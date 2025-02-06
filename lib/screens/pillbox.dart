@@ -1,19 +1,12 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(MyApp());
-}
+import '../core/theme/icons.dart';
+import '../core/widgets/bottom_navigation.dart';
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: PillboxScreen(),
-    );
-  }
-}
 
 class PillboxScreen extends StatelessWidget {
+  const PillboxScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,19 +68,7 @@ class PillboxScreen extends StatelessWidget {
         ),
       ),
       // Bottom Navigation Bar
-      bottomNavigationBar: BottomAppBar(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildBottomNavItem(Icons.book_outlined, 'Journal', false),
-              _buildBottomNavItem(Icons.lock_outline, 'Pillbox', true),
-              _buildBottomNavItem(Icons.person_outline, 'Profile', false),
-            ],
-          ),
-        ),
-      ),
+      bottomNavigationBar: buildBottomNavigationBar(context: context, currentRoute: 'pillbox'),
     );
   }
 
@@ -110,11 +91,7 @@ class PillboxScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: Colors.grey[200],
-                child: const Icon(Icons.medical_services_outlined, size: 30),
-              ),
+              appImage('medicine', size: 40),
               const SizedBox(height: 10),
               Text(
                 med['name']!,
@@ -132,24 +109,5 @@ class PillboxScreen extends StatelessWidget {
         ),
       );
     }).toList();
-  }
-
-  // Bottom Navigation Item
-  Widget _buildBottomNavItem(IconData icon, String label, bool isSelected) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          color: isSelected ? Colors.pink[100] : Colors.black,
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.pink[100] : Colors.black,
-          ),
-        ),
-      ],
-    );
   }
 }
