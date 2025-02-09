@@ -1,6 +1,8 @@
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'treatment.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../data/treatment.dart';
 
 class TreatmentManager {
   List<Treatment> _treatments = [];

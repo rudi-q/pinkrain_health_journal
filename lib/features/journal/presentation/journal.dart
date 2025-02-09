@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../core/theme/icons.dart';
-import '../core/widgets/bottom_navigation.dart';
+
+import '../../../core/theme/icons.dart';
+import '../../../core/widgets/appbar.dart';
+import '../../../core/widgets/bottom_navigation.dart';
 
 class JournalScreen extends StatefulWidget {
   const JournalScreen({super.key});
@@ -51,21 +52,10 @@ class JournalScreenState extends State<JournalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text(
-          'Journal',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-      ),
+      backgroundColor: backgroundColor,
+      appBar: buildAppBar('Journal'),
       body: RefreshIndicator(
             color: Colors.pink[100],
             backgroundColor: Colors.white,
@@ -492,7 +482,6 @@ class JournalScreenState extends State<JournalScreen> {
       ),
     );
   }
-
 void _showMedicationDetails(String name, String dosage, String time) {
   showModalBottomSheet(
     context: context,
@@ -545,8 +534,8 @@ void _showMedicationDetails(String name, String dosage, String time) {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      // Handle take pill action
                       Navigator.pop(context);
+                      _showPillTakenDialog(context);
                     },
                     style: ElevatedButton.styleFrom(
                       foregroundColor: Colors.white, backgroundColor: Colors.pink[100],
@@ -564,6 +553,60 @@ void _showMedicationDetails(String name, String dosage, String time) {
                   // Handle postpone action
                   Navigator.pop(context);
                 },
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+
+
+void _showPillTakenDialog(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (BuildContext context) {
+      return Container(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.check_circle,
+              color: Colors.green,
+              size: 60,
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Pill taken!',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.pink[100],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                minimumSize: Size(double.infinity, 50),
+              ),
+              child: Text(
+                'Close',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                ),
               ),
             ),
           ],

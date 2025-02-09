@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pillow/screens/journal.dart';
-import 'package:pillow/screens/pillbox.dart';
+import 'package:pillow/features/journal/presentation/journal.dart';
+import 'package:pillow/features/pillbox/presentation/pillbox_screen.dart';
 
-import '../../screens/new_treatment.dart';
-import '../../screens/profile.dart';
+import '../../features/profile/presentation/profile.dart';
+import '../../features/treatment/presentation/duration.dart';
+import '../../features/treatment/presentation/new_treatment.dart';
+import '../../features/treatment/presentation/schedule.dart';
 
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-final GoRouter router = GoRouter(
-  routerNeglect: true,
-  navigatorKey: navigatorKey,
-  routes: routes,
-);
 
 final List<GoRoute> routes = [
   GoRoute(
@@ -32,7 +28,24 @@ final List<GoRoute> routes = [
       builder: (context, state) => JournalScreen()
   ),
   GoRoute(
-    path: '/new_treatment',
-    builder: (context, state) => NewTreatmentScreen()
+      path: '/new_treatment',
+      builder: (context, state) => NewTreatmentScreen()
+  ),
+  GoRoute(
+      path: '/schedule',
+      builder: (context, state) => ScheduleScreen()
+  ),
+  GoRoute(
+    path: '/duration',
+    builder: (context, state) => DurationScreen(),
   ),
 ];
+
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+final GoRouter router = GoRouter(
+  routerNeglect: true,
+  navigatorKey: navigatorKey,
+  routes: routes,
+);

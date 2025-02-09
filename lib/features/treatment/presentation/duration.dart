@@ -1,24 +1,16 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(MyApp());
-}
+import '../../../core/widgets/appbar.dart';
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: DurationScreen(),
-    );
-  }
-}
 
 class DurationScreen extends StatefulWidget {
+  const DurationScreen({super.key});
+
   @override
-  _DurationScreenState createState() => _DurationScreenState();
+  DurationScreenState createState() => DurationScreenState();
 }
 
-class _DurationScreenState extends State<DurationScreen> {
+class DurationScreenState extends State<DurationScreen> {
   String selectedStart = 'tomorrow';
   String selectedDurationUnit = 'days';
   int selectedDuration = 5;
@@ -28,19 +20,7 @@ class _DurationScreenState extends State<DurationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.close, color: Colors.black),
-          onPressed: () {},
-        ),
-        title: Text(
-          'Duration',
-          style: TextStyle(color: Colors.black),
-        ),
-        centerTitle: true,
-      ),
+      appBar: buildAppBar('Treatment Duration'),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -48,7 +28,7 @@ class _DurationScreenState extends State<DurationScreen> {
           children: [
             // Step indicator
             Center(
-              child: Container(
+              child: SizedBox(
                 width: 100,
                 child: Row(
                   children: [

@@ -22,7 +22,7 @@ GestureDetector buildNavItem(BuildContext context, String label, String route, b
   return GestureDetector(
     onTap: () {
       if (!isSelected) {
-        context.push('/$route');
+        context.go('/$route');
       }
     },
     child: Column(

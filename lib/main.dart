@@ -30,33 +30,35 @@ class MyApp extends ConsumerWidget{
       themeMode: ThemeMode.light, // This will use the device's theme settings
       theme: ThemeData(
         brightness: Brightness.light,
+        scaffoldBackgroundColor: Colors.white,
         fontFamily: 'Outfit',
         primarySwatch: Colors.blue,
         textTheme: Theme.of(context).textTheme.apply(
           bodyColor: Colors.black,
           displayColor: Colors.black,
         ),
-        scaffoldBackgroundColor: Colors.white,
+      /*  scaffoldBackgroundColor: Colors.white,
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: <TargetPlatform, PageTransitionsBuilder>{
             TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
           },
-        ),
+        ),*/
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
+        scaffoldBackgroundColor: Colors.black,
         fontFamily: 'Outfit',
         primarySwatch: Colors.blue,
         textTheme: Theme.of(context).textTheme.apply(
           bodyColor: Colors.white,
           displayColor: Colors.white,
         ),
-        scaffoldBackgroundColor: Colors.grey[900],
+        /*scaffoldBackgroundColor: Colors.grey[900],
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: <TargetPlatform, PageTransitionsBuilder>{
             TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
           },
-        ),
+        ),*/
       ),
     );
   }

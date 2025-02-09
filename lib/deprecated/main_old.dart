@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pillow/util/MedicineForm.dart';
-import 'package:pillow/util/MedicineList.dart';
+import 'package:pillow/deprecated/MedicineForm.dart';
+import 'package:pillow/deprecated/MedicineList.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {

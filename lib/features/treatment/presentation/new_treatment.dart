@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:pillow/models/treatment.dart';
+import 'package:pillow/core/util/helpers.dart';
+import 'package:pillow/features/treatment/data/treatment.dart';
+import 'package:pillow/features/treatment/presentation/schedule.dart';
 
-import '../models/treatment_manager.dart';
+import '../../../core/navigation/router.dart';
+import '../../../core/theme/icons.dart';
+import '../domain/treatment_manager.dart';
 
 class NewTreatmentScreen extends StatefulWidget {
   const NewTreatmentScreen({super.key});
@@ -31,11 +35,13 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text('New treatment'),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         foregroundColor: Colors.black,
         elevation: 0,
         leading: IconButton(
@@ -43,28 +49,31 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildProgressBar(),
-              SizedBox(height: 20),
-              _buildTreatmentTypeOptions(),
-              SizedBox(height: 30),
-              _buildColorOptions(),
-              SizedBox(height: 30),
-              _buildNameField(),
-              SizedBox(height: 30),
-              _buildDoseField(),
-              SizedBox(height: 30),
-              _buildMealOptions(),
-              SizedBox(height: 30),
-              _buildCommentField(),
-              SizedBox(height: 30),
-              _buildContinueButton(),
-            ],
+      body: Container(
+        color: Colors.transparent,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildProgressBar(),
+                SizedBox(height: 20),
+                _buildTreatmentTypeOptions(),
+                SizedBox(height: 30),
+                _buildColorOptions(),
+                SizedBox(height: 30),
+                _buildNameField(),
+                SizedBox(height: 30),
+                _buildDoseField(),
+                SizedBox(height: 30),
+                _buildMealOptions(),
+                SizedBox(height: 30),
+                _buildCommentField(),
+                SizedBox(height: 30),
+                _buildContinueButton(),
+              ],
+            ),
           ),
         ),
       ),
@@ -99,9 +108,8 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
             height: 60,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: type == selectedTreatmentType ? Colors.pink[100] : Colors.grey[200],
             ),
-            child: Icon(Icons.medication, color: Colors.teal),
+            child: appImage('medicine', size: 30),
           ),
           SizedBox(height: 5),
           Text(type, style: TextStyle(fontSize: 12)),
@@ -269,9 +277,8 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
             height: 60,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.grey[200],
             ),
-            child: Icon(Icons.medication, color: Colors.teal),
+            child: appImage('medicine', size: 30),
           ),
           SizedBox(height: 5),
           Text(option, style: TextStyle(fontSize: 12)),
@@ -306,7 +313,7 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: () async {
+        onPressed: () {
           if (_validateInput()) {
             Treatment newTreatment = Treatment(
               name: nameController.text,
@@ -318,22 +325,18 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
               comment: commentController.text.isNotEmpty ? commentController.text : null,
             );
             
-            // Add the new treatment
-            await treatmentManager.addTreatment(newTreatment);
-            
-            // Save the updated treatments list
-            await treatmentManager.saveTreatments();
-            
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Treatment added successfully')),
-            );
-            
-            // Return to the previous screen and pass the updated treatments list
-            Navigator.of(context).pop(treatmentManager.treatments);
+            // Navigate to the ScheduleScreen using GoRouter
+            try {
+              navigatorKey.currentState?.push(
+                  MaterialPageRoute(builder: (context) => ScheduleScreen())
+              );
+            } on Exception catch (e) {
+              'Error: Failed to navigate to ScheduleScreen: $e'.log();
+            }
           }
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.pink[100],
+          backgroundColor: Color(0xFFFFD0FF),
           padding: EdgeInsets.symmetric(vertical: 15),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
