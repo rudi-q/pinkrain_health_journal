@@ -9,6 +9,7 @@ class PillBoxNotifier extends StateNotifier<IPillBox> {
   void updatePillbox(List<MedicineInventory> pillStock) {
     state = PillBox.populate(pillStock);
   }
+
 }
 
 final pillBoxProvider = StateNotifierProvider<PillBoxNotifier, IPillBox>((ref) => PillBoxNotifier());

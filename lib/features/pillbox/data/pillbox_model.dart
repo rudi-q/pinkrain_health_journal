@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pillow/core/util/helpers.dart';
 import 'package:pillow/features/pillbox/presentation/pillbox_notifier.dart';
 
 import '../../../core/models/medicine_model.dart';
@@ -38,10 +37,12 @@ class PillBoxManager{
   static IPillBox getSample() {
 
     final med1 = Medicine(
-      name: 'Ritalin',
+      name: 'Paracetamol',
       type: 'ADHD medication',
       color: 'White',
     );
+
+    med1.addSpecification(Specification(dosage: 20, unit: 'mg'));
 
     final med2 = Medicine(
       name: 'Levocetirizine',
@@ -49,11 +50,17 @@ class PillBoxManager{
       color: 'White',
     );
 
+
+    med2.addSpecification(Specification(dosage: 20, unit: 'mg'));
+
     final med3 = Medicine(
       name: 'Valdoxan',
       type: 'Depression, GAD',
       color: 'White',
     );
+
+
+    med3.addSpecification(Specification(dosage: 20, unit: 'mg'));
 
     pillbox.addMed(med1, 180);
     pillbox.addMed(med2, 63);
@@ -64,12 +71,7 @@ class PillBoxManager{
 
   static void addMedicine({required Medicine medicine, int? quantity}) {
     pillbox.addMed(medicine, quantity);
-    if (pillBoxNotifier!= null) {
-      pillBoxNotifier.updatePillbox(pillbox.pillStock);
+    pillBoxNotifier.updatePillbox(pillbox.pillStock);
     }
-    else{
-      "Pillbox notifier is not initialized. Cannot update the pillbox.\n\n".log();
-    }
-  }
 
 }

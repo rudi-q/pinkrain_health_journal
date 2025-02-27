@@ -3,10 +3,12 @@ import 'package:go_router/go_router.dart';
 import 'package:pillow/features/journal/presentation/journal.dart';
 import 'package:pillow/features/pillbox/presentation/pillbox_screen.dart';
 
+import '../../features/pillbox/presentation/medicine_detail_screen.dart';
 import '../../features/profile/presentation/profile.dart';
 import '../../features/treatment/presentation/duration.dart';
 import '../../features/treatment/presentation/new_treatment.dart';
 import '../../features/treatment/presentation/schedule.dart';
+import '../models/medicine_model.dart';
 
 
 
@@ -38,6 +40,14 @@ final List<GoRoute> routes = [
   GoRoute(
     path: '/duration',
     builder: (context, state) => DurationScreen(),
+  ),
+  GoRoute(
+    path: '/medicine_detail/:id',
+    builder: (context, state) {/*
+      final medicine = state.extra as Medicine;
+      final pillsLeft = int.parse(state.pathParameters['id']!);*/
+      return MedicineDetailScreen(inventory: state.extra as MedicineInventory);
+    },
   ),
 ];
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pillow/features/pillbox/data/pillbox_model.dart';
 import 'package:pillow/features/pillbox/presentation/pillbox_notifier.dart';
 
@@ -52,7 +53,7 @@ class PillboxScreen extends ConsumerWidget {
                   hintText: 'Find medication',
                   prefixIcon: const Icon(Icons.search, color: Colors.grey),
                   filled: true,
-                  fillColor: Colors.pink.withOpacity(0.05),
+                  fillColor: Colors.pink.withValues(alpha: 0.05),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide.none,
@@ -66,7 +67,7 @@ class PillboxScreen extends ConsumerWidget {
                   crossAxisCount: 2,
                   crossAxisSpacing: 10,
                   mainAxisSpacing: 10,
-                  children: _buildMedicationCards(ref),
+                  children: _buildMedicationCards(ref, context),
                 ),
               ),
             ],
@@ -79,36 +80,40 @@ class PillboxScreen extends ConsumerWidget {
   }
 
   // Build Medication Cards
-  List<Widget> _buildMedicationCards(WidgetRef ref) {
-
+  List<Widget> _buildMedicationCards(WidgetRef ref, BuildContext context) {
     final IPillBox pillBox = ref.watch(pillBoxProvider);
   
     return pillBox.pillStock.map((medicineInventory) {
       Medicine med = medicineInventory.medicine;
-      return Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-        elevation: 2,
-        child: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              appImage('medicine', size: 40),
-              const SizedBox(height: 10),
-              Text(
-                med.name,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              Text(med.type,
-                  style: const TextStyle(fontSize: 14, color: Colors.grey)),
-              const Spacer(),
-              Text(
-                '${medicineInventory.quantity} pills left',
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
-              ),
-            ],
+      return GestureDetector(
+        onTap: () {
+          context.push('/medicine_detail/${medicineInventory.quantity}', extra: medicineInventory);
+        },
+        child: Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                appImage('medicine', size: 40),
+                const SizedBox(height: 10),
+                Text(
+                  med.name,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Text(med.type,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                const Spacer(),
+                Text(
+                  '${medicineInventory.quantity} pills left',
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
+            ),
           ),
         ),
       );

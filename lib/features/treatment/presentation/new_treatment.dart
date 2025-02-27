@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:pillow/core/util/helpers.dart';
-import 'package:pillow/features/treatment/data/treatment.dart';
 import 'package:pillow/features/treatment/presentation/schedule.dart';
 
 import '../../../core/navigation/router.dart';
@@ -315,7 +314,7 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
       child: ElevatedButton(
         onPressed: () {
           if (_validateInput()) {
-            Treatment newTreatment = Treatment(
+            Treatment newTreatment = Treatment.newTreatment(
               name: nameController.text,
               type: selectedTreatmentType,
               color: selectedColor,

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/icons.dart';
 import '../../../core/widgets/appbar.dart';
 import '../../../core/widgets/bottom_navigation.dart';
+import '../../treatment/domain/treatment_manager.dart';
 
 class JournalScreen extends StatefulWidget {
   const JournalScreen({super.key});
@@ -276,27 +277,58 @@ class JournalScreenState extends State<JournalScreen> {
   }
 
   Widget _buildMorningSection(DateTime date) {
+    List<Treatment> treatments = Treatment.getSample().forMorning();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionHeader('Morning - ${date.day}/${date.month}', Icons.wb_sunny_outlined),
-        _buildMedicationItem('Ritalin', '20 mg', '10:00'),
-        _buildMedicationItem('Levocetirizine', '2 pills', '11:00'),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          itemCount: treatments.length,
+          itemBuilder: (context, index) {
+            final medication = treatments[index];
+            return _buildMedicationItem(
+              medication.medicine.name,
+              '${medication.medicine.specs.dosage} ${medication.medicine.specs.unit}',
+              medication.timeOfDay()
+            );
+          },
+        ),
       ],
     );
   }
 
   Widget _buildEveningSection(DateTime date) {
+    List<Map<String, String>> eveningMedications = [
+      {'name': 'Valdoxan', 'dosage': '20 mg', 'time': '22:30'},
+    ];
+
+    List<Treatment> treatments = Treatment.getSample().forEvening();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionHeader('Evening - ${date.day}/${date.month}', Icons.nights_stay_outlined),
-        _buildMedicationItem('Valdoxan', '20 mg', '22:30'),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          itemCount: treatments.length,
+          itemBuilder: (context, index) {
+            final medication = treatments[index];
+            return _buildMedicationItem(
+              medication.medicine.name,
+              '${medication.medicine.specs.dosage} ${medication.medicine.specs.unit}',
+              medication.timeOfDay()
+            );
+          },
+        ),
       ],
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon) {
+  Padding _buildSectionHeader(String title, IconData icon) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Row(
@@ -640,6 +672,16 @@ Widget _buildInfoItem(String text) {
       // Clear taken medications (or fetch updated data from a service)
       takenMedications.clear();
     });
+  }
+}
+
+extension on List<Treatment> {
+  List<Treatment> forEvening() {
+    return where((t) => t.treatmentPlan.timeOfDay.hour >= 14).toList();
+  }
+
+  List<Treatment> forMorning() {
+    return where((t) => t.treatmentPlan.timeOfDay.hour <= 12).toList();
   }
 }
 

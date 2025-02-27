@@ -29,10 +29,15 @@ class Medicine {
 
 class MedicineInventory {
   final Medicine medicine;
-  final int quantity;
+  int quantity;
 
   MedicineInventory({
     required this.medicine,
     required this.quantity,
   });
+
+  void updateQuantity(int newQuantity) {
+    quantity = newQuantity;
+  }
+
 }
