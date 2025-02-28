@@ -1,29 +1,31 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pillow/core/util/helpers.dart';
 
 import '../../../core/theme/icons.dart';
 import '../../../core/widgets/appbar.dart';
 import '../../../core/widgets/bottom_navigation.dart';
-import '../../treatment/domain/treatment_manager.dart';
+import '../data/journal_log.dart';
+import 'journal_notifier.dart';
 
-class JournalScreen extends StatefulWidget {
+class JournalScreen extends ConsumerStatefulWidget {
   const JournalScreen({super.key});
 
   @override
-  JournalScreenState createState() => JournalScreenState();
+  ConsumerState<JournalScreen> createState() => JournalScreenState();
 }
 
-class JournalScreenState extends State<JournalScreen> {
+class JournalScreenState extends ConsumerState<JournalScreen> {
   final PageController _pageController = PageController(initialPage: 1000);
   final ScrollController _dateScrollController = ScrollController();
   late DateTime selectedDate;
-  Set<String> takenMedications = {};
+  late List<IntakeLog> medList = [];
 
   @override
   void initState() {
     super.initState();
-    selectedDate = DateTime.now();
   }
 
   @override
@@ -34,8 +36,9 @@ class JournalScreenState extends State<JournalScreen> {
   }
 
   void _onPageChanged(int page) {
+    final selectedDateNotifier = ref.read(selectedDateProvider.notifier);
+    selectedDateNotifier.setDate(DateTime.now().add(Duration(days: page - 1000)), ref);
     setState(() {
-      selectedDate = DateTime.now().add(Duration(days: page - 1000));
 
       // Scroll the date selector if necessary
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -53,6 +56,9 @@ class JournalScreenState extends State<JournalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    selectedDate = ref.watch(selectedDateProvider);
+    //medList = JournalLog().getMedicationsForTheDay(selectedDate);
+    medList = ref.watch(pillIntakeProvider);
     final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -69,12 +75,12 @@ class JournalScreenState extends State<JournalScreen> {
                         controller: _pageController,
                         onPageChanged: _onPageChanged,
                         itemBuilder: (context, index) {
-                          final date = DateTime.now().add(Duration(days: index - 1000));
+                          //final date = DateTime.now().add(Duration(days: index - 1000));
                           return ListView(
                             children: [
-                              _buildTodayHeading(date),
-                              _buildMorningSection(date),
-                              _buildEveningSection(date),
+                              _buildTodayHeading(),
+                              _buildMorningSection(),
+                              _buildEveningSection(),
                             ],
                           );
                         },
@@ -214,9 +220,8 @@ class JournalScreenState extends State<JournalScreen> {
                   minimumDate: DateTime(2000),
                   maximumDate: DateTime(2101),
                   onDateTimeChanged: (DateTime newDate) {
-                    setState(() {
-                      selectedDate = newDate;
-                    });
+                    final selectedDateNotifier = ref.read(selectedDateProvider.notifier);
+                    selectedDateNotifier.setDate(newDate, ref);
                   },
                 ),
               ),
@@ -252,7 +257,8 @@ class JournalScreenState extends State<JournalScreen> {
     }
   }
 
-  Widget _buildTodayHeading(DateTime date) {
+  Widget _buildTodayHeading() {
+    final date = selectedDate;
     String headingText;
     if (date.day == DateTime.now().day) {
       headingText = 'Today';
@@ -276,8 +282,9 @@ class JournalScreenState extends State<JournalScreen> {
     );
   }
 
-  Widget _buildMorningSection(DateTime date) {
-    List<Treatment> treatments = Treatment.getSample().forMorning();
+  Column _buildMorningSection() {
+    final date = selectedDate;
+    final List<IntakeLog> medications = medList.forMorning();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,13 +293,10 @@ class JournalScreenState extends State<JournalScreen> {
         ListView.builder(
           shrinkWrap: true,
           physics: NeverScrollableScrollPhysics(),
-          itemCount: treatments.length,
+          itemCount: medications.length,
           itemBuilder: (context, index) {
-            final medication = treatments[index];
             return _buildMedicationItem(
-              medication.medicine.name,
-              '${medication.medicine.specs.dosage} ${medication.medicine.specs.unit}',
-              medication.timeOfDay()
+                medications[index]
             );
           },
         ),
@@ -300,12 +304,9 @@ class JournalScreenState extends State<JournalScreen> {
     );
   }
 
-  Widget _buildEveningSection(DateTime date) {
-    List<Map<String, String>> eveningMedications = [
-      {'name': 'Valdoxan', 'dosage': '20 mg', 'time': '22:30'},
-    ];
-
-    List<Treatment> treatments = Treatment.getSample().forEvening();
+  Column _buildEveningSection() {
+    final date = selectedDate;
+    final List<IntakeLog> medications = medList.forEvening();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -314,13 +315,10 @@ class JournalScreenState extends State<JournalScreen> {
         ListView.builder(
           shrinkWrap: true,
           physics: NeverScrollableScrollPhysics(),
-          itemCount: treatments.length,
+          itemCount: medications.length,
           itemBuilder: (context, index) {
-            final medication = treatments[index];
             return _buildMedicationItem(
-              medication.medicine.name,
-              '${medication.medicine.specs.dosage} ${medication.medicine.specs.unit}',
-              medication.timeOfDay()
+                medications[index]
             );
           },
         ),
@@ -348,11 +346,16 @@ class JournalScreenState extends State<JournalScreen> {
     );
   }
 
-  Widget _buildMedicationItem(String name, String dosage, String time) {
-    bool isTaken = takenMedications.contains(name);
+  InkWell _buildMedicationItem(IntakeLog medicineLog) {
+    //todo: Make sure that on pill taken, the takenMedications list is updated
+    final bool isTaken = medicineLog.isTaken;
+    final medication = medicineLog.treatment;
+    final String name = medication.medicine.name;
+    final String dosage = '${medication.medicine.specs.dosage} ${medication.medicine.specs.unit}';
+    final String time = medication.timeOfDay();
 
     return InkWell(
-      onTap: () => _showMedicationDetails(name, dosage, time),
+      onTap: () => _showMedicationDetails(medicineLog),
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Row(
@@ -370,12 +373,12 @@ class JournalScreenState extends State<JournalScreen> {
                     right: 0,
                     bottom: 0,
                     child: Container(
-                      padding: EdgeInsets.all(2),
+                      padding: EdgeInsets.all(0.5),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.check_circle, color: Colors.green, size: 16),
+                      child: Icon(Icons.check_circle, color: Colors.green, size: 14),
                     ),
                   ),
               ],
@@ -514,7 +517,10 @@ class JournalScreenState extends State<JournalScreen> {
       ),
     );
   }
-void _showMedicationDetails(String name, String dosage, String time) {
+void _showMedicationDetails(IntakeLog medicineLog) {
+  final medication = medicineLog.treatment;
+  final String name = medication.medicine.name;
+  final String dosage = '${medication.medicine.specs.dosage} ${medication.medicine.specs.unit}';
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -568,6 +574,12 @@ void _showMedicationDetails(String name, String dosage, String time) {
                     onPressed: () {
                       Navigator.pop(context);
                       _showPillTakenDialog(context);
+                      setState(() {
+
+                        devPrint(medicineLog.isTaken);
+                        medicineLog.isTaken = true;
+                        devPrint(medicineLog.isTaken);
+                      });
                     },
                     style: ElevatedButton.styleFrom(
                       foregroundColor: Colors.white, backgroundColor: Colors.pink[100],
@@ -603,6 +615,7 @@ void _showPillTakenDialog(BuildContext context) {
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
     builder: (BuildContext context) {
+      String? pillLogError;
       return Container(
         padding: EdgeInsets.all(20),
         child: Column(
@@ -615,7 +628,7 @@ void _showPillTakenDialog(BuildContext context) {
             ),
             SizedBox(height: 20),
             Text(
-              'Pill taken!',
+              pillLogError ?? 'Pill taken!',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -664,24 +677,8 @@ Widget _buildInfoItem(String text) {
   Future<void> _refreshJournal() async {
     // Simulate a data fetch operation
     await Future.delayed(Duration(seconds: 1));
-
-    setState(() {
-      // Reset the selected date to today
-      selectedDate = DateTime.now();
-
-      // Clear taken medications (or fetch updated data from a service)
-      takenMedications.clear();
-    });
-  }
-}
-
-extension on List<Treatment> {
-  List<Treatment> forEvening() {
-    return where((t) => t.treatmentPlan.timeOfDay.hour >= 14).toList();
-  }
-
-  List<Treatment> forMorning() {
-    return where((t) => t.treatmentPlan.timeOfDay.hour <= 12).toList();
+    final selectedDateNotifier = ref.read(selectedDateProvider.notifier);
+    selectedDateNotifier.setDate(DateTime.now(), ref);
   }
 }
 
