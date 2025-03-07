@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pillow/core/util/helpers.dart';
 
 import '../../../core/theme/icons.dart';
+import '../../../core/util/dateFormatConverters.dart';
 import '../../../core/widgets/appbar.dart';
 import '../../../core/widgets/bottom_navigation.dart';
 import '../data/journal_log.dart';
@@ -136,7 +137,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      _getWeekdayAbbreviation(date.weekday),
+                      getWeekdayAbbreviation(date.weekday),
                       style: TextStyle(
                         color: isSelected ? Colors.white : Colors.black,
                         fontSize: 14,
@@ -232,31 +233,6 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
     );
   }
 
-  String _getWeekdayAbbreviation(int weekday) {
-    switch (weekday) {
-      case DateTime.monday: return 'M';
-      case DateTime.tuesday: return 'Tu';
-      case DateTime.wednesday: return 'W';
-      case DateTime.thursday: return 'Th';
-      case DateTime.friday: return 'F';
-      case DateTime.saturday: return 'Sa';
-      case DateTime.sunday: return 'Su';
-      default: return '';
-    }
-  }
-  String _getWeekdayName(int weekday) {
-    switch (weekday) {
-      case DateTime.monday: return 'Monday';
-      case DateTime.tuesday: return 'Tuesday';
-      case DateTime.wednesday: return 'Wednesday';
-      case DateTime.thursday: return 'Thursday';
-      case DateTime.friday: return 'Friday';
-      case DateTime.saturday: return 'Saturday';
-      case DateTime.sunday: return 'Sunday';
-      default: return '';
-    }
-  }
-
   Widget _buildTodayHeading() {
     final date = selectedDate;
     String headingText;
@@ -267,7 +243,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
     } else if (date.day == DateTime.now().subtract(Duration(days: 1)).day) {
       headingText = 'Yesterday';
     } else {
-      headingText = '${_getWeekdayName(date.weekday)}, ${date.day}';
+      headingText = '${getWeekdayName(date.weekday)}, ${date.day}';
     }
 
     return Padding(

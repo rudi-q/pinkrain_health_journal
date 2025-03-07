@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'package:pillow/core/util/helpers.dart';
 
 import '../../../core/widgets/bottom_navigation.dart';
+import 'components/mood_painter.dart';
+import 'components/scatter_plot_painter.dart';
 
 class WellnessTrackerScreen extends StatefulWidget {
   const WellnessTrackerScreen({super.key});
@@ -48,10 +51,10 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
                 const SizedBox(height: 30),
 
                 // Wellness title and description
-                const Center(
+                Center(
                   child: Text(
-                    'wellness',
-                    style: TextStyle(
+                    "${DateTime.now().month.monthName}'s Wellness Report",
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w500,
                     ),
@@ -506,159 +509,4 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
       ],
     );
   }
-
-  Widget _bottomNavItem(String label, IconData icon, {bool isSelected = false}) {
-    return Column(
-      children: [
-        Icon(
-          icon,
-          color: isSelected ? Colors.purple[200] : Colors.grey,
-          size: 24,
-        ),
-        const SizedBox(height: 5),
-        Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.purple[200] : Colors.grey,
-            fontSize: 12,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// Custom painter for mood icons
-class MoodPainter extends CustomPainter {
-  final int mood;
-  final bool isSelected;
-
-  MoodPainter(this.mood, this.isSelected);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = isSelected ? Colors.white : Colors.grey[700]!
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-  
-    switch (mood) {
-      case 0: // Very sad
-        final center = Offset(size.width / 2, size.height / 2 + 5);
-        canvas.drawArc(
-          Rect.fromCenter(center: center, width: size.width, height: size.height),
-          3.14, // PI (180 degrees, making it upside down)
-          3.14, // PI (180 degrees arc)
-          false,
-          paint,
-        );
-        // Eyes
-        canvas.drawCircle(Offset(size.width / 2 - 8, size.height / 2 - 10), 1, paint);
-        canvas.drawCircle(Offset(size.width / 2 + 8, size.height / 2 - 10), 1, paint);
-        break;
-      case 1: // Sad
-        final center = Offset(size.width / 2, size.height + 5);
-        canvas.drawArc(
-          Rect.fromCenter(center: center, width: size.width, height: size.height),
-          3.14, // PI (180 degrees, making it upside down)
-          3.14, // PI (180 degrees arc)
-          false,
-          paint,
-        );
-        // Eyes
-        canvas.drawLine(
-          Offset(size.width / 2 - 8, size.height / 2 - 10),
-          Offset(size.width / 2 - 3, size.height / 2 - 10),
-          paint,
-        );
-        canvas.drawLine(
-          Offset(size.width / 2 + 3, size.height / 2 - 10),
-          Offset(size.width / 2 + 8, size.height / 2 - 10),
-          paint,
-        );
-        break;
-      case 2: // Neutral
-      // Mouth - straight line
-        canvas.drawLine(
-          Offset(size.width / 2 - 10, size.height / 2 + 10),
-          Offset(size.width / 2 + 10, size.height / 2 + 10),
-          paint,
-        );
-        // Eyes
-        canvas.drawLine(
-          Offset(size.width / 2 - 8, size.height / 2 - 10),
-          Offset(size.width / 2 - 3, size.height / 2 - 10),
-          paint,
-        );
-        canvas.drawLine(
-          Offset(size.width / 2 + 3, size.height / 2 - 10),
-          Offset(size.width / 2 + 8, size.height / 2 - 10),
-          paint,
-        );
-        break;
-      case 3: // Happy
-        final center = Offset(size.width / 2, size.height / 2 + 5);
-        canvas.drawArc(
-          Rect.fromCenter(center: center, width: size.width, height: size.height),
-          0, // 0 degrees (starting from the right)
-          3.14, // PI (180 degrees arc)
-          false,
-          paint,
-        );
-        // Eyes
-        canvas.drawCircle(Offset(size.width / 2 - 8, size.height / 2 - 10), 1, paint);
-        canvas.drawCircle(Offset(size.width / 2 + 8, size.height / 2 - 10), 1, paint);
-        break;
-      case 4: // Very happy
-        final center = Offset(size.width / 2, size.height / 2);
-        canvas.drawArc(
-          Rect.fromCenter(center: center, width: size.width, height: size.height - 5),
-          0, // 0 degrees (starting from the right)
-          3.14, // PI (180 degrees arc)
-          false,
-          paint,
-        );
-        // Eyes
-        canvas.drawCircle(Offset(size.width / 2 - 8, size.height / 2 - 14), 1, paint);
-        canvas.drawCircle(Offset(size.width / 2 + 8, size.height / 2 - 14), 1, paint);
-        break;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
-// Custom painter for scatter plot
-class ScatterPlotPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.pink[100]!
-      ..style = PaintingStyle.fill;
-
-    // Draw scatter points
-    canvas.drawCircle(Offset(size.width * 0.2, size.height * 0.7), 3, paint);
-    canvas.drawCircle(Offset(size.width * 0.3, size.height * 0.6), 3, paint);
-    canvas.drawCircle(Offset(size.width * 0.4, size.height * 0.5), 3, paint);
-    canvas.drawCircle(Offset(size.width * 0.5, size.height * 0.4), 3, paint);
-    canvas.drawCircle(Offset(size.width * 0.6, size.height * 0.3), 3, paint);
-    canvas.drawCircle(Offset(size.width * 0.7, size.height * 0.25), 3, paint);
-    canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.2), 3, paint);
-
-    // Draw trend line
-    final linePaint = Paint()
-      ..color = Colors.green[200]!
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-
-    canvas.drawLine(
-      Offset(size.width * 0.1, size.height * 0.8),
-      Offset(size.width * 0.9, size.height * 0.1),
-      linePaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

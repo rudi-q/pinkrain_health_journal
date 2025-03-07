@@ -1,4 +1,7 @@
+import 'dart:ffi';
+
 import 'package:flutter/foundation.dart';
+import 'package:pillow/core/util/dateFormatConverters.dart';
 
 import '../../features/journal/data/journal_log.dart';
 
@@ -42,4 +45,9 @@ extension ListExtensions on List<IntakeLog> {
     return where((t) => t.treatment.treatmentPlan.timeOfDay.hour <= 12).toList();
   }
 }
+
+extension IntExtensions on int {
+  get monthName => getMonthName(this);
+}
+
 

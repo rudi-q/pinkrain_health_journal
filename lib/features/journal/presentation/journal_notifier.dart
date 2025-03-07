@@ -19,7 +19,9 @@ final selectedDateProvider = StateNotifierProvider<SelectedDateNotifier, DateTim
 class PillIntakeNotifier extends StateNotifier<List<IntakeLog>> {
   final JournalLog _journalLog = JournalLog();
 
-  PillIntakeNotifier() : super([]);
+  PillIntakeNotifier() : super([]) {
+    populateJournal(DateTime.now().normalize());
+  }
 
   void populateJournal(DateTime selectedDate) => state = _journalLog.getMedicationsForTheDay(selectedDate);
 
