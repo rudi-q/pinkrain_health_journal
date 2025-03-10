@@ -106,11 +106,11 @@ class PillboxScreen extends ConsumerWidget {
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(med.type,
-                    style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                    style: const TextStyle(fontSize: 14, color: Colors.black54)),
                 const Spacer(),
                 Text(
                   '${medicineInventory.quantity} pills left',
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.bold),
                 ),
               ],
             ),

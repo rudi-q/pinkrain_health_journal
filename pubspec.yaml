@@ -30,6 +30,7 @@ dependencies:
   flutter_riverpod: ^2.6.1
   intl: ^0.20.2
   percent_indicator: ^4.2.4
+  pretty_animated_text: ^2.0.0
 
 dev_dependencies:
   flutter_test:

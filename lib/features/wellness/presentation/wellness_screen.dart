@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:pillow/core/util/helpers.dart';
+import 'package:pillow/features/wellness/domain/wellness_tracker.dart';
+import 'package:pretty_animated_text/pretty_animated_text.dart';
 
 import '../../../core/widgets/bottom_navigation.dart';
 import 'components/mood_painter.dart';
@@ -14,8 +16,8 @@ class WellnessTrackerScreen extends StatefulWidget {
 }
 
 class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
-  // Selected mood (0-4, where 3 is selected in the prototype)
-  int selectedMood = 3;
+  int selectedMood = MoodTracker.getMood(DateTime.now()) - 1;
+  String selectedDateOption = 'month';
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +43,7 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         _dateOption('day'),
-                        _dateOption('month', isSelected: true),
+                        _dateOption('month'),
                         _dateOption('year'),
                       ],
                     ),
@@ -53,7 +55,7 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
                 // Wellness title and description
                 Center(
                   child: Text(
-                    "${DateTime.now().month.monthName}'s Wellness Report",
+                    "${DateTime.now().getNameOf(selectedDateOption)}'s Wellness Report",
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w500,
@@ -75,19 +77,23 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
                 const SizedBox(height: 30),
 
                 // Mood tracker
-                const Text(
-                  'How are you feeling?',
-                  style: TextStyle(
+                BlurText(
+                  text:
+                  'How have you been feeling'
+                  ' ${selectedDateOption == 'day' ? 'today' : 'this $selectedDateOption'}?',
+                  duration: const Duration(seconds: 1),
+                  type: AnimationType.word,
+                  textStyle: const TextStyle(
                     fontWeight: FontWeight.w500,
                     fontSize: 16,
-                  ),
+                  )
                 ),
                 const SizedBox(height: 15),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: List.generate(
                     5,
-                        (index) => _moodIcon(index),
+                        (index) => _moodIcon(index: index),
                   ),
                 ),
 
@@ -329,20 +335,40 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
     );
   }
 
-  Widget _dateOption(String text, {bool isSelected = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: isSelected ? Colors.black : Colors.grey,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+  Widget _dateOption(String text) {
+    bool isSelected = text == selectedDateOption;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedDateOption = text;
+        });
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: isSelected ? Colors.black : Colors.grey,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
         ),
       ),
     );
   }
 
-  Widget _moodIcon(int index) {
+  Widget _moodIcon({required int index, int intensity = 500}) {
+    bool isSelected = selectedMood == index;
+    if(selectedDateOption == 'month') {
+      MoodTracker.populateSample();
+      isSelected = true;
+      final int moodCount = MoodTracker.getMoodCountByRange(
+      DateTime(DateTime.now().year, DateTime.now().month, 1),
+      DateTime(DateTime.now().year, DateTime.now().month, 30),
+      index + 1
+      );
+      intensity =  50 + ((moodCount / MoodTracker.moodLog.length) * 800).toInt();
+    }
+    intensity -= intensity % 100;
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -353,13 +379,13 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
         width: 50,
         height: 50,
         decoration: BoxDecoration(
-          color: selectedMood == index ? Colors.grey[700] : Colors.white,
+          color: isSelected ? Colors.grey[intensity] : Colors.white,
           shape: BoxShape.circle,
           border: Border.all(color: Colors.grey[300]!),
         ),
         child: Center(
           child: CustomPaint(
-            painter: MoodPainter(index, selectedMood == index),
+            painter: MoodPainter(index, isSelected && intensity >= 500),
             size: const Size(30, 20),
           ),
         ),

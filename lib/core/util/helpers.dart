@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:flutter/foundation.dart';
 import 'package:pillow/core/util/dateFormatConverters.dart';
 
@@ -34,6 +32,17 @@ extension DateTimeExtensions on DateTime {
   DateTime normalize() {
     return DateTime(year, month, day);
   }
+  String getNameOf(String selectedDateOption) {
+    switch(selectedDateOption) {
+      case 'day':
+        return 'Today';
+      case 'month':
+        return getMonthName(month);
+      case 'year':
+        return '$year';
+    }
+    return '';
+  }
 }
 
 extension ListExtensions on List<IntakeLog> {
@@ -44,10 +53,6 @@ extension ListExtensions on List<IntakeLog> {
   List<IntakeLog> forMorning() {
     return where((t) => t.treatment.treatmentPlan.timeOfDay.hour <= 12).toList();
   }
-}
-
-extension IntExtensions on int {
-  get monthName => getMonthName(this);
 }
 
 
