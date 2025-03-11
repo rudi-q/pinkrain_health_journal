@@ -39,9 +39,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     
     _controller.forward();
     
-    // Navigate to the main screen after 3 seconds
-    Timer(const Duration(milliseconds: 3000), () {
+    // Initialize Hive and check if it's the first launch of the day
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    // Wait for the animation to complete
+    Timer(const Duration(milliseconds: 2000), () {
       if (mounted) {
+        // Navigate directly to the journal screen
         context.go('/journal');
       }
     });

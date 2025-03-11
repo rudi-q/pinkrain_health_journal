@@ -31,6 +31,9 @@ dependencies:
   intl: ^0.20.2
   percent_indicator: ^4.2.4
   pretty_animated_text: ^2.0.0
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.2
 
 dev_dependencies:
   flutter_test:
@@ -55,4 +58,3 @@ flutter:
     - family: Outfit
       fonts:
         - asset: assets/fonts/Outfit.ttf
-

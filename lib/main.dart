@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/navigation/router.dart';
+import 'core/services/hive_service.dart';
 
 Future<void> main() async {
 
@@ -10,6 +11,9 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   //todo: Implement analytics and crash reporting
+
+  // Initialize Hive
+  await HiveService.init();
 
   //appVersion = await getAppVersion();
 

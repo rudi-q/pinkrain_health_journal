@@ -3,11 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pillow/core/util/helpers.dart';
+import 'dart:async';
 
 import '../../../core/theme/icons.dart';
 import '../../../core/util/dateFormatConverters.dart';
 import '../../../core/widgets/appbar.dart';
 import '../../../core/widgets/bottom_navigation.dart';
+import '../../../core/services/hive_service.dart';
+import '../../../features/splash/daily_mood_prompt.dart';
 import '../data/journal_log.dart';
 import 'journal_notifier.dart';
 
@@ -30,6 +33,13 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
   void initState() {
     super.initState();
     //todo: Load saved journal entries from local storage or cloud
+    
+    // Check for daily mood prompt with a gentle delay
+    Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        _checkDailyMood();
+      }
+    });
   }
 
   @override
@@ -59,6 +69,25 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
   }
 
   //todo: Implement journal entry saving functionality
+  
+  // Check if it's the first launch of the day and show mood prompt
+  void _checkDailyMood() {
+    if (HiveService.isFirstLaunchOfDay()) {
+      // Show the daily mood prompt with a gentle animation
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        barrierColor: Colors.black54,
+        builder: (BuildContext context) {
+          return DailyMoodPrompt(
+            onComplete: () {
+              Navigator.of(context).pop();
+            },
+          );
+        },
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
