@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:pillow/core/util/helpers.dart';
 import 'package:pillow/features/wellness/domain/wellness_tracker.dart';
+import 'package:pillow/features/wellness/presentation/components/correlation_analysis.dart';
+import 'package:pillow/features/wellness/presentation/components/mood_trend_chart.dart';
+import 'package:pillow/features/wellness/presentation/components/personalized_insights.dart';
+import 'package:pillow/features/wellness/presentation/components/wellness_prediction.dart';
 import 'package:pretty_animated_text/pretty_animated_text.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/widgets/bottom_navigation.dart';
 import 'components/mood_painter.dart';
@@ -10,8 +15,28 @@ import 'components/scatter_plot_painter.dart';
 
 //todo: Implement wellness data persistence and analytics
 
+// Extension to add date comparison functionality
+extension DateTimeExtension on DateTime {
+  bool isSameDate(DateTime other) {
+    return year == other.year && month == other.month && day == other.day;
+  }
+}
+
+// Extension to add string capitalization
+extension StringExtension on String {
+  String capitalize() {
+    if (isEmpty) return '';
+    return "${this[0].toUpperCase()}${substring(1)}";
+  }
+}
+
 class WellnessTrackerScreen extends StatefulWidget {
-  const WellnessTrackerScreen({super.key});
+  final DateTime? initialDate;
+  
+  const WellnessTrackerScreen({
+    super.key,
+    this.initialDate,
+  });
 
   @override
   State<WellnessTrackerScreen> createState() => _WellnessTrackerScreenState();
@@ -20,6 +45,91 @@ class WellnessTrackerScreen extends StatefulWidget {
 class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
   int selectedMood = MoodTracker.getMood(DateTime.now()) - 1;
   String selectedDateOption = 'month';
+  late DateTime selectedDate;
+  
+  @override
+  void initState() {
+    super.initState();
+    selectedDate = widget.initialDate ?? DateTime.now();
+  }
+  
+  // Format the selected date based on the current view
+  String get formattedSelectedDate {
+    switch (selectedDateOption) {
+      case 'day':
+        return DateFormat('MMMM d, yyyy').format(selectedDate);
+      case 'month':
+        return DateFormat('MMMM yyyy').format(selectedDate);
+      case 'year':
+        return DateFormat('yyyy').format(selectedDate);
+      default:
+        return DateFormat('MMMM yyyy').format(selectedDate);
+    }
+  }
+  
+  // Navigate to previous period based on current view
+  void _navigateToPrevious() {
+    setState(() {
+      switch (selectedDateOption) {
+        case 'day':
+          selectedDate = selectedDate.subtract(const Duration(days: 1));
+          break;
+        case 'month':
+          selectedDate = DateTime(
+            selectedDate.year,
+            selectedDate.month - 1,
+            selectedDate.day,
+          );
+          break;
+        case 'year':
+          selectedDate = DateTime(
+            selectedDate.year - 1,
+            selectedDate.month,
+            selectedDate.day,
+          );
+          break;
+      }
+    });
+    // Log the navigation for debugging
+    "Navigated to previous ${selectedDateOption}: ${formattedSelectedDate}".log();
+  }
+  
+  // Navigate to next period based on current view
+  void _navigateToNext() {
+    final now = DateTime.now();
+    final nextDate = switch (selectedDateOption) {
+      'day' => selectedDate.add(const Duration(days: 1)),
+      'month' => DateTime(
+          selectedDate.year,
+          selectedDate.month + 1,
+          selectedDate.day,
+        ),
+      'year' => DateTime(
+          selectedDate.year + 1,
+          selectedDate.month,
+          selectedDate.day,
+        ),
+      _ => selectedDate,
+    };
+    
+    // Only allow navigation up to the current date
+    if (!nextDate.isAfter(now)) {
+      setState(() {
+        selectedDate = nextDate;
+      });
+      "Navigated to next ${selectedDateOption}: ${formattedSelectedDate}".log();
+    } else {
+      "Cannot navigate to future dates".log();
+    }
+  }
+  
+  // Navigate to today
+  void _navigateToToday() {
+    setState(() {
+      selectedDate = DateTime.now();
+    });
+    "Navigated to today: ${formattedSelectedDate}".log();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,31 +143,89 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                // Date selector
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                // Date navigation and selector
+                Column(
+                  children: [
+                    // Date navigation controls
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _dateOption('day'),
-                        _dateOption('month'),
-                        _dateOption('year'),
+                        IconButton(
+                          icon: const Icon(Icons.chevron_left),
+                          onPressed: _navigateToPrevious,
+                        ),
+                        GestureDetector(
+                          onTap: () => _showDatePicker(context),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                formattedSelectedDate,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.calendar_today, size: 16),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Today button
+                            TextButton(
+                              onPressed: _navigateToToday,
+                              style: TextButton.styleFrom(
+                                minimumSize: Size.zero,
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Text('Today'),
+                            ),
+                            // Next button
+                            IconButton(
+                              icon: const Icon(Icons.chevron_right),
+                              onPressed: DateTime(
+                                selectedDate.year,
+                                selectedDate.month,
+                                selectedDate.day,
+                              ).isSameDate(DateTime.now())
+                                  ? null
+                                  : _navigateToNext,
+                            ),
+                          ],
+                        ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    // Date range selector
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _dateOption('day'),
+                            _dateOption('month'),
+                            _dateOption('year'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-
                 const SizedBox(height: 30),
 
                 // Wellness title and description
                 Center(
                   child: Text(
-                    "${DateTime.now().getNameOf(selectedDateOption)}'s Wellness Report",
+                    "${selectedDate.getNameOf(selectedDateOption)}'s Wellness Report",
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w500,
@@ -83,7 +251,7 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
                 BlurText(
                   text:
                   'How have you been feeling'
-                  ' ${selectedDateOption == 'day' ? 'today' : 'this $selectedDateOption'}?',
+                  ' ${selectedDate.isSameDate(DateTime.now()) ? 'today' : selectedDateOption == 'day' ? 'on this day' : 'this $selectedDateOption'}?',
                   duration: const Duration(seconds: 1),
                   type: AnimationType.word,
                   textStyle: const TextStyle(
@@ -329,6 +497,91 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 30),
+
+                // NEW SECTION: Mood Trend Chart
+                const Text(
+                  'Mood Trends Analysis',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Visualize how your mood has changed over time',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 15),
+                MoodTrendChart(
+                  timeRange: selectedDateOption,
+                  selectedDate: selectedDate,
+                ),
+                const SizedBox(height: 30),
+
+                // NEW SECTION: Correlation Analysis
+                const Text(
+                  'Wellness Factor Analysis',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Discover which factors most strongly influence your mood',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 15),
+                const CorrelationAnalysis(),
+                const SizedBox(height: 30),
+
+                // NEW SECTION: Wellness Prediction
+                const Text(
+                  'Mood Forecast',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'AI-powered prediction of your mood trends',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 15),
+                const WellnessPrediction(),
+                const SizedBox(height: 30),
+
+                // NEW SECTION: Personalized Insights
+                const Text(
+                  'Your Personalized Insights',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Data-driven recommendations tailored to your wellness patterns',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 15),
+                PersonalizedInsights(timeRange: selectedDateOption),
+                const SizedBox(height: 30),
+
                 const SizedBox(height: 10),
               ],
             ),
@@ -339,20 +592,191 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
     );
   }
 
+  void _showDatePicker(BuildContext context) async {
+    final now = DateTime.now();
+    
+    switch (selectedDateOption) {
+      case 'day':
+        final pickedDate = await showDatePicker(
+          context: context,
+          initialDate: selectedDate.isAfter(now) ? now : selectedDate,
+          firstDate: DateTime(2020),
+          lastDate: now,
+          builder: (context, child) {
+            return Theme(
+              data: Theme.of(context).copyWith(
+                colorScheme: ColorScheme.light(
+                  primary: Theme.of(context).primaryColor,
+                ),
+              ),
+              child: child!,
+            );
+          },
+        );
+        
+        if (pickedDate != null) {
+          setState(() {
+            selectedDate = pickedDate;
+          });
+          "Selected date: ${formattedSelectedDate}".log();
+        }
+        break;
+        
+      case 'month':
+        // Show month picker
+        await _showMonthPicker(context);
+        break;
+        
+      case 'year':
+        // Show year picker
+        await _showYearPicker(context);
+        break;
+    }
+  }
+  
+  // Custom month picker
+  Future<void> _showMonthPicker(BuildContext context) async {
+    final now = DateTime.now();
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Month'),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 300,
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                childAspectRatio: 1.5,
+              ),
+              itemCount: 12,
+              itemBuilder: (context, index) {
+                final month = index + 1;
+                final date = DateTime(selectedDate.year, month, 1);
+                final isSelected = selectedDate.month == month;
+                final isFuture = date.year == now.year && month > now.month;
+                
+                return InkWell(
+                  onTap: isFuture ? null : () {
+                    setState(() {
+                      selectedDate = DateTime(
+                        selectedDate.year,
+                        month,
+                        1,
+                      );
+                    });
+                    Navigator.pop(context);
+                    "Selected month: ${formattedSelectedDate}".log();
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isSelected ? Theme.of(context).primaryColor : Colors.grey[300]!,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        DateFormat('MMM').format(DateTime(2022, month)),
+                        style: TextStyle(
+                          color: isFuture
+                              ? Colors.grey[400]
+                              : isSelected
+                                  ? Colors.white
+                                  : Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  
+  // Custom year picker
+  Future<void> _showYearPicker(BuildContext context) async {
+    final now = DateTime.now();
+    final startYear = 2020;
+    final endYear = now.year;
+    final years = List.generate(endYear - startYear + 1, (index) => startYear + index);
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Year'),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 300,
+            child: ListView.builder(
+              itemCount: years.length,
+              itemBuilder: (context, index) {
+                final year = years[index];
+                final isSelected = selectedDate.year == year;
+                
+                return ListTile(
+                  title: Text(year.toString()),
+                  selected: isSelected,
+                  selectedTileColor: Theme.of(context).primaryColor.withAlpha(50),
+                  textColor: isSelected ? Theme.of(context).primaryColor : null,
+                  onTap: () {
+                    setState(() {
+                      selectedDate = DateTime(
+                        year,
+                        selectedDate.month,
+                        1,
+                      );
+                    });
+                    Navigator.pop(context);
+                    "Selected year: ${formattedSelectedDate}".log();
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _dateOption(String text) {
-    bool isSelected = text == selectedDateOption;
+    final isSelected = selectedDateOption == text;
     return GestureDetector(
       onTap: () {
         setState(() {
           selectedDateOption = text;
         });
       },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: Text(
-          text,
+          text.capitalize(),
           style: TextStyle(
-            color: isSelected ? Colors.black : Colors.grey,
+            color: isSelected ? Colors.white : Colors.black54,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),

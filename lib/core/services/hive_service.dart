@@ -1,62 +1,143 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:pillow/core/util/helpers.dart' show devPrint;
 
 class HiveService {
   static const String userPrefsBox = 'userPreferences';
+  static const String moodBoxName = 'moodData';
   static const String lastMoodDateKey = 'lastMoodDate';
   static const String userMoodKey = 'userMood';
   static const String userMoodDescriptionKey = 'userMoodDescription';
 
   /// Initialize Hive
   static Future<void> init() async {
-    final appDocumentDir = await getApplicationDocumentsDirectory();
-    await Hive.initFlutter(appDocumentDir.path);
-    
-    // Open boxes
-    await Hive.openBox(userPrefsBox);
+    try {
+      final appDocumentDir = await getApplicationDocumentsDirectory();
+      await Hive.initFlutter(appDocumentDir.path);
+
+      // Open boxes
+      await _openBox(userPrefsBox);
+      await _openBox(moodBoxName);
+    } catch (e) {
+      devPrint('Error initializing Hive: $e');
+    }
+  }
+
+  /// Helper method to safely open a box
+  static Future<Box> _openBox(String boxName) async {
+    try {
+      if (Hive.isBoxOpen(boxName)) {
+        return Hive.box(boxName);
+      } else {
+        return await Hive.openBox(boxName);
+      }
+    } catch (e) {
+      devPrint('Error opening box $boxName: $e');
+      // Create a new box if there was an error
+      await Hive.deleteBoxFromDisk(boxName);
+      return await Hive.openBox(boxName);
+    }
   }
 
   /// Check if this is the first launch of the day
-  static bool isFirstLaunchOfDay() {
-    final box = Hive.box(userPrefsBox);
-    final String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final String? lastDate = box.get(lastMoodDateKey);
-    
-    // If no date is stored or the stored date is different from today
-    return lastDate == null || lastDate != today;
+  static Future<bool> isFirstLaunchOfDay() async {
+    try {
+      final box = await _openBox(userPrefsBox);
+      final String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final String? lastDate = await box.get(lastMoodDateKey);
+
+      // If no date is stored or the stored date is different from today
+      return lastDate == null || lastDate != today;
+    } catch (e) {
+      devPrint('Error checking first launch: $e');
+      return true; // Default to true if there's an error
+    }
   }
 
   /// Set today as the last mood entry date
   static Future<void> setMoodEntryForToday() async {
-    final box = Hive.box(userPrefsBox);
-    final String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    await box.put(lastMoodDateKey, today);
+    try {
+      final box = await _openBox(userPrefsBox);
+      final String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      await box.put(lastMoodDateKey, today);
+    } catch (e) {
+      devPrint('Error setting mood entry for today: $e');
+    }
   }
 
-  /// Save user's daily mood data
-  static Future<void> saveUserMood(int moodValue, String moodDescription) async {
-    final box = Hive.box(userPrefsBox);
-    await box.put(userMoodKey, moodValue);
-    await box.put(userMoodDescriptionKey, moodDescription);
-    await setMoodEntryForToday();
+  /// Save user mood data
+  static Future<void> saveUserMood(int mood, String description) async {
+    try {
+      final box = await _openBox(userPrefsBox);
+
+      // Save the current date
+      final now = DateTime.now().toIso8601String();
+      await box.put(lastMoodDateKey, now);
+
+      // Save the mood data
+      await box.put(userMoodKey, mood);
+      await box.put(userMoodDescriptionKey, description);
+    } catch (e) {
+      devPrint('Error saving user mood: $e');
+    }
   }
 
-  /// Get user's mood value
-  static int? getUserMood() {
-    final box = Hive.box(userPrefsBox);
-    return box.get(userMoodKey);
+  /// Get user mood
+  static Future<int> getUserMood() async {
+    try {
+      final box = await _openBox(userPrefsBox);
+      return await box.get(userMoodKey, defaultValue: 2);
+    } catch (e) {
+      devPrint('Error getting user mood: $e');
+      return 2; // Default to neutral mood
+    }
   }
 
-  /// Get user's mood description
-  static String? getUserMoodDescription() {
-    final box = Hive.box(userPrefsBox);
-    return box.get(userMoodDescriptionKey);
+  /// Get user mood description
+  static Future<String> getUserMoodDescription() async {
+    try {
+      final box = await _openBox(userPrefsBox);
+      return await box.get(userMoodDescriptionKey, defaultValue: '');
+    } catch (e) {
+      devPrint('Error getting user mood description: $e');
+      return ''; // Default to empty string
+    }
   }
-  
-  /// Get the date of the last mood entry
-  static String? getLastMoodDate() {
-    final box = Hive.box(userPrefsBox);
-    return box.get(lastMoodDateKey);
+
+  /// Get last mood date
+  static Future<String?> getLastMoodDate() async {
+    try {
+      final box = await _openBox(userPrefsBox);
+      return await box.get(lastMoodDateKey);
+    } catch (e) {
+      devPrint('Error getting last mood date: $e');
+      return null;
+    }
+  }
+
+  // Get mood data for a specific date
+  static Future<Map<String, dynamic>?> getMoodForDate(DateTime date) async {
+    try {
+      final box = await _openBox(moodBoxName);
+      final dateKey = DateFormat('yyyy-MM-dd').format(date);
+      final moodData = await box.get('mood_$dateKey');
+      return moodData != null ? Map<String, dynamic>.from(moodData) : null;
+    } catch (e) {
+      devPrint('Error getting mood data: $e');
+      return null;
+    }
+  }
+
+  // Check if mood data exists for a specific date
+  static Future<bool> hasMoodForDate(DateTime date) async {
+    try {
+      final box = await _openBox(moodBoxName);
+      final dateKey = DateFormat('yyyy-MM-dd').format(date);
+      return box.containsKey('mood_$dateKey');
+    } catch (e) {
+      devPrint('Error checking mood data: $e');
+      return false;
+    }
   }
 }

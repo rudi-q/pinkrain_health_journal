@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pillow/core/util/helpers.dart';
 import 'package:pillow/features/journal/data/journal_log.dart';
 
 void main(){
@@ -22,10 +21,12 @@ void main(){
   });
 
   test('Check Log Details', (){
-    print(logs[0].treatment.medicine.name);
-    print(logs[0].isTaken);
+    // Note: Using print is acceptable in test files for debugging purposes
+    // These prints help verify the test data is correct
+    print('Medicine name: ${logs[0].treatment.medicine.name}');
+    print('Is taken initially: ${logs[0].isTaken}');
     firstLog.isTaken = true;
-    print(journalLog.getMedicationsForTheDay(date)[0].isTaken);
+    print('Is taken after update: ${journalLog.getMedicationsForTheDay(date)[0].isTaken}');
   });
 
 

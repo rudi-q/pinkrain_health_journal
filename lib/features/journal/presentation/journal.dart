@@ -3,14 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pillow/core/util/helpers.dart';
+import 'package:pillow/core/services/hive_service.dart';
+import 'package:pillow/features/splash/daily_mood_prompt.dart';
+import 'package:intl/intl.dart';
 import 'dart:async';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../../core/theme/icons.dart';
 import '../../../core/util/dateFormatConverters.dart';
 import '../../../core/widgets/appbar.dart';
 import '../../../core/widgets/bottom_navigation.dart';
-import '../../../core/services/hive_service.dart';
-import '../../../features/splash/daily_mood_prompt.dart';
 import '../data/journal_log.dart';
 import 'journal_notifier.dart';
 
@@ -24,21 +26,31 @@ class JournalScreen extends ConsumerStatefulWidget {
 }
 
 class JournalScreenState extends ConsumerState<JournalScreen> {
-  final PageController _pageController = PageController(initialPage: 1000);
-  final ScrollController _dateScrollController = ScrollController();
+  late final ScrollController _dateScrollController;
+  late final PageController _pageController;
   late DateTime selectedDate;
   late List<IntakeLog> medList = [];
 
   @override
   void initState() {
     super.initState();
-    //todo: Load saved journal entries from local storage or cloud
+    _dateScrollController = ScrollController();
+    _pageController = PageController(initialPage: 1000);
     
-    // Check for daily mood prompt with a gentle delay
-    Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        _checkDailyMood();
-      }
+    // Check for daily mood prompt with a delay
+    Future.delayed(Duration(seconds: 3), () {
+      _checkDailyMood();
+    });
+    
+    // Initialize the date selector
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      double targetScroll = MediaQuery.of(context).size.width / 5 * 2;
+      
+      _dateScrollController.animateTo(
+        targetScroll,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     });
   }
 
@@ -71,21 +83,40 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
   //todo: Implement journal entry saving functionality
   
   // Check if it's the first launch of the day and show mood prompt
-  void _checkDailyMood() {
-    if (HiveService.isFirstLaunchOfDay()) {
-      // Show the daily mood prompt with a gentle animation
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        barrierColor: Colors.black54,
-        builder: (BuildContext context) {
-          return DailyMoodPrompt(
-            onComplete: () {
-              Navigator.of(context).pop();
+  void _checkDailyMood() async {
+    try {
+      // Check if user has already logged mood for today
+      final today = DateTime.now();
+      final hasMoodToday = await HiveService.hasMoodForDate(today);
+      
+      // Only show the mood prompt if user hasn't logged mood today
+      if (!hasMoodToday) {
+        final isFirstLaunch = await HiveService.isFirstLaunchOfDay();
+        if (isFirstLaunch) {
+          // Wait a moment for the UI to settle
+          await Future.delayed(const Duration(milliseconds: 500));
+          
+          if (!mounted) return;
+          
+          // Show the daily mood prompt
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) {
+              return DailyMoodPrompt(
+                onComplete: () {
+                  Navigator.of(context).pop();
+                  HiveService.setMoodEntryForToday();
+                  setState(() {});
+                },
+              );
             },
           );
-        },
-      );
+        }
+      }
+    } catch (e) {
+      // Handle any errors
+      devPrint('Error checking daily mood: $e');
     }
   }
 
@@ -281,16 +312,378 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
       headingText = '${getWeekdayName(date.weekday)}, ${date.day}';
     }
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Text(
-        headingText,
-        style: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Text(
+            headingText,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
-      ),
+        _buildMoodCard(date),
+      ],
     );
+  }
+  
+  // Build the mood card for the selected date
+  Widget _buildMoodCard(DateTime date) {
+    // Check if the date is in the future
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selectedDate = DateTime(date.year, date.month, date.day);
+    
+    if (selectedDate.isAfter(today)) {
+      // Don't show mood card for future dates
+      return const SizedBox.shrink();
+    }
+    
+    // Use FutureBuilder to handle async data loading
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: _getMoodData(date),
+      builder: (context, snapshot) {
+        // Default values
+        bool hasMood = false;
+        Map<String, dynamic>? moodData;
+        
+        // Check if we have data
+        if (snapshot.connectionState == ConnectionState.done && 
+            snapshot.hasData && 
+            snapshot.data != null) {
+          hasMood = true;
+          moodData = snapshot.data;
+        }
+        
+        // Determine card background color based on mood
+        Color cardColor = Colors.grey[100]!;
+        if (hasMood && moodData != null) {
+          final mood = moodData['mood'] as int;
+          // Gradient from light pink to light yellow based on mood (sad to happy)
+          if (mood <= 1) {
+            cardColor = Colors.blue[50]!; // Sad mood
+          } else if (mood == 2) {
+            cardColor = Colors.grey[100]!; // Neutral mood
+          } else {
+            cardColor = Colors.pink[50]!; // Happy mood
+          }
+        }
+        
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            color: cardColor,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                if (hasMood && moodData != null) {
+                  // Show full mood description
+                  _showMoodDetails(date, moodData);
+                } else {
+                  // Show mood input dialog
+                  _showAddMoodDialog(date);
+                }
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            hasMood && moodData != null ? 'How I Felt' : 'How did you feel?',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                          if (hasMood && moodData != null) SizedBox(height: 8),
+                          if (hasMood && moodData != null)
+                            Text(
+                              moodData['description'] as String,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[700],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: hasMood && moodData != null ? Colors.white : Colors.grey[200],
+                        shape: BoxShape.circle,
+                        boxShadow: hasMood && moodData != null ? [
+                          BoxShadow(
+                            color: Colors.black.withAlpha(20),
+                            blurRadius: 2,
+                            spreadRadius: 1,
+                          )
+                        ] : null,
+                      ),
+                      child: hasMood && moodData != null 
+                        ? Center(
+                            child: Text(
+                              _getMoodEmoji(moodData['mood'] as int),
+                              style: TextStyle(fontSize: 24),
+                            ),
+                          )
+                        : Icon(
+                            Icons.add,
+                            color: Colors.grey[400],
+                            size: 24,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+  
+  // Helper method to get mood data asynchronously
+  Future<Map<String, dynamic>?> _getMoodData(DateTime date) async {
+    try {
+      final hasMood = await HiveService.hasMoodForDate(date);
+      if (hasMood) {
+        return await HiveService.getMoodForDate(date);
+      }
+      return null;
+    } catch (e) {
+      print('Error loading mood data: $e');
+      return null;
+    }
+  }
+  
+  // Show detailed mood information in a bottom sheet
+  void _showMoodDetails(DateTime date, Map<String, dynamic> moodData) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        final mood = moodData['mood'] as int;
+        final description = moodData['description'] as String;
+        
+        // Parse timestamp - handle both string and int formats
+        DateTime timestamp;
+        if (moodData['timestamp'] is int) {
+          timestamp = DateTime.fromMillisecondsSinceEpoch(moodData['timestamp'] as int);
+        } else {
+          timestamp = DateTime.parse(moodData['timestamp'] as String);
+        }
+        
+        final timeString = DateFormat('h:mm a').format(timestamp);
+        
+        return Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(20),
+                      blurRadius: 4,
+                      spreadRadius: 2,
+                    )
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    _getMoodEmoji(mood),
+                    style: TextStyle(fontSize: 60),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              Text(
+                _getMoodLabel(mood),
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[800],
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Recorded at $timeString',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+              SizedBox(height: 16),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[700],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey[300],
+                      foregroundColor: Colors.black87,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                    child: Text('Close'),
+                  ),
+                  SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _showEditMoodDialog(date, moodData);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.pink[100],
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                    child: Text('Edit'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+  
+  // Show dialog to add mood for a date
+  void _showAddMoodDialog(DateTime date) {
+    // Check if the date is in the future
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selectedDate = DateTime(date.year, date.month, date.day);
+    
+    if (selectedDate.isAfter(today)) {
+      // Show error message for future dates
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Cannot add mood entries for future dates'),
+          backgroundColor: Colors.red[400],
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+      return;
+    }
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return DailyMoodPrompt(
+          date: date, // Pass the selected date
+          onComplete: () {
+            Navigator.of(context).pop();
+            setState(() {
+              // Refresh the UI to show the new mood
+            });
+          },
+        );
+      },
+    );
+  }
+  
+  // Show dialog to edit mood for a date
+  void _showEditMoodDialog(DateTime date, Map<String, dynamic> moodData) {
+    final int initialMood = moodData['mood'] as int;
+    final String initialDescription = moodData['description'] as String;
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return EditMoodDialog(
+          initialMood: initialMood,
+          initialDescription: initialDescription,
+          date: date,
+          onComplete: () {
+            Navigator.of(context).pop();
+            setState(() {
+              // Refresh the UI to show the updated mood
+            });
+          },
+        );
+      },
+    );
+  }
+  
+  // Get mood label based on mood index
+  String _getMoodLabel(int mood) {
+    switch (mood) {
+      case 0:
+        return 'Very Sad';
+      case 1:
+        return 'Sad';
+      case 2:
+        return 'Neutral';
+      case 3:
+        return 'Happy';
+      case 4:
+        return 'Very Happy';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  // Get mood emoji based on mood index
+  String _getMoodEmoji(int mood) {
+    switch (mood) {
+      case 0:
+        return '😢'; // Very Sad
+      case 1:
+        return '😔'; // Sad
+      case 2:
+        return '😐'; // Neutral
+      case 3:
+        return '😊'; // Happy
+      case 4:
+        return '😁'; // Very Happy
+      default:
+        return '😐'; // Default to neutral
+    }
   }
 
   Column _buildMorningSection() {
@@ -338,11 +731,22 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
   }
 
   Padding _buildSectionHeader(String title, IconData icon) {
+    // Get emoji based on icon
+    String emoji = '';
+    if (icon == Icons.wb_sunny_outlined) {
+      emoji = '☀️'; // Sun emoji for morning
+    } else if (icon == Icons.nights_stay_outlined) {
+      emoji = '🌙'; // Moon emoji for evening
+    }
+    
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Row(
         children: [
-          Icon(icon, color: Colors.grey[600], size: 20),
+          Text(
+            emoji,
+            style: TextStyle(fontSize: 20),
+          ),
           SizedBox(width: 10),
           Text(
             title,
@@ -689,5 +1093,199 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
     await Future.delayed(Duration(seconds: 1));
     final selectedDateNotifier = ref.read(selectedDateProvider.notifier);
     selectedDateNotifier.setDate(DateTime.now(), ref);
+  }
+}
+
+// Dialog to edit mood entries
+class EditMoodDialog extends StatefulWidget {
+  final int initialMood;
+  final String initialDescription;
+  final DateTime date;
+  final VoidCallback onComplete;
+
+  const EditMoodDialog({
+    Key? key,
+    required this.initialMood,
+    required this.initialDescription,
+    required this.date,
+    required this.onComplete,
+  }) : super(key: key);
+
+  @override
+  _EditMoodDialogState createState() => _EditMoodDialogState();
+}
+
+class _EditMoodDialogState extends State<EditMoodDialog> {
+  late int selectedMood;
+  late TextEditingController descriptionController;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedMood = widget.initialMood;
+    descriptionController = TextEditingController(text: widget.initialDescription);
+  }
+
+  @override
+  void dispose() {
+    descriptionController.dispose();
+    super.dispose();
+  }
+
+  String _getMoodEmoji(int mood) {
+    switch (mood) {
+      case 0:
+        return '😢'; // Very Sad
+      case 1:
+        return '😔'; // Sad
+      case 2:
+        return '😐'; // Neutral
+      case 3:
+        return '😊'; // Happy
+      case 4:
+        return '😁'; // Very Happy
+      default:
+        return '😐'; // Default to neutral
+    }
+  }
+
+  String _getMoodLabel(int mood) {
+    switch (mood) {
+      case 0:
+        return 'Very Sad';
+      case 1:
+        return 'Sad';
+      case 2:
+        return 'Neutral';
+      case 3:
+        return 'Happy';
+      case 4:
+        return 'Very Happy';
+      default:
+        return 'Neutral';
+    }
+  }
+
+  void _saveMoodData() async {
+    final dateKey = widget.date.toIso8601String().split('T')[0];
+    
+    // Create updated mood data
+    final moodData = {
+      'mood': selectedMood,
+      'description': descriptionController.text,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    };
+    
+    // Save to Hive
+    try {
+      // Check if box is open, if not open it
+      if (!Hive.isBoxOpen(HiveService.moodBoxName)) {
+        await Hive.openBox(HiveService.moodBoxName);
+      }
+      
+      final box = Hive.box(HiveService.moodBoxName);
+      await box.put(dateKey, moodData);
+      
+      widget.onComplete();
+    } catch (e) {
+      print('Error saving mood data: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Edit Your Mood',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: List.generate(
+                5,
+                (index) => GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      selectedMood = index;
+                    });
+                  },
+                  child: Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: selectedMood == index ? Colors.grey[300] : Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: selectedMood == index ? Colors.grey[400]! : Colors.grey[300]!,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        _getMoodEmoji(index),
+                        style: TextStyle(fontSize: 24),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 10),
+            Text(
+              _getMoodLabel(selectedMood),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            SizedBox(height: 20),
+            TextField(
+              controller: descriptionController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Describe how you feel...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                filled: true,
+                fillColor: Colors.grey[100],
+              ),
+            ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('Cancel'),
+                ),
+                SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: _saveMoodData,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.pink[100],
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text('Save'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

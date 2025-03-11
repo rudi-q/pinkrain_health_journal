@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:pillow/core/util/dateFormatConverters.dart';
+import 'package:intl/intl.dart';
 
 import '../../features/journal/data/journal_log.dart';
 
@@ -33,9 +34,17 @@ extension DateTimeExtensions on DateTime {
     return DateTime(year, month, day);
   }
   String getNameOf(String selectedDateOption) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final thisDate = DateTime(year, month, day);
+    
     switch(selectedDateOption) {
       case 'day':
-        return 'Today';
+        if (thisDate.isAtSameMomentAs(today)) {
+          return 'Today';
+        } else {
+          return DateFormat('MMMM d, yyyy').format(this);
+        }
       case 'month':
         return getMonthName(month);
       case 'year':
@@ -54,5 +63,3 @@ extension ListExtensions on List<IntakeLog> {
     return where((t) => t.treatment.treatmentPlan.timeOfDay.hour <= 12).toList();
   }
 }
-
-

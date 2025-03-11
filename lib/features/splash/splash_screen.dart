@@ -9,27 +9,30 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacityAnimation;
   late Animation<double> _scaleAnimation;
+  late Animation<double> _taglineOpacityAnimation;
+  late Animation<double> _taglineSlideAnimation;
 
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     );
-    
+
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
       ),
     );
-    
+
     _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -37,8 +40,23 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       ),
     );
     
-    _controller.forward();
+    // Add animations for the tagline
+    _taglineOpacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.5, 0.8, curve: Curves.easeIn),
+      ),
+    );
     
+    _taglineSlideAnimation = Tween<double>(begin: 20.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.5, 0.8, curve: Curves.easeOut),
+      ),
+    );
+
+    _controller.forward();
+
     // Initialize Hive and check if it's the first launch of the day
     _initializeApp();
   }
@@ -92,14 +110,41 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       ),
                     ),
                     const SizedBox(height: 8),
-                    // Tagline
-                    const Text(
-                      'Sleep Better. Live Better.',
-                      style: TextStyle(
-                        fontFamily: 'Outfit',
-                        fontSize: 16,
-                        color: Colors.black54,
-                      ),
+                    // Tagline with enhanced animation
+                    AnimatedBuilder(
+                      animation: _controller,
+                      builder: (context, child) {
+                        return Transform.translate(
+                          offset: Offset(0, _taglineSlideAnimation.value),
+                          child: Opacity(
+                            opacity: _taglineOpacityAnimation.value,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).primaryColor.withAlpha(40),
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withAlpha(15),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Text(
+                                "It's time to feel better 🙂",
+                                style: TextStyle(
+                                  fontFamily: 'Outfit',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF4A4A4A),
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 48),
                     // Loading indicator

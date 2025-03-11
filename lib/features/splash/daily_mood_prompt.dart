@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:pillow/core/services/hive_service.dart';
+import 'package:pillow/core/util/helpers.dart';
 import 'package:pillow/features/wellness/presentation/components/mood_painter.dart';
+import 'package:intl/intl.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class DailyMoodPrompt extends StatefulWidget {
   final Function onComplete;
+  final DateTime? date; // Optional date parameter, defaults to today if not provided
 
   const DailyMoodPrompt({
-    super.key, 
+    super.key,
     required this.onComplete,
+    this.date,
   });
 
   @override
@@ -17,17 +22,57 @@ class DailyMoodPrompt extends StatefulWidget {
 class _DailyMoodPromptState extends State<DailyMoodPrompt> {
   int selectedMood = 2; // Default to neutral mood
   final TextEditingController _feelingsController = TextEditingController();
-  
+
   @override
   void dispose() {
     _feelingsController.dispose();
     super.dispose();
   }
 
-  void _saveMoodAndContinue() async {
-    await HiveService.saveUserMood(selectedMood, _feelingsController.text);
-    if (mounted) {
-      widget.onComplete();
+  // Save the mood data to Hive
+  void _saveMoodData() async {
+    if (selectedMood != -1) {
+      try {
+        // Use the provided date or default to today
+        final date = widget.date ?? DateTime.now();
+        final dateKey = DateFormat('yyyy-MM-dd').format(date);
+
+        // Make sure the box is open before saving
+        if (!Hive.isBoxOpen(HiveService.moodBoxName)) {
+          await Hive.openBox(HiveService.moodBoxName);
+        }
+
+        final box = Hive.box(HiveService.moodBoxName);
+
+        // Save the mood data
+        await box.put('mood_$dateKey', {
+          'mood': selectedMood,
+          'description': _feelingsController.text,
+          'timestamp': DateTime.now().toIso8601String(), // Always use current timestamp for when it was recorded
+        });
+
+        // Save the user's current mood only if we're recording for today
+        final today = DateTime.now();
+        final isToday = date.year == today.year && date.month == today.month && date.day == today.day;
+        if (isToday) {
+          await HiveService.saveUserMood(selectedMood, _feelingsController.text);
+        }
+
+        // Call the onComplete callback
+        widget.onComplete();
+      } catch (e) {
+        devPrint('Error saving mood data: $e');
+        // Still call onComplete even if there's an error
+        widget.onComplete();
+      }
+    } else {
+      // Show error if no mood is selected
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please select a mood'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -71,7 +116,7 @@ class _DailyMoodPromptState extends State<DailyMoodPrompt> {
             ),
           ),
           const SizedBox(height: 15),
-          
+
           // Subtitle
           Text(
             'We\'d love to know your mood today!',
@@ -82,15 +127,15 @@ class _DailyMoodPromptState extends State<DailyMoodPrompt> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 25),
-          
+
           // Mood selection
-          Container(
-            height: 110, 
+          SizedBox(
+            height: 110,
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: List.generate(5, (index) {
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12.0), 
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
                   child: GestureDetector(
                     onTap: () {
                       setState(() {
@@ -100,32 +145,40 @@ class _DailyMoodPromptState extends State<DailyMoodPrompt> {
                     child: Column(
                       children: [
                         Container(
-                          width: 60, 
-                          height: 60, 
+                          width: 60,
+                          height: 60,
                           decoration: BoxDecoration(
-                            color: selectedMood == index ? Colors.pink[100] : Colors.grey[100],
+                            color: selectedMood == index
+                                ? Colors.pink[100]
+                                : Colors.grey[100],
                             shape: BoxShape.circle,
-                            boxShadow: selectedMood == index ? [
-                              BoxShadow(
-                                color: Colors.pink.withOpacity(0.3),
-                                spreadRadius: 1,
-                                blurRadius: 3,
-                                offset: Offset(0, 1),
-                              )
-                            ] : null,
+                            boxShadow: selectedMood == index
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.pink.withAlpha(76),
+                                      spreadRadius: 1,
+                                      blurRadius: 3,
+                                      offset: const Offset(0, 1),
+                                    )
+                                  ]
+                                : null,
                           ),
                           child: CustomPaint(
                             painter: MoodPainter(index, selectedMood == index),
-                            size: const Size(50, 50), 
+                            size: const Size(50, 50),
                           ),
                         ),
-                        const SizedBox(height: 10), 
+                        const SizedBox(height: 10),
                         Text(
                           _getMoodLabel(index),
                           style: TextStyle(
-                            fontSize: 14, 
-                            fontWeight: selectedMood == index ? FontWeight.bold : FontWeight.normal,
-                            color: selectedMood == index ? Colors.pink[400] : Colors.grey[600],
+                            fontSize: 14,
+                            fontWeight: selectedMood == index
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color: selectedMood == index
+                                ? Colors.pink[400]
+                                : Colors.grey[600],
                           ),
                         ),
                       ],
@@ -136,7 +189,7 @@ class _DailyMoodPromptState extends State<DailyMoodPrompt> {
             ),
           ),
           const SizedBox(height: 25),
-          
+
           // Text field for feelings
           TextField(
             controller: _feelingsController,
@@ -154,10 +207,10 @@ class _DailyMoodPromptState extends State<DailyMoodPrompt> {
             ),
           ),
           const SizedBox(height: 25),
-          
+
           // Submit button
           ElevatedButton(
-            onPressed: _saveMoodAndContinue,
+            onPressed: _saveMoodData,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.pink[100],
               foregroundColor: Colors.white,
@@ -178,7 +231,7 @@ class _DailyMoodPromptState extends State<DailyMoodPrompt> {
       ),
     );
   }
-  
+
   String _getMoodLabel(int mood) {
     switch (mood) {
       case 0:

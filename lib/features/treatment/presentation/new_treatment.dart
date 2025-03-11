@@ -34,7 +34,6 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -314,7 +313,7 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
       child: ElevatedButton(
         onPressed: () {
           if (_validateInput()) {
-            Treatment newTreatment = Treatment.newTreatment(
+            final treatment = Treatment.newTreatment(
               name: nameController.text,
               type: selectedTreatmentType,
               color: selectedColor,
@@ -324,7 +323,8 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
               comment: commentController.text.isNotEmpty ? commentController.text : null,
             );
             
-            // Navigate to the ScheduleScreen using GoRouter
+            'Created new treatment: ${treatment.medicine.name}'.log();
+            
             try {
               navigatorKey.currentState?.push(
                   MaterialPageRoute(builder: (context) => ScheduleScreen())

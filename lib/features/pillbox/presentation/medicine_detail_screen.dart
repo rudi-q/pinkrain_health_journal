@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pillow/core/models/medicine_model.dart';
 import 'package:pillow/features/treatment/data/treatment.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/icons.dart';
 import '../../treatment/domain/treatment_manager.dart';
@@ -74,11 +75,11 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        medicinePlan.mealOption ?? 'Before meal',
+                        medicinePlan.mealOption,
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       Text(
-                        medicinePlan.instructions ?? 'Take at least 30 minutes before food.',
+                        medicinePlan.instructions,
                         style: TextStyle(color: Colors.grey),
                       ),
                     ],
@@ -132,7 +133,9 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
                     SizedBox(height: 10),
                     GestureDetector(
                       onTap: () {
-                        //TODO: Implement Information Source link
+                        // Launch Wikipedia page for the medicine
+                        final url = Uri.parse('https://en.wikipedia.org/wiki/${medicine.name}');
+                        launchUrl(url, mode: LaunchMode.externalApplication);
                       },
                       child: Text(
                         'Wikipedia >',
