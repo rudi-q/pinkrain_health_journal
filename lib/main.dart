@@ -5,9 +5,11 @@ import 'core/navigation/router.dart';
 
 Future<void> main() async {
 
+  //todo: Implement proper app initialization with error handling
 
   WidgetsFlutterBinding.ensureInitialized();
 
+  //todo: Implement analytics and crash reporting
 
   //appVersion = await getAppVersion();
 
@@ -22,6 +24,7 @@ class MyApp extends ConsumerWidget{
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    //todo: Implement theme provider to allow user customization
     //final title = ref.watch(titleProvider);
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,

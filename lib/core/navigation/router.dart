@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pillow/features/journal/presentation/journal.dart';
 import 'package:pillow/features/pillbox/presentation/pillbox_screen.dart';
+import 'package:pillow/features/splash/splash_screen.dart'; 
 import 'package:pillow/features/wellness/presentation/wellness_screen.dart';
 
 import '../../features/pillbox/presentation/medicine_detail_screen.dart';
@@ -16,7 +17,7 @@ import '../models/medicine_model.dart';
 final List<GoRoute> routes = [
   GoRoute(
       path: '/',
-      builder: (context, state) => JournalScreen()/*SplashScreen()*/
+      builder: (context, state) => SplashScreen() 
   ),
   GoRoute(
       path: '/journal',

@@ -9,6 +9,7 @@ import '../../../core/theme/icons.dart';
 import '../../../core/widgets/appbar.dart';
 import '../../../core/widgets/bottom_navigation.dart';
 
+//todo: Implement medication reminder notifications
 
 class PillboxScreen extends ConsumerWidget {
   const PillboxScreen({super.key});
@@ -47,6 +48,7 @@ class PillboxScreen extends ConsumerWidget {
           child: Column(
             children: [
               // Search Bar
+              //todo: Implement search functionality
               TextField(
                 cursorColor: Colors.grey,
                 decoration: InputDecoration(
@@ -119,6 +121,7 @@ class PillboxScreen extends ConsumerWidget {
       );
     }).toList();
   }
+//todo: Improve medication form with more detailed information and validation
 void _showAddMedicineDialog(BuildContext context, WidgetRef ref) {
   final nameController = TextEditingController();
   final typeController = TextEditingController();

@@ -8,6 +8,8 @@ import '../../../core/widgets/bottom_navigation.dart';
 import 'components/mood_painter.dart';
 import 'components/scatter_plot_painter.dart';
 
+//todo: Implement wellness data persistence and analytics
+
 class WellnessTrackerScreen extends StatefulWidget {
   const WellnessTrackerScreen({super.key});
 
@@ -77,6 +79,7 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
                 const SizedBox(height: 30),
 
                 // Mood tracker
+                //todo: Implement mood tracking history and trends analysis
                 BlurText(
                   text:
                   'How have you been feeling'
@@ -117,6 +120,7 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
                 const SizedBox(height: 30),
 
                 // Medication adherence
+                //todo: Connect with actual medication data from pillbox
                 const Text(
                   'Medication adherence',
                   style: TextStyle(

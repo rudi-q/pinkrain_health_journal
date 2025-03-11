@@ -11,6 +11,8 @@ import '../../../core/widgets/bottom_navigation.dart';
 import '../data/journal_log.dart';
 import 'journal_notifier.dart';
 
+//todo: Implement proper journal entry model with cloud synchronization
+
 class JournalScreen extends ConsumerStatefulWidget {
   const JournalScreen({super.key});
 
@@ -27,6 +29,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
   @override
   void initState() {
     super.initState();
+    //todo: Load saved journal entries from local storage or cloud
   }
 
   @override
@@ -54,6 +57,8 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
       });
     });
   }
+
+  //todo: Implement journal entry saving functionality
 
   @override
   Widget build(BuildContext context) {
@@ -97,6 +102,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
   }
 
   Widget _buildDateSelector() {
+    //todo: Improve date selector with better UI and month view option
     return SizedBox(
       height: 90,
       width: MediaQuery.of(context).size.width,
@@ -493,162 +499,161 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
       ),
     );
   }
-void _showMedicationDetails(IntakeLog medicineLog) {
-  final medication = medicineLog.treatment;
-  final String name = medication.medicine.name;
-  final String dosage = '${medication.medicine.specs.dosage} ${medication.medicine.specs.unit}';
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (BuildContext context) {
-      return Container(
-        padding: EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '$name • $dosage',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                IconButton(
-                  icon: Icon(Icons.edit, color: Colors.grey),
+
+  void _showMedicationDetails(IntakeLog medicineLog) {
+    final medication = medicineLog.treatment;
+    final String name = medication.medicine.name;
+    final String dosage = '${medication.medicine.specs.dosage} ${medication.medicine.specs.unit}';
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return Container(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '$name • $dosage',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.edit, color: Colors.grey),
+                    onPressed: () {
+                      // Handle edit action
+                    },
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+              _buildInfoItem('Blue pill'),
+              _buildInfoItem('Take at least 30 minutes before breakfast.'),
+              _buildInfoItem('Try to take it at the same time each day.'),
+              SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Handle skip action
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.red, backgroundColor: Colors.grey[200],
+                      ),
+                      child: const Text('Skip for today'),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showPillTakenDialog(context);
+                        setState(() {
+
+                          devPrint(medicineLog.isTaken);
+                          medicineLog.isTaken = true;
+                          devPrint(medicineLog.isTaken);
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white, backgroundColor: Colors.pink[100],
+                      ),
+                      child: const Text('Take pill'),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 10),
+              Center(
+                child: TextButton(
+                  child: Text('Postpone', style: TextStyle(color: Colors.grey)),
                   onPressed: () {
-                    // Handle edit action
+                    // Handle postpone action
+                    Navigator.pop(context);
                   },
                 ),
-              ],
-            ),
-            SizedBox(height: 20),
-            _buildInfoItem('Blue pill'),
-            _buildInfoItem('Take at least 30 minutes before breakfast.'),
-            _buildInfoItem('Try to take it at the same time each day.'),
-            SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Handle skip action
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.red, backgroundColor: Colors.grey[200],
-                    ),
-                    child: const Text('Skip for today'),
-                  ),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _showPillTakenDialog(context);
-                      setState(() {
-
-                        devPrint(medicineLog.isTaken);
-                        medicineLog.isTaken = true;
-                        devPrint(medicineLog.isTaken);
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white, backgroundColor: Colors.pink[100],
-                    ),
-                    child: const Text('Take pill'),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 10),
-            Center(
-              child: TextButton(
-                child: Text('Postpone', style: TextStyle(color: Colors.grey)),
-                onPressed: () {
-                  // Handle postpone action
-                  Navigator.pop(context);
-                },
               ),
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
+            ],
+          ),
+        );
+      },
+    );
+  }
 
-
-
-void _showPillTakenDialog(BuildContext context) {
-  showModalBottomSheet(
-    context: context,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (BuildContext context) {
-      String? pillLogError;
-      return Container(
-        padding: EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.check_circle,
-              color: Colors.green,
-              size: 60,
-            ),
-            SizedBox(height: 20),
-            Text(
-              pillLogError ?? 'Pill taken!',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+  void _showPillTakenDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        String? pillLogError;
+        return Container(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.check_circle,
+                color: Colors.green,
+                size: 60,
               ),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.pink[100],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                minimumSize: Size(double.infinity, 50),
-              ),
-              child: Text(
-                'Close',
+              SizedBox(height: 20),
+              Text(
+                pillLogError ?? 'Pill taken!',
                 style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.pink[100],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  minimumSize: Size(double.infinity, 50),
+                ),
+                child: Text(
+                  'Close',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
-Widget _buildInfoItem(String text) {
-  return Padding(
-    padding: EdgeInsets.symmetric(vertical: 5),
-    child: Row(
-      children: [
-        Icon(Icons.check, color: Colors.green, size: 20),
-        SizedBox(width: 10),
-        Expanded(child: Text(text)),
-      ],
-    ),
-  );
-}
+  Widget _buildInfoItem(String text) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          Icon(Icons.check, color: Colors.green, size: 20),
+          SizedBox(width: 10),
+          Expanded(child: Text(text)),
+        ],
+      ),
+    );
+  }
 
   Future<void> _refreshJournal() async {
     // Simulate a data fetch operation
@@ -657,5 +662,3 @@ Widget _buildInfoItem(String text) {
     selectedDateNotifier.setDate(DateTime.now(), ref);
   }
 }
-
-
