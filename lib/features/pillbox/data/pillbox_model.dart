@@ -38,7 +38,7 @@ class PillBoxManager{
 
     final med1 = Medicine(
       name: 'Paracetamol',
-      type: 'ADHD medication',
+      type: 'Pain Killer',
       color: 'White',
     );
 

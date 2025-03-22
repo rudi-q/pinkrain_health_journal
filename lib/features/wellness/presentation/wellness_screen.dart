@@ -91,7 +91,7 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
       }
     });
     // Log the navigation for debugging
-    "Navigated to previous ${selectedDateOption}: ${formattedSelectedDate}".log();
+    "Navigated to previous $selectedDateOption: $formattedSelectedDate".log();
   }
   
   // Navigate to next period based on current view
@@ -117,7 +117,7 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
       setState(() {
         selectedDate = nextDate;
       });
-      "Navigated to next ${selectedDateOption}: ${formattedSelectedDate}".log();
+      "Navigated to next $selectedDateOption: $formattedSelectedDate".log();
     } else {
       "Cannot navigate to future dates".log();
     }
@@ -128,7 +128,7 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
     setState(() {
       selectedDate = DateTime.now();
     });
-    "Navigated to today: ${formattedSelectedDate}".log();
+    "Navigated to today: $formattedSelectedDate".log();
   }
 
   @override
@@ -297,46 +297,7 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
                   ),
                 ),
                 const SizedBox(height: 15),
-                Row(
-                  children: [
-                    CircularPercentIndicator(
-                      radius: 40,
-                      lineWidth: 8,
-                      percent: 0.85,
-                      center: const Text(
-                        '85%',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
-                      ),
-                      progressColor: Colors.purple[100],
-                      backgroundColor: Colors.grey[200]!,
-                    ),
-                    const SizedBox(width: 20),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "You've taken 85% of your\nmedications this month",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          "That's better than last month\n(82%)",
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-
+                _buildMedicationAdherenceCard(),
                 const SizedBox(height: 30),
 
                 // Missed dose patterns
@@ -618,7 +579,7 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
           setState(() {
             selectedDate = pickedDate;
           });
-          "Selected date: ${formattedSelectedDate}".log();
+          "Selected date: $formattedSelectedDate".log();
         }
         break;
         
@@ -668,7 +629,7 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
                       );
                     });
                     Navigator.pop(context);
-                    "Selected month: ${formattedSelectedDate}".log();
+                    "Selected month: $formattedSelectedDate".log();
                   },
                   child: Container(
                     margin: const EdgeInsets.all(4),
@@ -742,7 +703,7 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
                       );
                     });
                     Navigator.pop(context);
-                    "Selected year: ${formattedSelectedDate}".log();
+                    "Selected year: $formattedSelectedDate".log();
                   },
                 );
               },
@@ -933,6 +894,48 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
               style: TextStyle(
                 color: Colors.grey[600],
                 fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMedicationAdherenceCard() {
+    return Row(
+      children: [
+        CircularPercentIndicator(
+          radius: 40,
+          lineWidth: 8,
+          percent: 0.85,
+          center: const Text(
+            '85%',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
+          ),
+          progressColor: Colors.purple[100],
+          backgroundColor: Colors.grey[200]!,
+        ),
+        const SizedBox(width: 20),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "You've taken 85% of your\nmedications this month",
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              "That's better than last month\n(82%)",
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 12,
               ),
             ),
           ],
