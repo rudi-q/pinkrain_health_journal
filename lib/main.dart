@@ -1,23 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pillow/tf_lite_symtom_pred.dart';
 
 import 'core/navigation/router.dart';
 import 'core/services/hive_service.dart';
+import 'core/util/helpers.dart';
+
+/// Runs a sample prediction with the symptom predictor.
+///
+/// This function creates an instance of [SymptomPredictor], loads the model,
+/// and then runs a prediction on the string "I can't sleep at night". The
+/// result of the prediction is then printed to the console.
+///
+/// This is only intended as a sample and does not do anything in a real
+/// application.
+Future<void> symptomPrediction() async {
+  final predictor = SymptomPredictor();
+  await predictor.loadModel();
+
+  final symptoms = await predictor.predictSymptoms("I can't sleep at night");
+  devPrint(symptoms.isEmpty);
+}
 
 Future<void> main() async {
 
-  //todo: Implement proper app initialization with error handling
-
   WidgetsFlutterBinding.ensureInitialized();
 
-  //todo: Implement analytics and crash reporting
-
-  // Initialize Hive
   await HiveService.init();
 
-  //appVersion = await getAppVersion();
-
-  //await appInit(args);
+  //await symptomPrediction();
 
   runApp(ProviderScope(child: const MyApp()));
 
@@ -28,11 +39,8 @@ class MyApp extends ConsumerWidget{
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    //todo: Implement theme provider to allow user customization
-    //final title = ref.watch(titleProvider);
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      //title: title,
       routerConfig: router,
       themeMode: ThemeMode.light, // This will use the device's theme settings
       theme: ThemeData(
@@ -44,12 +52,6 @@ class MyApp extends ConsumerWidget{
           bodyColor: Colors.black,
           displayColor: Colors.black,
         ),
-      /*  scaffoldBackgroundColor: Colors.white,
-        pageTransitionsTheme: const PageTransitionsTheme(
-          builders: <TargetPlatform, PageTransitionsBuilder>{
-            TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
-          },
-        ),*/
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
@@ -60,12 +62,6 @@ class MyApp extends ConsumerWidget{
           bodyColor: Colors.white,
           displayColor: Colors.white,
         ),
-        /*scaffoldBackgroundColor: Colors.grey[900],
-        pageTransitionsTheme: const PageTransitionsTheme(
-          builders: <TargetPlatform, PageTransitionsBuilder>{
-            TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
-          },
-        ),*/
       ),
     );
   }

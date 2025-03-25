@@ -35,6 +35,7 @@ dependencies:
   hive_flutter: ^1.1.0
   path_provider: ^2.1.2
   fl_chart: ^0.65.0
+  tflite_flutter: ^0.11.0
 
 dev_dependencies:
   flutter_test:
@@ -56,6 +57,10 @@ flutter:
 
   assets:
     - assets/icons/
+    - assets/models/
+    - assets/models/symptom_prediction/model.tflite
+    - assets/models/symptom_prediction/tokenizer.pkl
+    - assets/models/symptom_prediction/mlb.pkl
 
   fonts:
     - family: Outfit
