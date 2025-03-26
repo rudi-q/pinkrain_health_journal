@@ -59,8 +59,8 @@ flutter:
     - assets/icons/
     - assets/models/
     - assets/models/symptom_prediction/model.tflite
-    - assets/models/symptom_prediction/tokenizer.pkl
-    - assets/models/symptom_prediction/mlb.pkl
+    - assets/models/symptom_prediction/tokenizer.json
+    - assets/models/symptom_prediction/mlb.json
 
   fonts:
     - family: Outfit

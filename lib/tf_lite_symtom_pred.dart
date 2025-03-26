@@ -13,22 +13,32 @@ class SymptomPredictor {
 
     const String symptomModelsDir ="assets/models/symptom_prediction";
 
-    // Verify model exists
-    var modelExists = await rootBundle.loadString('$symptomModelsDir/model.tflite').then((value) => true).catchError((_) => false);
-    if (!modelExists) {
-      //throw Exception('Model does not exist at $symptomModelsDir/model.tflite');
+    try {
+      // Load model as a byte buffer to verify it’s accessible
+      final modelData = await rootBundle.load('$symptomModelsDir/model.tflite');
+      print("Model size: ${modelData.lengthInBytes} bytes");
+
+      // Create interpreter from buffer instead of asset directly
+      interpreter = tfl.Interpreter.fromBuffer(modelData.buffer.asUint8List());
+      print("Interpreter initialized successfully.");
+    } catch (e) {
+      throw Exception('Failed to load or initialize model: $e');
     }
 
-    // Load TFLite model
-    interpreter = await tfl.Interpreter.fromAsset('$symptomModelsDir/model.tflite');
+    var inputTensor = interpreter.getInputTensor(0);
+    var outputTensor = interpreter.getOutputTensor(0);
+    devPrint("Input shape: ${inputTensor.shape}");
+    devPrint("Output shape: ${outputTensor.shape}");
 
-    // Load tokenizer word index
-    String jsonString = await rootBundle.loadString('$symptomModelsDir/tokenizer.pkl');
-    wordIndex = Map<String, int>.from(json.decode(jsonString));
+    // Load tokenizer as JSON
+    String tokenizerString = await rootBundle.loadString('$symptomModelsDir/tokenizer.json');
+    wordIndex = Map<String, int>.from(json.decode(tokenizerString));
+    print("Tokenizer loaded with ${wordIndex.length} words.");
 
-    // Load mlb classes
-    jsonString = await rootBundle.loadString('$symptomModelsDir/mlb.pkl');
-    mlbClasses = List<String>.from(json.decode(jsonString));
+    // Load MLB classes as JSON
+    String mlbString = await rootBundle.loadString('$symptomModelsDir/mlb.json');
+    mlbClasses = List<String>.from(json.decode(mlbString));
+    print("MLB classes loaded with ${mlbClasses.length} classes.");
   }
 
   List<int> tokenize(String text) {

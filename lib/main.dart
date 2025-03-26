@@ -15,11 +15,17 @@ import 'core/util/helpers.dart';
 /// This is only intended as a sample and does not do anything in a real
 /// application.
 Future<void> symptomPrediction() async {
-  final predictor = SymptomPredictor();
-  await predictor.loadModel();
-
-  final symptoms = await predictor.predictSymptoms("I can't sleep at night");
-  devPrint(symptoms.isEmpty);
+  try {
+    final predictor = SymptomPredictor();
+    print("Loading model...");
+    await predictor.loadModel();
+    print("Model loaded successfully.");
+    final symptoms = await predictor.predictSymptoms("I can't sleep at night");
+    print("Predicted symptoms: $symptoms");
+  } catch (e, stackTrace) {
+    print("Error in symptom prediction: $e");
+    print("Stack trace: $stackTrace");
+  }
 }
 
 Future<void> main() async {
@@ -28,7 +34,7 @@ Future<void> main() async {
 
   await HiveService.init();
 
-  //await symptomPrediction();
+  await symptomPrediction();
 
   runApp(ProviderScope(child: const MyApp()));
 
