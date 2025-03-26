@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:tflite_flutter/tflite_flutter.dart' as tfl;
 
-import 'core/util/helpers.dart';
+import '../../../core/util/helpers.dart';
 
 class SymptomPredictor {
   late Map<String, int> wordIndex;
@@ -16,11 +16,11 @@ class SymptomPredictor {
     try {
       // Load model as a byte buffer to verify it’s accessible
       final modelData = await rootBundle.load('$symptomModelsDir/model.tflite');
-      print("Model size: ${modelData.lengthInBytes} bytes");
+      devPrint("Model size: ${modelData.lengthInBytes} bytes");
 
       // Create interpreter from buffer instead of asset directly
       interpreter = tfl.Interpreter.fromBuffer(modelData.buffer.asUint8List());
-      print("Interpreter initialized successfully.");
+      devPrint("Interpreter initialized successfully.");
     } catch (e) {
       throw Exception('Failed to load or initialize model: $e');
     }
@@ -33,12 +33,12 @@ class SymptomPredictor {
     // Load tokenizer as JSON
     String tokenizerString = await rootBundle.loadString('$symptomModelsDir/tokenizer.json');
     wordIndex = Map<String, int>.from(json.decode(tokenizerString));
-    print("Tokenizer loaded with ${wordIndex.length} words.");
+    devPrint("Tokenizer loaded with ${wordIndex.length} words.");
 
     // Load MLB classes as JSON
     String mlbString = await rootBundle.loadString('$symptomModelsDir/mlb.json');
     mlbClasses = List<String>.from(json.decode(mlbString));
-    print("MLB classes loaded with ${mlbClasses.length} classes.");
+    devPrint("MLB classes loaded with ${mlbClasses.length} classes.");
   }
 
   List<int> tokenize(String text) {
@@ -76,12 +76,18 @@ class SymptomPredictor {
   }
 }
 
-void main() async {
-  //WidgetsFlutterBinding.ensureInitialized();
-
-  final predictor = SymptomPredictor();
-  await predictor.loadModel();
-
-  final symptoms = await predictor.predictSymptoms("I can't sleep at night");
-  print(symptoms.isEmpty);
+Future<List<String>> symptomPrediction(String text) async {
+  try {
+    final predictor = SymptomPredictor();
+    devPrint("Loading model...");
+    await predictor.loadModel();
+    devPrint("Model loaded successfully.");
+    final symptoms = await predictor.predictSymptoms(text);
+    devPrint("Predicted symptoms: $symptoms");
+    return symptoms;
+  } catch (e, stackTrace) {
+    devPrint("Error in symptom prediction: $e");
+    devPrint("Stack trace: $stackTrace");
+    return [];
+  }
 }

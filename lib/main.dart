@@ -1,32 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pillow/tf_lite_symtom_pred.dart';
 
 import 'core/navigation/router.dart';
 import 'core/services/hive_service.dart';
-import 'core/util/helpers.dart';
-
-/// Runs a sample prediction with the symptom predictor.
-///
-/// This function creates an instance of [SymptomPredictor], loads the model,
-/// and then runs a prediction on the string "I can't sleep at night". The
-/// result of the prediction is then printed to the console.
-///
-/// This is only intended as a sample and does not do anything in a real
-/// application.
-Future<void> symptomPrediction() async {
-  try {
-    final predictor = SymptomPredictor();
-    print("Loading model...");
-    await predictor.loadModel();
-    print("Model loaded successfully.");
-    final symptoms = await predictor.predictSymptoms("I can't sleep at night");
-    print("Predicted symptoms: $symptoms");
-  } catch (e, stackTrace) {
-    print("Error in symptom prediction: $e");
-    print("Stack trace: $stackTrace");
-  }
-}
 
 Future<void> main() async {
 
@@ -34,10 +10,7 @@ Future<void> main() async {
 
   await HiveService.init();
 
-  await symptomPrediction();
-
   runApp(ProviderScope(child: const MyApp()));
-
 }
 
 class MyApp extends ConsumerWidget{

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pillow/core/util/helpers.dart';
 import 'package:pillow/core/services/hive_service.dart';
-import 'package:pillow/features/splash/daily_mood_prompt.dart';
+import 'package:pillow/features/journal/presentation/daily_mood_prompt.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -467,7 +467,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
       }
       return null;
     } catch (e) {
-      print('Error loading mood data: $e');
+      devPrint('Error loading mood data: $e');
       return null;
     }
   }
@@ -1104,18 +1104,18 @@ class EditMoodDialog extends StatefulWidget {
   final VoidCallback onComplete;
 
   const EditMoodDialog({
-    Key? key,
+    super.key,
     required this.initialMood,
     required this.initialDescription,
     required this.date,
     required this.onComplete,
-  }) : super(key: key);
+  });
 
   @override
-  _EditMoodDialogState createState() => _EditMoodDialogState();
+  EditMoodDialogState createState() => EditMoodDialogState();
 }
 
-class _EditMoodDialogState extends State<EditMoodDialog> {
+class EditMoodDialogState extends State<EditMoodDialog> {
   late int selectedMood;
   late TextEditingController descriptionController;
 
@@ -1130,23 +1130,6 @@ class _EditMoodDialogState extends State<EditMoodDialog> {
   void dispose() {
     descriptionController.dispose();
     super.dispose();
-  }
-
-  String _getMoodEmoji(int mood) {
-    switch (mood) {
-      case 0:
-        return '😢'; // Very Sad
-      case 1:
-        return '😔'; // Sad
-      case 2:
-        return '😐'; // Neutral
-      case 3:
-        return '😊'; // Happy
-      case 4:
-        return '😁'; // Very Happy
-      default:
-        return '😐'; // Default to neutral
-    }
   }
 
   String _getMoodLabel(int mood) {
@@ -1188,7 +1171,7 @@ class _EditMoodDialogState extends State<EditMoodDialog> {
       
       widget.onComplete();
     } catch (e) {
-      print('Error saving mood data: $e');
+      devPrint('Error saving mood data: $e');
     }
   }
 
@@ -1233,7 +1216,7 @@ class _EditMoodDialogState extends State<EditMoodDialog> {
                     ),
                     child: Center(
                       child: Text(
-                        _getMoodEmoji(index),
+                        getMoodEmoji(index),
                         style: TextStyle(fontSize: 24),
                       ),
                     ),
@@ -1287,5 +1270,22 @@ class _EditMoodDialogState extends State<EditMoodDialog> {
         ),
       ),
     );
+  }
+}
+
+String getMoodEmoji(int mood) {
+  switch (mood) {
+    case 0:
+      return '😢'; // Very Sad
+    case 1:
+      return '😔'; // Sad
+    case 2:
+      return '😐'; // Neutral
+    case 3:
+      return '😊'; // Happy
+    case 4:
+      return '😁'; // Very Happy
+    default:
+      return '😐'; // Default to neutral
   }
 }
