@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:pillow/core/util/helpers.dart';
 import 'package:pillow/features/wellness/domain/wellness_tracker.dart';
@@ -6,6 +7,7 @@ import 'package:pillow/features/wellness/presentation/components/correlation_ana
 import 'package:pillow/features/wellness/presentation/components/mood_trend_chart.dart';
 import 'package:pillow/features/wellness/presentation/components/personalized_insights.dart';
 import 'package:pillow/features/wellness/presentation/components/wellness_prediction.dart';
+import 'package:pillow/features/wellness/presentation/wellness_notifier.dart';
 import 'package:pretty_animated_text/pretty_animated_text.dart';
 import 'package:intl/intl.dart';
 
@@ -15,22 +17,7 @@ import 'components/scatter_plot_painter.dart';
 
 //todo: Implement wellness data persistence and analytics
 
-// Extension to add date comparison functionality
-extension DateTimeExtension on DateTime {
-  bool isSameDate(DateTime other) {
-    return year == other.year && month == other.month && day == other.day;
-  }
-}
-
-// Extension to add string capitalization
-extension StringExtension on String {
-  String capitalize() {
-    if (isEmpty) return '';
-    return "${this[0].toUpperCase()}${substring(1)}";
-  }
-}
-
-class WellnessTrackerScreen extends StatefulWidget {
+class WellnessTrackerScreen extends ConsumerStatefulWidget {
   final DateTime? initialDate;
   
   const WellnessTrackerScreen({
@@ -39,85 +26,86 @@ class WellnessTrackerScreen extends StatefulWidget {
   });
 
   @override
-  State<WellnessTrackerScreen> createState() => _WellnessTrackerScreenState();
+  ConsumerState<WellnessTrackerScreen> createState() => WellnessTrackerScreenState();
 }
 
-class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
-  int selectedMood = MoodTracker.getMood(DateTime.now()) - 1;
-  String selectedDateOption = 'month';
-  late DateTime selectedDate;
+class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
+  int _selectedMood = MoodTracker.getMood(DateTime.now()) - 1;
+  String _selectedDateOption = 'month';
+  late DateTime _selectedDate;
+  late WellnessScreenNotifier wellnessNotifier;
   
   @override
   void initState() {
     super.initState();
-    selectedDate = widget.initialDate ?? DateTime.now();
+    //_selectedDate = widget.initialDate ?? DateTime.now();
+    wellnessNotifier = ref.read(wellnessScreenProvider.notifier);
   }
   
   // Format the selected date based on the current view
   String get formattedSelectedDate {
-    switch (selectedDateOption) {
+    switch (_selectedDateOption) {
       case 'day':
-        return DateFormat('MMMM d, yyyy').format(selectedDate);
+        return DateFormat('MMMM d, yyyy').format(_selectedDate);
       case 'month':
-        return DateFormat('MMMM yyyy').format(selectedDate);
+        return DateFormat('MMMM yyyy').format(_selectedDate);
       case 'year':
-        return DateFormat('yyyy').format(selectedDate);
+        return DateFormat('yyyy').format(_selectedDate);
       default:
-        return DateFormat('MMMM yyyy').format(selectedDate);
+        return DateFormat('MMMM yyyy').format(_selectedDate);
     }
   }
   
   // Navigate to previous period based on current view
   void _navigateToPrevious() {
-    setState(() {
-      switch (selectedDateOption) {
-        case 'day':
-          selectedDate = selectedDate.subtract(const Duration(days: 1));
-          break;
-        case 'month':
-          selectedDate = DateTime(
-            selectedDate.year,
-            selectedDate.month - 1,
-            selectedDate.day,
-          );
-          break;
-        case 'year':
-          selectedDate = DateTime(
-            selectedDate.year - 1,
-            selectedDate.month,
-            selectedDate.day,
-          );
-          break;
-      }
-    });
+    switch (_selectedDateOption) {
+      case 'day':
+        wellnessNotifier.setDate(_selectedDate.subtract(const Duration(days: 1)));
+        break;
+      case 'month':
+        wellnessNotifier.setDate(
+          DateTime(
+          _selectedDate.year,
+          _selectedDate.month - 1,
+          _selectedDate.day,
+        ));
+        break;
+      case 'year':
+      wellnessNotifier.setDate(
+          DateTime(
+            _selectedDate.year - 1,
+            _selectedDate.month,
+            _selectedDate.day,
+          )
+      );
+        break;
+    }
     // Log the navigation for debugging
-    "Navigated to previous $selectedDateOption: $formattedSelectedDate".log();
+    "Navigated to previous $_selectedDateOption: $formattedSelectedDate".log();
   }
   
   // Navigate to next period based on current view
   void _navigateToNext() {
     final now = DateTime.now();
-    final nextDate = switch (selectedDateOption) {
-      'day' => selectedDate.add(const Duration(days: 1)),
+    final nextDate = switch (_selectedDateOption) {
+      'day' => _selectedDate.add(const Duration(days: 1)),
       'month' => DateTime(
-          selectedDate.year,
-          selectedDate.month + 1,
-          selectedDate.day,
+          _selectedDate.year,
+          _selectedDate.month + 1,
+          _selectedDate.day,
         ),
       'year' => DateTime(
-          selectedDate.year + 1,
-          selectedDate.month,
-          selectedDate.day,
+          _selectedDate.year + 1,
+          _selectedDate.month,
+          _selectedDate.day,
         ),
-      _ => selectedDate,
+      _ => _selectedDate,
     };
     
     // Only allow navigation up to the current date
     if (!nextDate.isAfter(now)) {
-      setState(() {
-        selectedDate = nextDate;
-      });
-      "Navigated to next $selectedDateOption: $formattedSelectedDate".log();
+        wellnessNotifier.setDate(nextDate);
+      "Navigated to next $_selectedDateOption: $formattedSelectedDate".log();
     } else {
       "Cannot navigate to future dates".log();
     }
@@ -125,14 +113,17 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
   
   // Navigate to today
   void _navigateToToday() {
+
+    wellnessNotifier.setDate(DateTime.now());
+
     setState(() {
-      selectedDate = DateTime.now();
+      _selectedDateOption = 'day';
     });
-    "Navigated to today: $formattedSelectedDate".log();
   }
 
   @override
   Widget build(BuildContext context) {
+    _selectedDate = ref.watch(wellnessScreenProvider);
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
@@ -188,9 +179,9 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
                             IconButton(
                               icon: const Icon(Icons.chevron_right),
                               onPressed: DateTime(
-                                selectedDate.year,
-                                selectedDate.month,
-                                selectedDate.day,
+                                _selectedDate.year,
+                                _selectedDate.month,
+                                _selectedDate.day,
                               ).isSameDate(DateTime.now())
                                   ? null
                                   : _navigateToNext,
@@ -225,9 +216,10 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
                 // Wellness title and description
                 Center(
                   child: Text(
-                    "${selectedDate.getNameOf(selectedDateOption)}'s Wellness Report",
+                    "${_selectedDate.getNameOf(_selectedDateOption)}'s Wellness Report",
+                    textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontSize: 20,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -249,9 +241,9 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
                 // Mood tracker
                 //todo: Implement mood tracking history and trends analysis
                 BlurText(
+                  key: ValueKey('$_selectedDateOption: $_selectedDate'),
                   text:
-                  'How have you been feeling'
-                  ' ${selectedDate.isSameDate(DateTime.now()) ? 'today' : selectedDateOption == 'day' ? 'on this day' : 'this $selectedDateOption'}?',
+                  wellnessNotifier.checkInMessage(_selectedDateOption),
                   duration: const Duration(seconds: 1),
                   type: AnimationType.word,
                   textStyle: const TextStyle(
@@ -297,9 +289,14 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
                   ),
                 ),
                 const SizedBox(height: 15),
-                _buildMedicationAdherenceCard(),
-                const SizedBox(height: 30),
 
+                _buildMedicationAdherenceCard(),
+
+                const SizedBox(height: 15),
+
+                _medicineAdherenceBar(),
+
+                const SizedBox(height: 30),
                 // Missed dose patterns
                 const Text(
                   'Missed dose patterns',
@@ -309,104 +306,13 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
                   ),
                 ),
                 const SizedBox(height: 15),
-                Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _dayIndicator('Mon', true),
-                        _dayIndicator('Tue', true),
-                        _dayIndicator('Wed', false),
-                        _dayIndicator('Thu', true),
-                        _dayIndicator('Fri', true),
-                        _dayIndicator('Sat', false),
-                        _dayIndicator('Sun', true),
-                      ],
-                    ),
-                    const SizedBox(height: 15),
-                    Text(
-                      'You tend to miss evening doses on\nWednesdays and Saturdays',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
 
-                const SizedBox(height: 30),
-
-                // Medication effectiveness
-                const Text(
-                  'Medication effectiveness',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  'Effectiveness scores are based on your\nreported symptom improvements',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 15),
-                _effectivenessBar('Omeprazole', 9.0, Colors.green[200]!),
-                const SizedBox(height: 8),
-                _effectivenessBar('Omeprazole', 8.0, Colors.green[200]!),
-                const SizedBox(height: 8),
-                _effectivenessBar('Omeprazole', 4.3, Colors.purple[100]!),
+                buildMissedDosagePatterns(),
 
                 const SizedBox(height: 30),
 
                 // Active symptoms and triggers
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Active symptoms',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(height: 15),
-                          _symptomItem(12, 'Headache', '12 occurrences this month', Colors.purple),
-                          const SizedBox(height: 8),
-                          _symptomItem(5, 'Fatigue', '5 occurrences this month', Colors.purple),
-                          const SizedBox(height: 8),
-                          _symptomItem(2, 'Dizziness', '2 occurrences this month', Colors.purple),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Top triggers',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(height: 15),
-                          _triggerItem('Stress', Colors.pink[100]!),
-                          const SizedBox(height: 8),
-                          _triggerItem('Poor sleep', Colors.orange[100]!),
-                          const SizedBox(height: 8),
-                          _triggerItem('Screen time', Colors.yellow[200]!),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                buildSymptomsAndTriggers(),
 
                 const SizedBox(height: 30),
 
@@ -478,8 +384,8 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
                 ),
                 const SizedBox(height: 15),
                 MoodTrendChart(
-                  timeRange: selectedDateOption,
-                  selectedDate: selectedDate,
+                  timeRange: _selectedDateOption,
+                  selectedDate: _selectedDate,
                 ),
                 const SizedBox(height: 30),
 
@@ -540,7 +446,7 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
                   ),
                 ),
                 const SizedBox(height: 15),
-                PersonalizedInsights(timeRange: selectedDateOption),
+                PersonalizedInsights(timeRange: _selectedDateOption),
                 const SizedBox(height: 30),
 
                 const SizedBox(height: 10),
@@ -556,11 +462,11 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
   void _showDatePicker(BuildContext context) async {
     final now = DateTime.now();
     
-    switch (selectedDateOption) {
+    switch (_selectedDateOption) {
       case 'day':
         final pickedDate = await showDatePicker(
           context: context,
-          initialDate: selectedDate.isAfter(now) ? now : selectedDate,
+          initialDate: _selectedDate.isAfter(now) ? now : _selectedDate,
           firstDate: DateTime(2020),
           lastDate: now,
           builder: (context, child) {
@@ -576,9 +482,9 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
         );
         
         if (pickedDate != null) {
-          setState(() {
-            selectedDate = pickedDate;
-          });
+
+          wellnessNotifier.setDate(pickedDate);
+
           "Selected date: $formattedSelectedDate".log();
         }
         break;
@@ -615,19 +521,19 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
               itemCount: 12,
               itemBuilder: (context, index) {
                 final month = index + 1;
-                final date = DateTime(selectedDate.year, month, 1);
-                final isSelected = selectedDate.month == month;
+                final date = DateTime(_selectedDate.year, month, 1);
+                final isSelected = _selectedDate.month == month;
                 final isFuture = date.year == now.year && month > now.month;
                 
                 return InkWell(
                   onTap: isFuture ? null : () {
-                    setState(() {
-                      selectedDate = DateTime(
-                        selectedDate.year,
-                        month,
-                        1,
-                      );
-                    });
+                    wellnessNotifier.setDate(
+                      DateTime(
+                      _selectedDate.year,
+                      month,
+                      1,
+                      )
+                    );
                     Navigator.pop(context);
                     "Selected month: $formattedSelectedDate".log();
                   },
@@ -687,7 +593,7 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
               itemCount: years.length,
               itemBuilder: (context, index) {
                 final year = years[index];
-                final isSelected = selectedDate.year == year;
+                final isSelected = _selectedDate.year == year;
                 
                 return ListTile(
                   title: Text(year.toString()),
@@ -695,13 +601,11 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
                   selectedTileColor: Theme.of(context).primaryColor.withAlpha(50),
                   textColor: isSelected ? Theme.of(context).primaryColor : null,
                   onTap: () {
-                    setState(() {
-                      selectedDate = DateTime(
-                        year,
-                        selectedDate.month,
-                        1,
-                      );
-                    });
+                    wellnessNotifier.setDate(DateTime(
+                      year,
+                      _selectedDate.month,
+                      1,
+                    ));
                     Navigator.pop(context);
                     "Selected year: $formattedSelectedDate".log();
                   },
@@ -721,11 +625,11 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
   }
 
   Widget _dateOption(String text) {
-    final isSelected = selectedDateOption == text;
+    final isSelected = _selectedDateOption == text;
     return GestureDetector(
       onTap: () {
         setState(() {
-          selectedDateOption = text;
+          _selectedDateOption = text;
         });
       },
       child: Container(
@@ -746,8 +650,8 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
   }
 
   Widget _moodIcon({required int index, int intensity = 500}) {
-    bool isSelected = selectedMood == index;
-    if(selectedDateOption == 'month') {
+    bool isSelected = _selectedMood == index;
+    if(_selectedDateOption == 'month') {
       MoodTracker.populateSample();
       isSelected = true;
       final int moodCount = MoodTracker.getMoodCountByRange(
@@ -761,7 +665,7 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
     return GestureDetector(
       onTap: () {
         setState(() {
-          selectedMood = index;
+          _selectedMood = index;
         });
       },
       child: Container(
@@ -902,43 +806,57 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
     );
   }
 
-  Widget _buildMedicationAdherenceCard() {
+  Row _buildMedicationAdherenceCard() {
+    String currentTimeFrame = _selectedDate.getNameOf(_selectedDateOption);
+    currentTimeFrame = currentTimeFrame == 'Today' ? 'today' : _selectedDateOption == 'day' ? 'on $currentTimeFrame' : 'in $currentTimeFrame';
+    final String previousTimeFrame = currentTimeFrame == 'today' ? 'yesterday' : 'the previous $_selectedDateOption';
+    const double currentAdherence = 0.85;
+    final currentText = "You've taken ${currentAdherence * 100}% of your meds $currentTimeFrame";
+    final progressText = "That's better than $previousTimeFrame (${(currentAdherence - 0.05) * 100}%)";
     return Row(
       children: [
         CircularPercentIndicator(
-          radius: 40,
-          lineWidth: 8,
-          percent: 0.85,
+          radius: 35,
+          lineWidth: 6,
+          percent: currentAdherence,
           center: const Text(
-            '85%',
+            '${currentAdherence * 100}%',
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: 20,
+              fontSize: 15,
             ),
           ),
           progressColor: Colors.purple[100],
           backgroundColor: Colors.grey[200]!,
         ),
-        const SizedBox(width: 20),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "You've taken 85% of your\nmedications this month",
-              style: TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
+        const SizedBox(width: 15),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ChimeBellText(
+                key: ValueKey('$currentTimeFrame : $currentAdherence'),
+                text: currentText,
+                duration: Duration(milliseconds: 500),
+                type: AnimationType.word,
+                overlapFactor: 0.5,
+                textAlignment: TextAlignment.start,
+                textStyle: TextStyle(
+                  overflow: TextOverflow.clip,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
               ),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              "That's better than last month\n(82%)",
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 12,
+              const SizedBox(height: 5),
+              Text(
+                progressText,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -961,6 +879,98 @@ class _WellnessTrackerScreenState extends State<WellnessTrackerScreen> {
               color: color,
               borderRadius: BorderRadius.circular(4),
             ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Row buildSymptomsAndTriggers() {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Active symptoms',
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 15),
+              _symptomItem(12, 'Headache', '12 occurrences this month', Colors.purple),
+              const SizedBox(height: 8),
+              _symptomItem(5, 'Fatigue', '5 occurrences this month', Colors.purple),
+              const SizedBox(height: 8),
+              _symptomItem(2, 'Dizziness', '2 occurrences this month', Colors.purple),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Top triggers',
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 15),
+              _triggerItem('Stress', Colors.pink[100]!),
+              const SizedBox(height: 8),
+              _triggerItem('Poor sleep', Colors.orange[100]!),
+              const SizedBox(height: 8),
+              _triggerItem('Screen time', Colors.yellow[200]!),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+  ListView _medicineAdherenceBar(){
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      itemCount: 3,
+      itemBuilder: (context, index) {
+        final medName = 'Omeprazole';
+        final medRate = 9.5 - (index * 1.8);
+        final medColor = index == 2 ? Colors.purple[100] : Colors.green[200];
+        return
+          //_buildMedicationItem(medications[index]);
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 4),
+            child: _effectivenessBar(medName, medRate, medColor!)
+        );
+      },
+    );
+  }
+  Column buildMissedDosagePatterns(){
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _dayIndicator('Mon', true),
+            _dayIndicator('Tue', true),
+            _dayIndicator('Wed', false),
+            _dayIndicator('Thu', true),
+            _dayIndicator('Fri', true),
+            _dayIndicator('Sat', false),
+            _dayIndicator('Sun', true),
+          ],
+        ),
+        const SizedBox(height: 15),
+        Text(
+          'You tend to miss evening doses on\nWednesdays and Saturdays',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontSize: 12,
           ),
         ),
       ],

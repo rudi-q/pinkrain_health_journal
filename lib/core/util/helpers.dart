@@ -52,6 +52,7 @@ extension DateTimeExtensions on DateTime {
     }
     return '';
   }
+    bool isToday() => day == DateTime.now().day && month == DateTime.now().month && year == DateTime.now().year;
 }
 
 extension ListExtensions on List<IntakeLog> {
@@ -61,5 +62,20 @@ extension ListExtensions on List<IntakeLog> {
 
   List<IntakeLog> forMorning() {
     return where((t) => t.treatment.treatmentPlan.timeOfDay.hour <= 12).toList();
+  }
+}
+
+// Extension to add date comparison functionality
+extension DateTimeExtension on DateTime {
+  bool isSameDate(DateTime other) {
+    return year == other.year && month == other.month && day == other.day;
+  }
+}
+
+// Extension to add string capitalization
+extension StringExtension on String {
+  String capitalize() {
+    if (isEmpty) return '';
+    return "${this[0].toUpperCase()}${substring(1)}";
   }
 }
