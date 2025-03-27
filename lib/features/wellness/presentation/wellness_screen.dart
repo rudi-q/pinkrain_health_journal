@@ -12,6 +12,7 @@ import 'package:pretty_animated_text/pretty_animated_text.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/widgets/bottom_navigation.dart';
+import '../../journal/presentation/journal_notifier.dart';
 import 'components/mood_painter.dart';
 import 'components/scatter_plot_painter.dart';
 
@@ -152,6 +153,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                             children: [
                               Text(
                                 formattedSelectedDate,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
@@ -377,15 +379,19 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'Visualize how your mood has changed over time',
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 12,
                   ),
                 ),
                 const SizedBox(height: 15),
-                MoodTrendChart(
-                  timeRange: _selectedDateOption,
-                  selectedDate: _selectedDate,
+                SizedBox(
+                  width: double.infinity,
+                  child: MoodTrendChart(
+                    timeRange: _selectedDateOption,
+                    selectedDate: _selectedDate,
+                  ),
                 ),
                 const SizedBox(height: 30),
 
@@ -400,13 +406,17 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'Discover which factors most strongly influence your mood',
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 12,
                   ),
                 ),
                 const SizedBox(height: 15),
-                const CorrelationAnalysis(),
+                const SizedBox(
+                  width: double.infinity,
+                  child: CorrelationAnalysis(),
+                ),
                 const SizedBox(height: 30),
 
                 // NEW SECTION: Wellness Prediction
@@ -420,13 +430,17 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'AI-powered prediction of your mood trends',
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 12,
                   ),
                 ),
                 const SizedBox(height: 15),
-                const WellnessPrediction(),
+                const SizedBox(
+                  width: double.infinity,
+                  child: WellnessPrediction(),
+                ),
                 const SizedBox(height: 30),
 
                 // NEW SECTION: Personalized Insights
@@ -440,13 +454,17 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'Data-driven recommendations tailored to your wellness patterns',
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 12,
                   ),
                 ),
                 const SizedBox(height: 15),
-                PersonalizedInsights(timeRange: _selectedDateOption),
+                SizedBox(
+                  width: double.infinity,
+                  child: PersonalizedInsights(timeRange: _selectedDateOption),
+                ),
                 const SizedBox(height: 30),
 
                 const SizedBox(height: 10),
@@ -719,6 +737,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
           width: 100,
           child: Text(
             medication,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 14,
             ),
@@ -783,24 +802,28 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
           ),
         ),
         const SizedBox(width: 10),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
               ),
-            ),
-            Text(
-              subtitle,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 10,
+              Text(
+                subtitle,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 10,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -842,7 +865,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                 overlapFactor: 0.5,
                 textAlignment: TextAlignment.start,
                 textStyle: TextStyle(
-                  overflow: TextOverflow.clip,
+                  overflow: TextOverflow.ellipsis,
                   fontWeight: FontWeight.w500,
                   fontSize: 14,
                 ),
@@ -850,6 +873,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
               const SizedBox(height: 5),
               Text(
                 progressText,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.grey[600],
                   fontSize: 12,
@@ -865,10 +889,13 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
   Widget _triggerItem(String title, Color color) {
     return Row(
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 14,
+        Flexible(
+          child: Text(
+            title,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 14,
+            ),
           ),
         ),
         const SizedBox(width: 8),
@@ -887,6 +914,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
 
   Row buildSymptomsAndTriggers() {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: Column(
@@ -908,6 +936,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
             ],
           ),
         ),
+        const SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -931,24 +960,27 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
       ],
     );
   }
-  ListView _medicineAdherenceBar(){
+  
+  Widget _medicineAdherenceBar(){
+    final medications = ref.watch(pillIntakeProvider);
+    //final medications = JournalLog().getMedicationsForTheDay(_selectedDate);
     return ListView.builder(
       shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
-      itemCount: 3,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: medications.length,
       itemBuilder: (context, index) {
-        final medName = 'Omeprazole';
-        final medRate = 9.5 - (index * 1.8);
-        final medColor = index == 2 ? Colors.purple[100] : Colors.green[200];
+        final medName = medications[index].treatment.medicine.name;
+        final double medRate = medications[index].isTaken ? 10 : 9.5 - (index * 1.8);
+        final medColor = medRate < 7 ? Colors.purple[100] : Colors.green[200];
         return
-          //_buildMedicationItem(medications[index]);
           Padding(
-            padding: EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(vertical: 4),
             child: _effectivenessBar(medName, medRate, medColor!)
         );
       },
     );
   }
+  
   Column buildMissedDosagePatterns(){
     return Column(
       children: [
@@ -965,12 +997,15 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
           ],
         ),
         const SizedBox(height: 15),
-        Text(
-          'You tend to miss evening doses on\nWednesdays and Saturdays',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 12,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'You tend to miss evening doses on Wednesdays and Saturdays',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 12,
+            ),
           ),
         ),
       ],

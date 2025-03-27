@@ -253,11 +253,15 @@ class CorrelationAnalysis extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              'Positive correlation: As this factor increases, your mood improves',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 12,
+            Expanded(
+              child: Text(
+                'Positive correlation: As this factor increases, your mood improves',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
               ),
             ),
           ],
@@ -278,11 +282,15 @@ class CorrelationAnalysis extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              'Negative correlation: As this factor increases, your mood declines',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 12,
+            Expanded(
+              child: Text(
+                'Negative correlation: As this factor increases, your mood declines',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
               ),
             ),
           ],
@@ -295,6 +303,8 @@ class CorrelationAnalysis extends StatelessWidget {
             fontSize: 10,
             fontStyle: FontStyle.italic,
           ),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 2,
         ),
       ],
     );
