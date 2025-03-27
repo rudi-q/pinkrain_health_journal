@@ -8,6 +8,7 @@ import 'package:pillow/features/journal/presentation/daily_mood_prompt.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:pretty_animated_text/pretty_animated_text.dart';
 
 import '../../../core/theme/icons.dart';
 import '../../../core/util/dateFormatConverters.dart';
@@ -399,9 +400,13 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            hasMood && moodData != null ? 'How I Felt' : 'How did you feel?',
-                            style: TextStyle(
+                          BlurText(
+                            text: hasMood && (moodData?['mood'] != null)
+                            ? 'I felt ${getMoodLabel(moodData?['mood']).toLowerCase()}'
+                            : 'How did you feel?',
+                            duration: const Duration(milliseconds: 500),
+                            type: AnimationType.word,
+                            textStyle: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: Colors.grey[800],
@@ -409,14 +414,18 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                           ),
                           if (hasMood && moodData != null) SizedBox(height: 8),
                           if (hasMood && moodData != null)
-                            Text(
-                              moodData['description'] as String,
-                              style: TextStyle(
+                            ChimeBellText(
+                              text: (moodData['description'] as String),
+                              duration: Duration(milliseconds:
+                              (500 / (moodData['description'].toString().length)).toInt()
+                              ),
+                              type: AnimationType.letter,
+                              textStyle: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[700],
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              /*maxLines: 1,
+                              overflow: TextOverflow.ellipsis,*/
                             ),
                         ],
                       ),
@@ -438,7 +447,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                       child: hasMood && moodData != null 
                         ? Center(
                             child: Text(
-                              _getMoodEmoji(moodData['mood'] as int),
+                              getMoodEmoji(moodData['mood'] as int),
                               style: TextStyle(fontSize: 24),
                             ),
                           )
@@ -515,14 +524,14 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                 ),
                 child: Center(
                   child: Text(
-                    _getMoodEmoji(mood),
+                    getMoodEmoji(mood),
                     style: TextStyle(fontSize: 60),
                   ),
                 ),
               ),
               SizedBox(height: 16),
               Text(
-                _getMoodLabel(mood),
+                getMoodLabel(mood),
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -649,42 +658,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
       },
     );
   }
-  
-  // Get mood label based on mood index
-  String _getMoodLabel(int mood) {
-    switch (mood) {
-      case 0:
-        return 'Very Sad';
-      case 1:
-        return 'Sad';
-      case 2:
-        return 'Neutral';
-      case 3:
-        return 'Happy';
-      case 4:
-        return 'Very Happy';
-      default:
-        return 'Unknown';
-    }
-  }
 
-  // Get mood emoji based on mood index
-  String _getMoodEmoji(int mood) {
-    switch (mood) {
-      case 0:
-        return '😢'; // Very Sad
-      case 1:
-        return '😔'; // Sad
-      case 2:
-        return '😐'; // Neutral
-      case 3:
-        return '😊'; // Happy
-      case 4:
-        return '😁'; // Very Happy
-      default:
-        return '😐'; // Default to neutral
-    }
-  }
 
   Column _buildMorningSection() {
     final date = selectedDate;
@@ -1287,5 +1261,21 @@ String getMoodEmoji(int mood) {
       return '😁'; // Very Happy
     default:
       return '😐'; // Default to neutral
+  }
+}
+String getMoodLabel(int mood) {
+  switch (mood) {
+    case 0:
+      return 'Very Sad';
+    case 1:
+      return 'Sad';
+    case 2:
+      return 'Neutral';
+    case 3:
+      return 'Happy';
+    case 4:
+      return 'Very Happy';
+    default:
+      return 'Unknown';
   }
 }

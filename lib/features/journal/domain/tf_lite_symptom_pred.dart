@@ -3,6 +3,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:tflite_flutter/tflite_flutter.dart' as tfl;
 
 import '../../../core/util/helpers.dart';
+import '../data/symptom_prediction.dart';
 
 class SymptomPredictor {
   late Map<String, int> wordIndex;
@@ -56,7 +57,7 @@ class SymptomPredictor {
     }
   }
 
-  Future<List<String>> predictSymptoms(String inputText) async {
+  Future<List<SymptomPrediction>> predictSymptoms(String inputText) async {
     var tokens = tokenize(inputText.replaceAll("can't sleep", "not_sleep"));
     var paddedTokens = padSequence(tokens, 20);
   
@@ -68,15 +69,16 @@ class SymptomPredictor {
     var sortedIndices = output[0].asMap().entries
         .toList()
         ..sort((a, b) => b.value.compareTo(a.value));
-  
+
     return sortedIndices.take(3)
-        .map((e) => e.key)
-        .map((i) => mlbClasses[i])
-        .toList();
+        .map((e) => SymptomPrediction(
+      name: mlbClasses[e.key],
+      probability: e.value,
+    )).toList();
   }
 }
 
-Future<List<String>> symptomPrediction(String text) async {
+Future<List<SymptomPrediction>> symptomPrediction(String text) async {
   try {
     final predictor = SymptomPredictor();
     devPrint("Loading model...");

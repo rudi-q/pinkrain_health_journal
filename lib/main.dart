@@ -26,7 +26,7 @@ class MyApp extends ConsumerWidget{
         brightness: Brightness.light,
         scaffoldBackgroundColor: Colors.white,
         fontFamily: 'Outfit',
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.pink,
         textTheme: Theme.of(context).textTheme.apply(
           bodyColor: Colors.black,
           displayColor: Colors.black,
@@ -36,7 +36,7 @@ class MyApp extends ConsumerWidget{
         brightness: Brightness.dark,
         scaffoldBackgroundColor: Colors.black,
         fontFamily: 'Outfit',
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.pink,
         textTheme: Theme.of(context).textTheme.apply(
           bodyColor: Colors.white,
           displayColor: Colors.white,

@@ -1,16 +1,21 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pillow/core/services/hive_service.dart';
 import 'package:pillow/core/util/helpers.dart';
+import 'package:pillow/features/journal/presentation/journal.dart';
+import 'package:pillow/features/journal/presentation/symtom_predicton_notifier.dart';
 import 'package:pillow/features/wellness/presentation/components/mood_painter.dart';
 import 'package:intl/intl.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../data/symptom_prediction.dart';
 import '../domain/tf_lite_symptom_pred.dart';
 
-class DailyMoodPrompt extends StatefulWidget {
+class DailyMoodPrompt extends ConsumerStatefulWidget {
   final Function onComplete;
-  final DateTime? date; // Optional date parameter, defaults to today if not provided
+  final DateTime?
+      date; // Optional date parameter, defaults to today if not provided
 
   const DailyMoodPrompt({
     super.key,
@@ -19,13 +24,14 @@ class DailyMoodPrompt extends StatefulWidget {
   });
 
   @override
-  State<DailyMoodPrompt> createState() => _DailyMoodPromptState();
+  ConsumerState<DailyMoodPrompt> createState() => DailyMoodPromptState();
 }
 
-class _DailyMoodPromptState extends State<DailyMoodPrompt> {
+class DailyMoodPromptState extends ConsumerState<DailyMoodPrompt> {
   int selectedMood = 2; // Default to neutral mood
   final TextEditingController _feelingsController = TextEditingController();
-  List<String> _predictedSymptoms = [];
+  late List<SymptomPrediction> predictedSymptoms;
+  bool _loadingSymptomsPrediction = false;
 
   @override
   void dispose() {
@@ -52,14 +58,18 @@ class _DailyMoodPromptState extends State<DailyMoodPrompt> {
         await box.put('mood_$dateKey', {
           'mood': selectedMood,
           'description': _feelingsController.text,
-          'timestamp': DateTime.now().toIso8601String(), // Always use current timestamp for when it was recorded
+          'timestamp': DateTime.now()
+              .toIso8601String(), // Always use current timestamp for when it was recorded
         });
 
         // Save the user's current mood only if we're recording for today
         final today = DateTime.now();
-        final isToday = date.year == today.year && date.month == today.month && date.day == today.day;
+        final isToday = date.year == today.year &&
+            date.month == today.month &&
+            date.day == today.day;
         if (isToday) {
-          await HiveService.saveUserMood(selectedMood, _feelingsController.text);
+          await HiveService.saveUserMood(
+              selectedMood, _feelingsController.text);
         }
 
         // Call the onComplete callback
@@ -82,6 +92,7 @@ class _DailyMoodPromptState extends State<DailyMoodPrompt> {
 
   @override
   Widget build(BuildContext context) {
+    predictedSymptoms = ref.watch(symptomPredictionProvider);
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
@@ -126,12 +137,11 @@ class _DailyMoodPromptState extends State<DailyMoodPrompt> {
           const SizedBox(height: 10),
 
           // Text field for feelings
-          _buildFeelingsTextField(),
+          _buildFeelingsTextField(ref),
           const SizedBox(height: 10),
 
           // Symptom prediction container
-          if (_predictedSymptoms.isNotEmpty)
-            _buildSymptomPredictionContainer(),
+          if (predictedSymptoms.isNotEmpty) _buildSymptomPredictionContainer(),
 
           // Submit button
           ElevatedButton(
@@ -157,22 +167,6 @@ class _DailyMoodPromptState extends State<DailyMoodPrompt> {
     );
   }
 
-  String _getMoodLabel(int mood) {
-    switch (mood) {
-      case 0:
-        return 'Very Sad';
-      case 1:
-        return 'Sad';
-      case 2:
-        return 'Neutral';
-      case 3:
-        return 'Happy';
-      case 4:
-        return 'Very Happy';
-      default:
-        return '';
-    }
-  }
 
   SizedBox _buildMoodSelection() {
     return SizedBox(
@@ -200,23 +194,24 @@ class _DailyMoodPromptState extends State<DailyMoodPrompt> {
                       shape: BoxShape.circle,
                       boxShadow: selectedMood == index
                           ? [
-                        BoxShadow(
-                          color: Colors.pink.withAlpha(76),
-                          spreadRadius: 1,
-                          blurRadius: 3,
-                          offset: const Offset(0, 1),
-                        )
-                      ]
+                              BoxShadow(
+                                color: Colors.pink.withAlpha(76),
+                                spreadRadius: 1,
+                                blurRadius: 3,
+                                offset: const Offset(0, 1),
+                              )
+                            ]
                           : null,
                     ),
-                    child: CustomPaint(
+                    child: //Text(getMoodEmoji(index))
+                    CustomPaint(
                       painter: MoodPainter(index, selectedMood == index),
-                      size: const Size(50, 50),
+                      size: const Size(15, 15),
                     ),
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    _getMoodLabel(index),
+                    getMoodLabel(index),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: selectedMood == index
@@ -236,20 +231,18 @@ class _DailyMoodPromptState extends State<DailyMoodPrompt> {
     );
   }
 
-  TextField _buildFeelingsTextField() {
+  TextField _buildFeelingsTextField(WidgetRef ref) {
     return TextField(
       cursorColor: Colors.pink[400],
       controller: _feelingsController,
       maxLines: 3,
       onChanged: (value) {
         // Trigger symptom prediction when text changes
-        if (value.length > 7) { // Only predict after some meaningful text
-          setState(() {
-            _predictedSymptoms = [];
-          });
-          setState(() async {
-            _predictedSymptoms = await symptomPrediction(value);
-          });
+        final symptomPredictionNotifier = ref.read(symptomPredictionProvider.notifier);
+        symptomPredictionNotifier.reset();
+        if (value.length > 7) {
+          // Only predict after some meaningful text
+          symptomPredictionNotifier.predict(value);
         }
       },
       decoration: InputDecoration(
@@ -290,7 +283,7 @@ class _DailyMoodPromptState extends State<DailyMoodPrompt> {
                 ),
               ),
               const SizedBox(width: 14),
-              if (_predictedSymptoms.isEmpty)
+              if (_loadingSymptomsPrediction)
                 const CupertinoActivityIndicator(
                   radius: 10,
                 ),
@@ -299,11 +292,52 @@ class _DailyMoodPromptState extends State<DailyMoodPrompt> {
           const SizedBox(height: 15),
           Wrap(
             spacing: 8,
-            children: _predictedSymptoms.map((symptom) => Chip(
-              backgroundColor: Colors.white.withValues(alpha: 0.9),
-              label: Text(symptom),
-              //avatar: Icon(Icons.medical_services_outlined, size: 14, color: Colors.blue[400]),
-            )).toList(),
+            runSpacing: 8,
+            children: predictedSymptoms.map((symptom) {
+              // Determine size category based on probability
+              final double probability = symptom.probability;
+
+              // Size categories
+              double fontSize;
+              double chipHeight;
+
+              if (probability >= 0.4) {
+                // High probability (70%+)
+                fontSize = 14.0;
+                chipHeight = 32.0;
+              } else if (probability >= 0.1) {
+                // Medium probability (40-69%)
+                fontSize = 12.0;
+                chipHeight = 28.0;
+              } else {
+                // Low probability (<40%)
+                fontSize = 10.0;
+                chipHeight = 24.0;
+              }
+
+              return Chip(
+                backgroundColor: Colors.white.withValues(alpha: 0.9),
+                labelPadding: EdgeInsets.symmetric(
+                  horizontal: probability >= 0.7 ? 8.0 : 6.0,
+                  vertical: 0,
+                ),
+                label: Text(
+                  symptom.toString(),
+                  style: TextStyle(
+                    color: Colors.blue[700],
+                    fontSize: fontSize,
+                    fontWeight: probability >= 0.7
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
+                ),
+                avatar: Icon(
+                  Icons.medical_services_outlined,
+                  size: fontSize + 2,
+                  color: Colors.blue[400],
+                ),
+              );
+            }).toList(),
           ),
         ],
       ),
