@@ -266,84 +266,101 @@ class DailyMoodPromptState extends ConsumerState<DailyMoodPrompt> {
 
   Container _buildSymptomPredictionContainer() {
     return Container(
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.blue[50],
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.blue[100]!),
+        color: Colors.pink[50]!.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.pink[100]!.withOpacity(0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.pink[100]!.withOpacity(0.1),
+            blurRadius: 10,
+            spreadRadius: 0,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.psychology, color: Colors.blue[700], size: 18),
+              Icon(
+                Icons.psychology_outlined,
+                color: Colors.pink[400],
+                size: 20,
+              ),
               const SizedBox(width: 8),
-              Text(
-                'Possible Symptoms You Might\n Be Experiencing',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue[700],
-                  fontSize: 12,
+              Expanded(
+                child: Text(
+                  'Possible Symptoms',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.pink[400],
+                    fontSize: 16,
+                  ),
                 ),
               ),
-              const SizedBox(width: 14),
               if (_loadingSymptomsPrediction)
-                const CupertinoActivityIndicator(
+                CupertinoActivityIndicator(
+                  color: Colors.pink[300],
                   radius: 10,
                 ),
             ],
           ),
-          const SizedBox(height: 15),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: predictedSymptoms.map((symptom) {
-              // Determine size category based on probability
-              final double probability = symptom.probability;
-
-              // Size categories
-              double fontSize;
-              double chipHeight;
-
-              if (probability >= 0.4) {
-                // High probability (70%+)
-                fontSize = 14.0;
-                chipHeight = 32.0;
-              } else if (probability >= 0.1) {
-                // Medium probability (40-69%)
-                fontSize = 12.0;
-                chipHeight = 28.0;
-              } else {
-                // Low probability (<40%)
-                fontSize = 10.0;
-                chipHeight = 24.0;
-              }
-
-              return Chip(
-                backgroundColor: Colors.white.withValues(alpha: 0.9),
-                labelPadding: EdgeInsets.symmetric(
-                  horizontal: probability >= 0.7 ? 8.0 : 6.0,
-                  vertical: 0,
-                ),
-                label: Text(
-                  symptom.toString(),
-                  style: TextStyle(
-                    color: Colors.blue[700],
-                    fontSize: fontSize,
-                    fontWeight: probability >= 0.7
-                        ? FontWeight.bold
-                        : FontWeight.normal,
+          if (predictedSymptoms.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: predictedSymptoms.map((symptom) {
+                final double probability = symptom.probability;
+                final bool isHighProbability = probability >= 0.4;
+                
+                return Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
                   ),
-                ),
-                avatar: Icon(
-                  Icons.medical_services_outlined,
-                  size: fontSize + 2,
-                  color: Colors.blue[400],
-                ),
-              );
-            }).toList(),
-          ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: Colors.pink[100]!.withOpacity(0.5),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.pink[100]!.withOpacity(0.1),
+                        blurRadius: 4,
+                        spreadRadius: 0,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.medical_services_outlined,
+                        size: isHighProbability ? 16 : 14,
+                        color: Colors.pink[300],
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${symptom.name} (${(probability * 100).toStringAsFixed(1)}%)',
+                        style: TextStyle(
+                          color: Colors.pink[700],
+                          fontSize: isHighProbability ? 14 : 12,
+                          fontWeight: isHighProbability ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
         ],
       ),
     );
