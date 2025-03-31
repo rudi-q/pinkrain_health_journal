@@ -14,7 +14,7 @@ import 'journal_screen.dart';
 class DailyMoodPrompt extends ConsumerStatefulWidget {
   final Function onComplete;
   final DateTime?
-  date; // Optional date parameter, defaults to today if not provided
+      date; // Optional date parameter, defaults to today if not provided
 
   const DailyMoodPrompt({
     super.key,
@@ -141,7 +141,7 @@ class DailyMoodPromptState extends ConsumerState<DailyMoodPrompt> {
             const SizedBox(height: 10),
 
             // Symptom prediction container
-            if (predictedSymptoms.isNotEmpty) 
+            if (predictedSymptoms.isNotEmpty)
               Flexible(
                 child: _buildSymptomPredictionContainer(),
               ),
@@ -172,7 +172,6 @@ class DailyMoodPromptState extends ConsumerState<DailyMoodPrompt> {
     );
   }
 
-
   SizedBox _buildMoodSelection() {
     return SizedBox(
       height: 50,
@@ -199,17 +198,17 @@ class DailyMoodPromptState extends ConsumerState<DailyMoodPrompt> {
                       shape: BoxShape.circle,
                       boxShadow: selectedMood == index
                           ? [
-                        BoxShadow(
-                          color: Colors.pink.withAlpha(76),
-                          spreadRadius: 1,
-                          blurRadius: 3,
-                          offset: const Offset(0, 1),
-                        )
-                      ]
+                              BoxShadow(
+                                color: Colors.pink.withAlpha(76),
+                                spreadRadius: 1,
+                                blurRadius: 3,
+                                offset: const Offset(0, 1),
+                              )
+                            ]
                           : null,
                     ),
                     child: //Text(getMoodEmoji(index))
-                    CustomPaint(
+                        CustomPaint(
                       painter: MoodPainter(index, selectedMood == index),
                       size: const Size(15, 15),
                     ),
@@ -243,7 +242,8 @@ class DailyMoodPromptState extends ConsumerState<DailyMoodPrompt> {
       maxLines: 3,
       onChanged: (value) {
         // Trigger symptom prediction when text changes
-        final symptomPredictionNotifier = ref.read(symptomPredictionProvider.notifier);
+        final symptomPredictionNotifier =
+            ref.read(symptomPredictionProvider.notifier);
         symptomPredictionNotifier.reset();
         if (value.length > 7) {
           // Only predict after some meaningful text
@@ -317,7 +317,7 @@ class DailyMoodPromptState extends ConsumerState<DailyMoodPrompt> {
               children: predictedSymptoms.map((symptom) {
                 final double probability = symptom.probability;
                 final bool isHighProbability = probability >= 0.4;
-                
+
                 return Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: 12,
@@ -352,7 +352,9 @@ class DailyMoodPromptState extends ConsumerState<DailyMoodPrompt> {
                         style: TextStyle(
                           color: Colors.pink[700],
                           fontSize: isHighProbability ? 14 : 12,
-                          fontWeight: isHighProbability ? FontWeight.w600 : FontWeight.normal,
+                          fontWeight: isHighProbability
+                              ? FontWeight.w600
+                              : FontWeight.normal,
                         ),
                       ),
                     ],

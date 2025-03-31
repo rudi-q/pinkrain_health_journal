@@ -16,6 +16,8 @@ import 'package:pillow/features/wellness/presentation/wellness_notifier.dart';
 import 'package:pretty_animated_text/pretty_animated_text.dart';
 import 'package:intl/intl.dart';
 
+import '../../../pdf_experiment.dart';
+
 //todo: Implement wellness data persistence and analytics
 
 class WellnessTrackerScreen extends ConsumerStatefulWidget {
@@ -36,6 +38,8 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
   String _selectedDateOption = 'month';
   late DateTime _selectedDate;
   late WellnessScreenNotifier wellnessNotifier;
+
+  final GlobalKey _printableWidgetKey = GlobalKey();
 
   @override
   void initState() {
@@ -166,7 +170,6 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
       });
     }
 
-    // Don't call _loadMoodForSelectedDate here to avoid infinite loops
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -261,295 +264,295 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                 const SizedBox(height: 30),
 
                 // Wellness title and description
+            RepaintBoundary(
+              key: _printableWidgetKey,
+              child: Column(
+                children: [
                 Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        BlurText(
+                          text:
+                              "${_selectedDate.getNameOf(_selectedDateOption)}'s Wellness Report",
+                          duration: const Duration(milliseconds: 800),
+                          type: AnimationType.word,
+                          textStyle: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 3),
+                        IconButton(
+                          icon: Icon(
+                            Icons.share,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: IconTheme.of(context).size! * 0.7,
+                          ), onPressed: () {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              devPrint("Height: ${_printableWidgetKey.currentContext!.size!.height}");
+                              captureAndShareAsPdfWidget(_printableWidgetKey, 'Pillow_${_selectedDate.getNameOf(_selectedDateOption)}_Wellness_Report');
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Center(
+                    child: Text(
+                      'Track your journey and nurture your whole self - mind and body together.',
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontSize: 14,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Mood tracker
+                  BlurText(
+                    key: ValueKey('$_selectedDateOption: $_selectedDate'),
+                    text: wellnessNotifier.checkInMessage(_selectedDateOption),
+                    duration: const Duration(milliseconds: 800),
+                    type: AnimationType.word,
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: List.generate(
+                      5,
+                      (index) => _moodIcon(index: index),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // More details button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       BlurText(
-                        text:
-                            "${_selectedDate.getNameOf(_selectedDateOption)}'s Wellness Report",
+                        text: 'Want to share more details?',
                         duration: const Duration(milliseconds: 800),
                         type: AnimationType.word,
-                        textStyle: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                        textStyle: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16,
                         ),
                       ),
-                      const SizedBox(width: 3),
-                      Icon(
-                        Icons.share,
-                        color: Theme.of(context).colorScheme.primary,
-                        size: IconTheme.of(context).size! * 0.7,
+                      const Icon(Icons.chevron_right),
+                    ],
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // Medication adherence
+                  BlurText(
+                    text: 'Medication adherence',
+                    duration: const Duration(milliseconds: 800),
+                    type: AnimationType.word,
+                    textStyle: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+
+                  _buildMedicationAdherenceCard(),
+
+                  const SizedBox(height: 15),
+
+                  _medicineAdherenceBar(),
+
+                  const SizedBox(height: 30),
+                  // Missed dose patterns
+                  buildMissedDosagePatterns(),
+
+                  const SizedBox(height: 30),
+
+                  // Active symptoms and triggers
+                  buildSymptomsAndTriggers(),
+
+                  const SizedBox(height: 30),
+
+                  // Medication impact
+                  BlurText(
+                    text: 'Medication impact',
+                    duration: const Duration(milliseconds: 800),
+                    type: AnimationType.word,
+                    textStyle: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 70,
+                        height: 70,
+                        margin: const EdgeInsets.only(right: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: CustomPaint(
+                          painter: ScatterPlotPainter(),
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            BlurText(
+                              text: 'Strong positive correlation',
+                              duration: const Duration(milliseconds: 800),
+                              type: AnimationType.word,
+                              textStyle: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            ChimeBellText(
+                              text:
+                                  'When you take your medications\nregularly, your symptoms\ntypically improve within 2 days',
+                              duration: const Duration(milliseconds: 50),
+                              textStyle: TextStyle(
+                                color: Color(0xFF9E9E9E),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 10),
-                Center(
-                  child: Text(
-                    'Track your journey and nurture your whole self - mind and body together.',
-                    style: TextStyle(
-                      color: Colors.black54,
-                      fontSize: 14,
+                  const SizedBox(height: 30),
+
+                  // NEW SECTION: Mood Trend Chart
+                  BlurText(
+                    text: 'Mood Trends Analysis',
+                    duration: const Duration(milliseconds: 800),
+                    type: AnimationType.word,
+                    textStyle: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                ),
-                const SizedBox(height: 30),
-
-                // Mood tracker
-                BlurText(
-                  key: ValueKey('$_selectedDateOption: $_selectedDate'),
-                  text: wellnessNotifier.checkInMessage(_selectedDateOption),
-                  duration: const Duration(milliseconds: 800),
-                  type: AnimationType.word,
-                  textStyle: const TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 15),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(
-                    5,
-                    (index) => _moodIcon(index: index),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // More details button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    BlurText(
-                      text: 'Want to share more details?',
-                      duration: const Duration(milliseconds: 800),
-                      type: AnimationType.word,
-                      textStyle: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 16,
-                      ),
+                  const SizedBox(height: 4),
+                  ChimeBellText(
+                    text: 'Visualize how your mood has changed over time',
+                    duration: const Duration(milliseconds: 50),
+                    textStyle: TextStyle(
+                      color: Color(0xFF9E9E9E),
+                      fontSize: 12,
                     ),
-                    const Icon(Icons.chevron_right),
-                  ],
-                ),
-
-                const SizedBox(height: 30),
-
-                // Medication adherence
-                BlurText(
-                  text: 'Medication adherence',
-                  duration: const Duration(milliseconds: 800),
-                  type: AnimationType.word,
-                  textStyle: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
                   ),
-                ),
-                const SizedBox(height: 15),
-
-                _buildMedicationAdherenceCard(),
-
-                const SizedBox(height: 15),
-
-                _medicineAdherenceBar(),
-
-                const SizedBox(height: 30),
-                // Missed dose patterns
-                buildMissedDosagePatterns(),
-
-                const SizedBox(height: 30),
-
-                // Active symptoms and triggers
-                buildSymptomsAndTriggers(),
-
-                const SizedBox(height: 30),
-
-                // Medication impact
-                BlurText(
-                  text: 'Medication impact',
-                  duration: const Duration(milliseconds: 800),
-                  type: AnimationType.word,
-                  textStyle: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 15),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 70,
-                      height: 70,
-                      margin: const EdgeInsets.only(right: 20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: CustomPaint(
-                        painter: ScatterPlotPainter(),
-                      ),
+                  const SizedBox(height: 15),
+                  SizedBox(
+                    width: double.infinity,
+                    child: MoodTrendChart(
+                      timeRange: _selectedDateOption,
+                      selectedDate: _selectedDate,
                     ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          BlurText(
-                            text: 'Strong positive correlation',
-                            duration: const Duration(milliseconds: 800),
-                            type: AnimationType.word,
-                            textStyle: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          ChimeBellText(
-                            text:
-                                'When you take your medications\nregularly, your symptoms\ntypically improve within 2 days',
-                            duration: const Duration(milliseconds: 50),
-                            textStyle: TextStyle(
-                              color: Color(0xFF9E9E9E),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
+                  ),
+                  const SizedBox(height: 30),
+
+                  // NEW SECTION: Correlation Analysis
+                  BlurText(
+                    text: 'Wellness Factor Analysis',
+                    duration: const Duration(milliseconds: 800),
+                    type: AnimationType.word,
+                    textStyle: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 30),
+                  ),
+                  const SizedBox(height: 4),
+                  ChimeBellText(
+                    text:
+                        'Discover which factors most strongly influence your mood',
+                    duration: const Duration(milliseconds: 50),
+                    textStyle: TextStyle(
+                      color: Color(0xFF9E9E9E),
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  const SizedBox(
+                    width: double.infinity,
+                    child: CorrelationAnalysis(),
+                  ),
+                  const SizedBox(height: 30),
 
-                // NEW SECTION: Mood Trend Chart
-                BlurText(
-                  text: 'Mood Trends Analysis',
-                  duration: const Duration(milliseconds: 800),
-                  type: AnimationType.word,
-                  textStyle: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
+                  // NEW SECTION: Wellness Prediction
+                  BlurText(
+                    text: 'Mood Forecast',
+                    duration: const Duration(milliseconds: 800),
+                    type: AnimationType.word,
+                    textStyle: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                ChimeBellText(
-                  text: 'Visualize how your mood has changed over time',
-                  duration: const Duration(milliseconds: 50),
-                  textStyle: TextStyle(
-                    color: Color(0xFF9E9E9E),
-                    fontSize: 12,
+                  const SizedBox(height: 4),
+                  ChimeBellText(
+                    text: 'AI-powered prediction of your mood trends',
+                    duration: const Duration(milliseconds: 50),
+                    textStyle: TextStyle(
+                      color: Color(0xFF9E9E9E),
+                      fontSize: 12,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 15),
-                SizedBox(
-                  width: double.infinity,
-                  child: MoodTrendChart(
-                    timeRange: _selectedDateOption,
-                    selectedDate: _selectedDate,
+                  const SizedBox(height: 15),
+                  const SizedBox(
+                    width: double.infinity,
+                    child: WellnessPrediction(),
                   ),
-                ),
-                const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-                // NEW SECTION: Correlation Analysis
-                BlurText(
-                  text: 'Wellness Factor Analysis',
-                  duration: const Duration(milliseconds: 800),
-                  type: AnimationType.word,
-                  textStyle: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
+                  // NEW SECTION: Personalized Insights
+                  BlurText(
+                    text: 'Your Personalized Insights',
+                    duration: const Duration(milliseconds: 800),
+                    type: AnimationType.word,
+                    textStyle: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                ChimeBellText(
-                  text:
-                      'Discover which factors most strongly influence your mood',
-                  duration: const Duration(milliseconds: 50),
-                  textStyle: TextStyle(
-                    color: Color(0xFF9E9E9E),
-                    fontSize: 12,
+                  const SizedBox(height: 4),
+                  ChimeBellText(
+                    text:
+                        'Data-driven recommendations tailored to your wellness patterns',
+                    duration: const Duration(milliseconds: 50),
+                    textStyle: TextStyle(
+                      color: Color(0xFF9E9E9E),
+                      fontSize: 12,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 15),
-                const SizedBox(
-                  width: double.infinity,
-                  child: CorrelationAnalysis(),
-                ),
-                const SizedBox(height: 30),
+                  const SizedBox(height: 15),
+                  SizedBox(
+                    width: double.infinity,
+                    child: PersonalizedInsights(timeRange: _selectedDateOption),
+                  ),
+                  const SizedBox(height: 30),
 
-                // NEW SECTION: Wellness Prediction
-                BlurText(
-                  text: 'Mood Forecast',
-                  duration: const Duration(milliseconds: 800),
-                  type: AnimationType.word,
-                  textStyle: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                ChimeBellText(
-                  text: 'AI-powered prediction of your mood trends',
-                  duration: const Duration(milliseconds: 50),
-                  textStyle: TextStyle(
-                    color: Color(0xFF9E9E9E),
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 15),
-                const SizedBox(
-                  width: double.infinity,
-                  child: WellnessPrediction(),
-                ),
-                const SizedBox(height: 30),
 
-                // NEW SECTION: Personalized Insights
-                BlurText(
-                  text: 'Your Personalized Insights',
-                  duration: const Duration(milliseconds: 800),
-                  type: AnimationType.word,
-                  textStyle: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                ChimeBellText(
-                  text:
-                      'Data-driven recommendations tailored to your wellness patterns',
-                  duration: const Duration(milliseconds: 50),
-                  textStyle: TextStyle(
-                    color: Color(0xFF9E9E9E),
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 15),
-                SizedBox(
-                  width: double.infinity,
-                  child: PersonalizedInsights(timeRange: _selectedDateOption),
-                ),
-                const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-                // NEW SECTION: Symptom Trigger Correlations
-                // Temporarily commenting out the Consumer section until we properly implement it
-                /*Consumer(
-                  builder: (context, ref, _) {
-                    final symptoms = ref.watch(symptomPredictionProvider);
-                    if (symptoms.isEmpty) return const SizedBox.shrink();
-                    return Column(
-                      children: symptoms.map((symptom) => 
-                        _buildSymptomTriggerCorrelations(symptom)
-                      ).toList(),
-                    );
-                  },
-                ),*/
-                const SizedBox(height: 30),
-
-                const SizedBox(height: 10),
-              ],
+                  const SizedBox(height: 10),
+                ]),
             ),
+            ]),
           ),
         ),
       ),
@@ -1214,3 +1217,5 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
     }
   }
 }
+
+
