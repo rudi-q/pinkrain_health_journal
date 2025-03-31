@@ -43,3 +43,14 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Android build configuration files
+**/android/**/configure_fingerprint.bin
+**/android/**/gradle-wrapper.jar
+**/android/.gradle
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+**/android/key.properties
+**/android/**/*.keystore

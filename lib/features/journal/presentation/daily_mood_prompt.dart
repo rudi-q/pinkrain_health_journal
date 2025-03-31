@@ -117,51 +117,57 @@ class DailyMoodPromptState extends ConsumerState<DailyMoodPrompt> {
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          // Cute header
-          Text(
-            'How are you feeling today?',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-              color: Colors.pink[400],
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          // Mood selection
-          _buildMoodSelection(),
-          const SizedBox(height: 10),
-
-          // Text field for feelings
-          _buildFeelingsTextField(ref),
-          const SizedBox(height: 10),
-
-          // Symptom prediction container
-          if (predictedSymptoms.isNotEmpty) _buildSymptomPredictionContainer(),
-
-          // Submit button
-          ElevatedButton(
-            onPressed: _saveMoodData,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.pink[100],
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-              minimumSize: const Size(double.infinity, 50),
-            ),
-            child: const Text(
-              'Submit',
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            // Cute header
+            Text(
+              'How are you feeling today?',
               style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+                color: Colors.pink[400],
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 10),
+
+            // Mood selection
+            _buildMoodSelection(),
+            const SizedBox(height: 10),
+
+            // Text field for feelings
+            _buildFeelingsTextField(ref),
+            const SizedBox(height: 10),
+
+            // Symptom prediction container
+            if (predictedSymptoms.isNotEmpty) 
+              Flexible(
+                child: _buildSymptomPredictionContainer(),
+              ),
+            const SizedBox(height: 10),
+
+            // Submit button
+            ElevatedButton(
+              onPressed: _saveMoodData,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.pink[100],
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                minimumSize: const Size(double.infinity, 50),
+              ),
+              child: const Text(
+                'Submit',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
