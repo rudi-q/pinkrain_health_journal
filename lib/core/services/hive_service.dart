@@ -6,6 +6,7 @@ import 'package:pillow/core/util/helpers.dart' show devPrint;
 class HiveService {
   static const String userPrefsBox = 'userPreferences';
   static const String moodBoxName = 'moodData';
+  static const String symptomBoxName = 'symptomData';
   static const String lastMoodDateKey = 'lastMoodDate';
   static const String userMoodKey = 'userMood';
   static const String userMoodDescriptionKey = 'userMoodDescription';
@@ -19,6 +20,7 @@ class HiveService {
       // Open boxes
       await _openBox(userPrefsBox);
       await _openBox(moodBoxName);
+      await _openBox(symptomBoxName);
     } catch (e) {
       devPrint('Error initializing Hive: $e');
     }
@@ -175,4 +177,73 @@ class HiveService {
       rethrow; // Rethrow to allow proper error handling upstream
     }
   }
+
+  /// Save a symptom entry
+  static Future<void> saveSymptom(String symptom, DateTime date) async {
+    try {
+      final box = await _openBox(symptomBoxName);
+      final dateKey = DateFormat('yyyy-MM-dd').format(date);
+      
+      List<String> existingSymptoms = [];
+      final existing = box.get(dateKey);
+      if (existing != null) {
+        existingSymptoms = List<String>.from(existing['symptoms']);
+      }
+      
+      if (!existingSymptoms.contains(symptom)) {
+        existingSymptoms.add(symptom);
+      }
+      
+      await box.put(dateKey, {
+        'date': dateKey,
+        'symptoms': existingSymptoms,
+      });
+    } catch (e) {
+      devPrint('Error saving symptom: $e');
+    }
+  }
+
+  /// Get symptom entries for a date range
+  static Future<List<SymptomEntry>> getSymptomEntries(DateTime start, DateTime end) async {
+    try {
+      final box = await _openBox(symptomBoxName);
+      final entries = <SymptomEntry>[];
+      
+      // Convert dates to string format for comparison
+      final startStr = DateFormat('yyyy-MM-dd').format(start);
+      final endStr = DateFormat('yyyy-MM-dd').format(end);
+      
+      for (var key in box.keys) {
+        // Skip non-date keys if any
+        if (key is! String || !key.contains('-')) continue;
+        
+        // Skip entries outside date range
+        if (key.compareTo(startStr) < 0 || key.compareTo(endStr) > 0) continue;
+        
+        final entry = box.get(key);
+        if (entry != null) {
+          entries.add(SymptomEntry(
+            date: DateTime.parse(entry['date']),
+            symptoms: List<String>.from(entry['symptoms']),
+          ));
+        }
+      }
+      
+      return entries;
+    } catch (e) {
+      devPrint('Error getting symptom entries: $e');
+      return [];
+    }
+  }
+}
+
+/// Model class for symptom entries
+class SymptomEntry {
+  final DateTime date;
+  final List<String> symptoms;
+
+  SymptomEntry({
+    required this.date,
+    required this.symptoms,
+  });
 }

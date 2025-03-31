@@ -521,6 +521,21 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                 ),
                 const SizedBox(height: 30),
 
+                // NEW SECTION: Symptom Trigger Correlations
+                // Temporarily commenting out the Consumer section until we properly implement it
+                /*Consumer(
+                  builder: (context, ref, _) {
+                    final symptoms = ref.watch(symptomPredictionProvider);
+                    if (symptoms.isEmpty) return const SizedBox.shrink();
+                    return Column(
+                      children: symptoms.map((symptom) => 
+                        _buildSymptomTriggerCorrelations(symptom)
+                      ).toList(),
+                    );
+                  },
+                ),*/
+                const SizedBox(height: 30),
+
                 const SizedBox(height: 10),
               ],
             ),
@@ -1122,6 +1137,53 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
       ],
     );
   }
+
+  // Temporarily removing the symptom trigger correlations widget until properly implemented
+  /*Widget _buildSymptomTriggerCorrelations(SymptomPrediction symptom) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            symptom.name,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (symptom.triggerCorrelations != null && symptom.triggerCorrelations!.isNotEmpty)
+            Column(
+              children: symptom.triggerCorrelations!.entries
+                  .map((entry) => Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(entry.key),
+                            Text('${(entry.value * 100).toStringAsFixed(1)}%'),
+                          ],
+                        ),
+                      ))
+                  .toList(),
+            ),
+        ],
+      ),
+    );
+  }*/
 
   // Save the mood data to HiveService
   Future<void> _saveMoodData(int mood) async {
