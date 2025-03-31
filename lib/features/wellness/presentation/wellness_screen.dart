@@ -347,17 +347,6 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
 
                 const SizedBox(height: 30),
                 // Missed dose patterns
-                BlurText(
-                  text: 'Missed dose patterns',
-                  duration: const Duration(milliseconds: 800),
-                  type: AnimationType.word,
-                  textStyle: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 15),
-
                 buildMissedDosagePatterns(),
 
                 const SizedBox(height: 30),
@@ -994,25 +983,31 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
   }
 
   Column buildMissedDosagePatterns() {
+    final pillIntakeNotifier = ref.watch(pillIntakeProvider.notifier);
+    final missedDays = pillIntakeNotifier.getMissedDoseDays();
+    
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _dayIndicator('Mon', true),
-            _dayIndicator('Tue', true),
-            _dayIndicator('Wed', false),
-            _dayIndicator('Thu', true),
-            _dayIndicator('Fri', true),
-            _dayIndicator('Sat', false),
-            _dayIndicator('Sun', true),
+            _dayIndicator('Mon', !missedDays.contains('Monday')),
+            _dayIndicator('Tue', !missedDays.contains('Tuesday')),
+            _dayIndicator('Wed', !missedDays.contains('Wednesday')),
+            _dayIndicator('Thu', !missedDays.contains('Thursday')),
+            _dayIndicator('Fri', !missedDays.contains('Friday')),
+            _dayIndicator('Sat', !missedDays.contains('Saturday')),
+            _dayIndicator('Sun', !missedDays.contains('Sunday')),
           ],
         ),
         const SizedBox(height: 15),
-        Text(
-          'You tend to miss evening doses on Wednesdays and Saturdays',
-          textAlign: TextAlign.center,
-          style: TextStyle(
+        BlurText(
+          text: missedDays.isEmpty 
+            ? 'Great job! You haven\'t missed any doses recently.'
+            : 'You tend to miss doses on ${missedDays.join(' and ')}',
+          duration: const Duration(milliseconds: 800),
+          type: AnimationType.word,
+          textStyle: TextStyle(
             color: Color(0xFF9E9E9E),
             fontSize: 12,
           ),
