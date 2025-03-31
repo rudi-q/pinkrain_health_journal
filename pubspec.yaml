@@ -36,6 +36,8 @@ dependencies:
   path_provider: ^2.1.2
   fl_chart: ^0.65.0
   tflite_flutter: ^0.11.0
+  pdf: ^3.10.7
+  share_plus: ^7.2.1
 
 dev_dependencies:
   flutter_test:

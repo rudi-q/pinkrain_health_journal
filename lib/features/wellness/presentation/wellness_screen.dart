@@ -158,16 +158,16 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
   Widget build(BuildContext context) {
     final previousDate = _selectedDate;
     _selectedDate = ref.watch(wellnessScreenProvider);
-    
+
     // Load mood data when the selected date changes
     if (previousDate != _selectedDate && _selectedDateOption == 'day') {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _loadMoodForSelectedDate();
       });
     }
-    
+
     // Don't call _loadMoodForSelectedDate here to avoid infinite loops
-    
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
@@ -262,15 +262,26 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
 
                 // Wellness title and description
                 Center(
-                  child: BlurText(
-                    text:
-                        "${_selectedDate.getNameOf(_selectedDateOption)}'s Wellness Report",
-                    duration: const Duration(milliseconds: 800),
-                    type: AnimationType.word,
-                    textStyle: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      BlurText(
+                        text:
+                            "${_selectedDate.getNameOf(_selectedDateOption)}'s Wellness Report",
+                        duration: const Duration(milliseconds: 800),
+                        type: AnimationType.word,
+                        textStyle: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                      Icon(
+                        Icons.share,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: IconTheme.of(context).size! * 0.7,
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -752,7 +763,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
 
           // Save mood data using HiveService
           await _saveMoodData(index);
-          
+
           // Force a rebuild to update the UI
           setState(() {});
         },
@@ -1000,7 +1011,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
   Column buildMissedDosagePatterns() {
     final pillIntakeNotifier = ref.watch(pillIntakeProvider.notifier);
     final missedDays = pillIntakeNotifier.getMissedDoseDays();
-    
+
     return Column(
       children: [
         Row(
@@ -1017,9 +1028,9 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
         ),
         const SizedBox(height: 15),
         BlurText(
-          text: missedDays.isEmpty 
-            ? 'Great job! You haven\'t missed any doses recently.'
-            : 'You tend to miss doses on ${missedDays.join(' and ')}',
+          text: missedDays.isEmpty
+              ? 'Great job! You haven\'t missed any doses recently.'
+              : 'You tend to miss doses on ${missedDays.join(' and ')}',
           duration: const Duration(milliseconds: 800),
           type: AnimationType.word,
           textStyle: TextStyle(
@@ -1190,10 +1201,10 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
     try {
       // Use the selected date
       final date = _selectedDate;
-      
+
       // Use the HiveService method to save mood data
       await HiveService.saveMoodForDate(date, mood, '');
-      
+
       // Force UI update
       setState(() {
         _selectedMood = mood;
