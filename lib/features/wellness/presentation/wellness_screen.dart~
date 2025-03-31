@@ -15,8 +15,7 @@ import 'package:pillow/features/wellness/presentation/components/wellness_predic
 import 'package:pillow/features/wellness/presentation/wellness_notifier.dart';
 import 'package:pretty_animated_text/pretty_animated_text.dart';
 import 'package:intl/intl.dart';
-
-//todo: Implement wellness data persistence and analytics
+import 'package:hive_flutter/hive_flutter.dart';
 
 class WellnessTrackerScreen extends ConsumerStatefulWidget {
   final DateTime? initialDate;
@@ -42,22 +41,16 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
     super.initState();
     _selectedDate = widget.initialDate ?? DateTime.now();
     wellnessNotifier = ref.read(wellnessScreenProvider.notifier);
-    // Load mood data when screen initializes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadMoodForSelectedDate();
-    });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // We'll handle mood loading when the selected date changes
   }
 
   @override
   void didUpdateWidget(WellnessTrackerScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // We'll handle mood loading when the selected date changes
   }
 
   // Format the selected date based on the current view
@@ -137,37 +130,22 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
   }
 
   // Load the mood data for the selected date
-  Future<void> _loadMoodForSelectedDate() async {
-    if (_selectedDateOption == 'day') {
-      // Get mood data for the selected date from HiveService
-      final moodData = await HiveService.getMoodForDate(_selectedDate);
-      if (moodData != null && mounted) {
-        setState(() {
-          _selectedMood = moodData['mood'] as int;
-        });
-      } else {
-        // Reset mood if no data found
-        setState(() {
-          _selectedMood = -1;
-        });
+  Future<Map<String, dynamic>?> _getMoodData(DateTime date) async {
+    try {
+      final hasMood = await HiveService.hasMoodForDate(date);
+      if (hasMood) {
+        return await HiveService.getMoodForDate(date);
       }
+      return null;
+    } catch (e) {
+      "Error loading mood data: $e".log();
+      return null;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final previousDate = _selectedDate;
     _selectedDate = ref.watch(wellnessScreenProvider);
-    
-    // Load mood data when the selected date changes
-    if (previousDate != _selectedDate && _selectedDateOption == 'day') {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _loadMoodForSelectedDate();
-      });
-    }
-    
-    // Don't call _loadMoodForSelectedDate here to avoid infinite loops
-    
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
@@ -287,6 +265,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                 const SizedBox(height: 30),
 
                 // Mood tracker
+                //todo: Implement mood tracking history and trends analysis
                 BlurText(
                   key: ValueKey('$_selectedDateOption: $_selectedDate'),
                   text: wellnessNotifier.checkInMessage(_selectedDateOption),
@@ -328,6 +307,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                 const SizedBox(height: 30),
 
                 // Medication adherence
+                //todo: Connect with actual medication data from pillbox
                 BlurText(
                   text: 'Medication adherence',
                   duration: const Duration(milliseconds: 800),
@@ -736,86 +716,100 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
   }
 
   Widget _moodIcon({required int index, int intensity = 500}) {
-    bool isSelected = _selectedMood == index;
-
-    // For day view, show the mood selection UI similar to journal screen
+    // Get the mood data using FutureBuilder to match journal screen approach
     if (_selectedDateOption == 'day') {
-      return GestureDetector(
-        onTap: () async {
-          setState(() {
-            _selectedMood = index;
-          });
+      return FutureBuilder<Map<String, dynamic>?>(
+        future: _getMoodData(_selectedDate),
+        builder: (context, snapshot) {
+          bool isSelected = false;
 
-          // Save mood data using HiveService
-          await _saveMoodData(index);
-          
-          // Force a rebuild to update the UI
-          setState(() {});
-        },
-        child: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.pink[100] : Colors.white,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.grey[300]!),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: Colors.pink.withAlpha(76),
-                      spreadRadius: 1,
-                      blurRadius: 3,
-                      offset: const Offset(0, 1),
-                    )
-                  ]
-                : null,
-          ),
-          child: Center(
-            child: CustomPaint(
-              painter: MoodPainter(index, isSelected),
-              size: const Size(30, 20),
+          // Check if we have mood data and if this is the selected mood
+          if (snapshot.connectionState == ConnectionState.done &&
+              snapshot.hasData &&
+              snapshot.data != null) {
+            isSelected = snapshot.data!['mood'] as int == index;
+          } else {
+            isSelected = _selectedMood == index;
+          }
+
+          return GestureDetector(
+            onTap: () async {
+              setState(() {
+                _selectedMood = index;
+              });
+
+              // Save mood using the same approach as the journal screen
+              try {
+                final dateKey = DateFormat('yyyy-MM-dd').format(_selectedDate);
+
+                // Make sure the box is open
+                if (!Hive.isBoxOpen(HiveService.moodBoxName)) {
+                  await Hive.openBox(HiveService.moodBoxName);
+                }
+
+                final box = Hive.box(HiveService.moodBoxName);
+
+                // Save the mood data
+                await box.put('mood_$dateKey', {
+                  'mood': index,
+                  'description': '', // No description from wellness screen
+                  'timestamp': DateTime.now().toIso8601String(),
+                });
+
+                // If it's today, also update current mood
+                if (_selectedDate.isToday()) {
+                  await HiveService.saveUserMood(index, '');
+                }
+              } catch (e) {
+                "Error saving mood: $e".log();
+              }
+            },
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.pink[100] : Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.grey[300]!),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: Colors.pink.withAlpha(76),
+                          spreadRadius: 1,
+                          blurRadius: 3,
+                          offset: const Offset(0, 1),
+                        )
+                      ]
+                    : null,
+              ),
+              child: Center(
+                child: CustomPaint(
+                  painter: MoodPainter(index, isSelected),
+                  size: const Size(30, 20),
+                ),
+              ),
             ),
-          ),
-        ),
+          );
+        },
       );
     }
-    // For month view, show the aggregated data
-    else if (_selectedDateOption == 'month') {
-      MoodTracker.populateSample();
-      isSelected = true;
-      final int moodCount = MoodTracker.getMoodCountByRange(
-          DateTime(_selectedDate.year, _selectedDate.month, 1),
-          DateTime(_selectedDate.year, _selectedDate.month, 30),
-          index + 1);
-      intensity = 50 + ((moodCount / MoodTracker.moodLog.length) * 800).toInt();
-      intensity -= intensity % 100;
-    }
 
-    // For other views (year) or default case
-    else {
-      intensity -= intensity % 100;
-    }
-
-    // Return the default visualization for non-day views
+    // For month/year view, show the mood distribution
     return GestureDetector(
       onTap: () {
-        if (_selectedDateOption == 'day') {
-          setState(() {
-            _selectedMood = index;
-          });
-        }
+        // No action for month/year view
       },
       child: Container(
         width: 50,
         height: 50,
         decoration: BoxDecoration(
-          color: isSelected ? Colors.grey[intensity] : Colors.white,
+          color: Colors.grey[intensity],
           shape: BoxShape.circle,
           border: Border.all(color: Colors.grey[300]!),
         ),
         child: Center(
           child: CustomPaint(
-            painter: MoodPainter(index, isSelected && intensity >= 500),
+            painter: MoodPainter(index, intensity >= 500),
             size: const Size(30, 20),
           ),
         ),
@@ -1126,23 +1120,5 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
         ),
       ],
     );
-  }
-
-  // Save the mood data to HiveService
-  Future<void> _saveMoodData(int mood) async {
-    try {
-      // Use the selected date
-      final date = _selectedDate;
-      
-      // Use the HiveService method to save mood data
-      await HiveService.saveMoodForDate(date, mood, '');
-      
-      // Force UI update
-      setState(() {
-        _selectedMood = mood;
-      });
-    } catch (e) {
-      "Error saving mood data: $e".log();
-    }
   }
 }

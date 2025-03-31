@@ -17,7 +17,6 @@ import '../../../core/widgets/bottom_navigation.dart';
 import '../data/journal_log.dart';
 import 'journal_notifier.dart';
 
-//todo: Implement proper journal entry model with cloud synchronization
 
 class JournalScreen extends ConsumerStatefulWidget {
   const JournalScreen({super.key});
@@ -37,16 +36,16 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
     super.initState();
     _dateScrollController = ScrollController();
     _pageController = PageController(initialPage: 1000);
-    
+
     // Check for daily mood prompt with a delay
     Future.delayed(Duration(seconds: 3), () {
       _checkDailyMood();
     });
-    
+
     // Initialize the date selector
     WidgetsBinding.instance.addPostFrameCallback((_) {
       double targetScroll = MediaQuery.of(context).size.width / 5 * 2;
-      
+
       _dateScrollController.animateTo(
         targetScroll,
         duration: Duration(milliseconds: 300),
@@ -81,24 +80,23 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
     });
   }
 
-  //todo: Implement journal entry saving functionality
-  
+
   // Check if it's the first launch of the day and show mood prompt
   void _checkDailyMood() async {
     try {
       // Check if user has already logged mood for today
       final today = DateTime.now();
       final hasMoodToday = await HiveService.hasMoodForDate(today);
-      
+
       // Only show the mood prompt if user hasn't logged mood today
       if (!hasMoodToday) {
         final isFirstLaunch = await HiveService.isFirstLaunchOfDay();
         if (isFirstLaunch) {
           // Wait a moment for the UI to settle
           await Future.delayed(const Duration(milliseconds: 500));
-          
+
           if (!mounted) return;
-          
+
           // Show the daily mood prompt
           showDialog(
             context: context,
@@ -163,7 +161,6 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
   }
 
   Widget _buildDateSelector() {
-    //todo: Improve date selector with better UI and month view option
     return SizedBox(
       height: 90,
       width: MediaQuery.of(context).size.width,
@@ -330,19 +327,19 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
       ],
     );
   }
-  
+
   // Build the mood card for the selected date
   Widget _buildMoodCard(DateTime date) {
     // Check if the date is in the future
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final selectedDate = DateTime(date.year, date.month, date.day);
-    
+
     if (selectedDate.isAfter(today)) {
       // Don't show mood card for future dates
       return const SizedBox.shrink();
     }
-    
+
     // Use FutureBuilder to handle async data loading
     return FutureBuilder<Map<String, dynamic>?>(
       future: _getMoodData(date),
@@ -350,15 +347,15 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
         // Default values
         bool hasMood = false;
         Map<String, dynamic>? moodData;
-        
+
         // Check if we have data
-        if (snapshot.connectionState == ConnectionState.done && 
-            snapshot.hasData && 
+        if (snapshot.connectionState == ConnectionState.done &&
+            snapshot.hasData &&
             snapshot.data != null) {
           hasMood = true;
           moodData = snapshot.data;
         }
-        
+
         // Determine card background color based on mood
         Color cardColor = Colors.grey[100]!;
         if (hasMood && moodData != null) {
@@ -372,7 +369,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
             cardColor = Colors.pink[50]!; // Happy mood
           }
         }
-        
+
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Card(
@@ -417,7 +414,9 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                             ChimeBellText(
                               text: (moodData['description'] as String),
                               duration: Duration(milliseconds:
-                              (500 / (moodData['description'].toString().length)).toInt()
+                              moodData['description'].toString().isEmpty
+                                ? 500 // Default duration if description is empty
+                                : (500 / (moodData['description'].toString().length)).toInt()
                               ),
                               type: AnimationType.letter,
                               textStyle: TextStyle(
@@ -444,7 +443,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                           )
                         ] : null,
                       ),
-                      child: hasMood && moodData != null 
+                      child: hasMood && moodData != null
                         ? Center(
                             child: Text(
                               getMoodEmoji(moodData['mood'] as int),
@@ -466,7 +465,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
       },
     );
   }
-  
+
   // Helper method to get mood data asynchronously
   Future<Map<String, dynamic>?> _getMoodData(DateTime date) async {
     try {
@@ -480,7 +479,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
       return null;
     }
   }
-  
+
   // Show detailed mood information in a bottom sheet
   void _showMoodDetails(DateTime date, Map<String, dynamic> moodData) {
     showModalBottomSheet(
@@ -491,7 +490,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
       builder: (context) {
         final mood = moodData['mood'] as int;
         final description = moodData['description'] as String;
-        
+
         // Parse timestamp - handle both string and int formats
         DateTime timestamp;
         if (moodData['timestamp'] is int) {
@@ -499,9 +498,9 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
         } else {
           timestamp = DateTime.parse(moodData['timestamp'] as String);
         }
-        
+
         final timeString = DateFormat('h:mm a').format(timestamp);
-        
+
         return Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -597,14 +596,14 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
       },
     );
   }
-  
+
   // Show dialog to add mood for a date
   void _showAddMoodDialog(DateTime date) {
     // Check if the date is in the future
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final selectedDate = DateTime(date.year, date.month, date.day);
-    
+
     if (selectedDate.isAfter(today)) {
       // Show error message for future dates
       ScaffoldMessenger.of(context).showSnackBar(
@@ -619,7 +618,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
       );
       return;
     }
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -635,12 +634,12 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
       },
     );
   }
-  
+
   // Show dialog to edit mood for a date
   void _showEditMoodDialog(DateTime date, Map<String, dynamic> moodData) {
     final int initialMood = moodData['mood'] as int;
     final String initialDescription = moodData['description'] as String;
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -712,7 +711,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
     } else if (icon == Icons.nights_stay_outlined) {
       emoji = '🌙'; // Moon emoji for evening
     }
-    
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Row(
@@ -736,7 +735,6 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
   }
 
   InkWell _buildMedicationItem(IntakeLog medicineLog) {
-    //todo: Make sure that on pill taken, the takenMedications list is updated
     final bool isTaken = medicineLog.isTaken;
     final medication = medicineLog.treatment;
     final String name = medication.medicine.name;
@@ -1125,24 +1123,24 @@ class EditMoodDialogState extends State<EditMoodDialog> {
 
   void _saveMoodData() async {
     final dateKey = widget.date.toIso8601String().split('T')[0];
-    
+
     // Create updated mood data
     final moodData = {
       'mood': selectedMood,
       'description': descriptionController.text,
       'timestamp': DateTime.now().millisecondsSinceEpoch,
     };
-    
+
     // Save to Hive
     try {
       // Check if box is open, if not open it
       if (!Hive.isBoxOpen(HiveService.moodBoxName)) {
         await Hive.openBox(HiveService.moodBoxName);
       }
-      
+
       final box = Hive.box(HiveService.moodBoxName);
       await box.put(dateKey, moodData);
-      
+
       widget.onComplete();
     } catch (e) {
       devPrint('Error saving mood data: $e');

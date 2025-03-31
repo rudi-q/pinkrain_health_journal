@@ -28,6 +28,9 @@ class PillIntakeNotifier extends StateNotifier<List<IntakeLog>> {
   void pillTaken(IntakeLog log) {
     log.isTaken = true;
   }
+  
+  // Getter to access the journal log
+  JournalLog get journalLog => _journalLog;
 }
 
 final pillIntakeProvider = StateNotifierProvider<PillIntakeNotifier, List<IntakeLog>>((ref) => PillIntakeNotifier());

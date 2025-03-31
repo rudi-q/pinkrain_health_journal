@@ -3,19 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pillow/core/services/hive_service.dart';
 import 'package:pillow/core/util/helpers.dart';
-import 'package:pillow/features/journal/presentation/journal.dart';
 import 'package:pillow/features/journal/presentation/symtom_predicton_notifier.dart';
 import 'package:pillow/features/wellness/presentation/components/mood_painter.dart';
 import 'package:intl/intl.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../data/symptom_prediction.dart';
-import '../domain/tf_lite_symptom_pred.dart';
+import 'journal_screen.dart';
 
 class DailyMoodPrompt extends ConsumerStatefulWidget {
   final Function onComplete;
   final DateTime?
-      date; // Optional date parameter, defaults to today if not provided
+  date; // Optional date parameter, defaults to today if not provided
 
   const DailyMoodPrompt({
     super.key,
@@ -194,13 +193,13 @@ class DailyMoodPromptState extends ConsumerState<DailyMoodPrompt> {
                       shape: BoxShape.circle,
                       boxShadow: selectedMood == index
                           ? [
-                              BoxShadow(
-                                color: Colors.pink.withAlpha(76),
-                                spreadRadius: 1,
-                                blurRadius: 3,
-                                offset: const Offset(0, 1),
-                              )
-                            ]
+                        BoxShadow(
+                          color: Colors.pink.withAlpha(76),
+                          spreadRadius: 1,
+                          blurRadius: 3,
+                          offset: const Offset(0, 1),
+                        )
+                      ]
                           : null,
                     ),
                     child: //Text(getMoodEmoji(index))

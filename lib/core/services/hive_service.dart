@@ -140,4 +140,39 @@ class HiveService {
       return false;
     }
   }
+
+  // Save mood data for a specific date
+  static Future<void> saveMoodForDate(DateTime date, int mood, String description) async {
+    try {
+      // Ensure the box is open
+      if (!Hive.isBoxOpen(moodBoxName)) {
+        await Hive.openBox(moodBoxName);
+      }
+      final box = Hive.box(moodBoxName);
+      final dateKey = DateFormat('yyyy-MM-dd').format(date);
+      
+      // Save the mood data
+      await box.put('mood_$dateKey', {
+        'mood': mood,
+        'description': description,
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+      
+      // If it's today, also update current mood
+      final today = DateTime.now();
+      final isToday = date.year == today.year &&
+          date.month == today.month &&
+          date.day == today.day;
+      
+      if (isToday) {
+        await saveUserMood(mood, description);
+        await setMoodEntryForToday();
+      }
+      
+      devPrint('Successfully saved mood $mood with description "$description" for date $dateKey');
+    } catch (e) {
+      devPrint('Error saving mood data for date: $e');
+      rethrow; // Rethrow to allow proper error handling upstream
+    }
+  }
 }

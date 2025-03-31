@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pillow/features/journal/presentation/journal.dart';
+import 'package:pillow/features/journal/presentation/journal_screen.dart';
 import 'package:pillow/features/pillbox/presentation/pillbox_screen.dart';
 import 'package:pillow/features/splash/splash_screen.dart'; 
 import 'package:pillow/features/wellness/presentation/wellness_screen.dart';
