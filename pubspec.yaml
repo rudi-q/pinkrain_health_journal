@@ -38,6 +38,7 @@ dependencies:
   tflite_flutter: ^0.11.0
   pdf: ^3.10.7
   share_plus: ^7.2.1
+  flutter_local_notifications: ^19.0.0
 
 dev_dependencies:
   flutter_test:
@@ -46,6 +47,10 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   mockito: ^5.4.5
   build_runner: ^2.4.15
+  timezone: ^0.9.2
+
+dependency_overrides:
+  timezone: ^0.9.2
 
 flutter_launcher_icons:
   android: "launcher_icon"
