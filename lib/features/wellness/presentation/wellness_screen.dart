@@ -16,7 +16,7 @@ import 'package:pillow/features/wellness/presentation/wellness_notifier.dart';
 import 'package:pretty_animated_text/pretty_animated_text.dart';
 import 'package:intl/intl.dart';
 
-import '../../../pdf_experiment.dart';
+import '../domain/share_as_pdf.dart';
 
 //todo: Implement wellness data persistence and analytics
 
