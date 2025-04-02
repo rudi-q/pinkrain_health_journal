@@ -39,6 +39,7 @@ dependencies:
   pdf: ^3.10.7
   share_plus: ^7.2.1
   flutter_local_notifications: ^19.0.0
+  permission_handler: ^11.3.0
 
 dev_dependencies:
   flutter_test:
