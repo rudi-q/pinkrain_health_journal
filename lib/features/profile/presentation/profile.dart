@@ -36,7 +36,7 @@ class ProfileScreenState extends State<ProfileScreen> {
               SizedBox(height: 10),
               TextField(
                 decoration: InputDecoration(
-                  hintText: 'Rudi',
+                  hintText: 'Anonymous',
                   filled: true,
                   fillColor: Colors.white.withValues(alpha: 0.9),
                   border: OutlineInputBorder(
