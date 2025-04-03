@@ -7,6 +7,7 @@ class HiveService {
   static const String userPrefsBox = 'userPreferences';
   static const String moodBoxName = 'moodData';
   static const String symptomBoxName = 'symptomData';
+  static const String medicationLogsBoxName = 'medicationLogs';
   static const String lastMoodDateKey = 'lastMoodDate';
   static const String userMoodKey = 'userMood';
   static const String userMoodDescriptionKey = 'userMoodDescription';
@@ -21,6 +22,7 @@ class HiveService {
       await _openBox(userPrefsBox);
       await _openBox(moodBoxName);
       await _openBox(symptomBoxName);
+      await _openBox(medicationLogsBoxName);
     } catch (e) {
       devPrint('Error initializing Hive: $e');
     }
@@ -144,7 +146,8 @@ class HiveService {
   }
 
   // Save mood data for a specific date
-  static Future<void> saveMoodForDate(DateTime date, int mood, String description) async {
+  static Future<void> saveMoodForDate(
+      DateTime date, int mood, String description) async {
     try {
       // Ensure the box is open
       if (!Hive.isBoxOpen(moodBoxName)) {
@@ -152,26 +155,27 @@ class HiveService {
       }
       final box = Hive.box(moodBoxName);
       final dateKey = DateFormat('yyyy-MM-dd').format(date);
-      
+
       // Save the mood data
       await box.put('mood_$dateKey', {
         'mood': mood,
         'description': description,
         'timestamp': DateTime.now().toIso8601String(),
       });
-      
+
       // If it's today, also update current mood
       final today = DateTime.now();
       final isToday = date.year == today.year &&
           date.month == today.month &&
           date.day == today.day;
-      
+
       if (isToday) {
         await saveUserMood(mood, description);
         await setMoodEntryForToday();
       }
-      
-      devPrint('Successfully saved mood $mood with description "$description" for date $dateKey');
+
+      devPrint(
+          'Successfully saved mood $mood with description "$description" for date $dateKey');
     } catch (e) {
       devPrint('Error saving mood data for date: $e');
       rethrow; // Rethrow to allow proper error handling upstream
@@ -183,17 +187,17 @@ class HiveService {
     try {
       final box = await _openBox(symptomBoxName);
       final dateKey = DateFormat('yyyy-MM-dd').format(date);
-      
+
       List<String> existingSymptoms = [];
       final existing = box.get(dateKey);
       if (existing != null) {
         existingSymptoms = List<String>.from(existing['symptoms']);
       }
-      
+
       if (!existingSymptoms.contains(symptom)) {
         existingSymptoms.add(symptom);
       }
-      
+
       await box.put(dateKey, {
         'date': dateKey,
         'symptoms': existingSymptoms,
@@ -204,22 +208,23 @@ class HiveService {
   }
 
   /// Get symptom entries for a date range
-  static Future<List<SymptomEntry>> getSymptomEntries(DateTime start, DateTime end) async {
+  static Future<List<SymptomEntry>> getSymptomEntries(
+      DateTime start, DateTime end) async {
     try {
       final box = await _openBox(symptomBoxName);
       final entries = <SymptomEntry>[];
-      
+
       // Convert dates to string format for comparison
       final startStr = DateFormat('yyyy-MM-dd').format(start);
       final endStr = DateFormat('yyyy-MM-dd').format(end);
-      
+
       for (var key in box.keys) {
         // Skip non-date keys if any
         if (key is! String || !key.contains('-')) continue;
-        
+
         // Skip entries outside date range
         if (key.compareTo(startStr) < 0 || key.compareTo(endStr) > 0) continue;
-        
+
         final entry = box.get(key);
         if (entry != null) {
           entries.add(SymptomEntry(
@@ -228,7 +233,7 @@ class HiveService {
           ));
         }
       }
-      
+
       return entries;
     } catch (e) {
       devPrint('Error getting symptom entries: $e');
@@ -247,31 +252,33 @@ class HiveService {
   }) async {
     try {
       final List<Map<String, dynamic>> correlationData = [];
-      
+
       // Get all dates in the range
       final daysInRange = endDate.difference(startDate).inDays + 1;
-      
+
       for (int i = 0; i < daysInRange; i++) {
         final date = startDate.add(Duration(days: i));
-        
+
         // Get mood data for this date
         final moodData = await getMoodForDate(date);
-        
+
         // Only proceed if we have mood data
         if (moodData != null && moodData.containsKey('mood')) {
           final moodValue = moodData['mood'] as int;
-          
+
           // Get medication logs for this date
           final medicationLogs = await getMedicationLogsForDate(date);
-          
+
           if (medicationLogs != null && medicationLogs.isNotEmpty) {
             // Calculate adherence percentage
             int totalMeds = medicationLogs.length;
-            int takenMeds = medicationLogs.where((log) => log['taken'] == true).length;
-            
+            int takenMeds =
+                medicationLogs.where((log) => log['taken'] == true).length;
+
             // Avoid division by zero
-            double adherencePercentage = totalMeds > 0 ? (takenMeds / totalMeds) * 100 : 0;
-            
+            double adherencePercentage =
+                totalMeds > 0 ? (takenMeds / totalMeds) * 100 : 0;
+
             // Add data point
             correlationData.add({
               'x': adherencePercentage,
@@ -281,7 +288,7 @@ class HiveService {
           }
         }
       }
-      
+
       return correlationData;
     } catch (e) {
       devPrint('Error getting medication-mood correlation: $e');
@@ -290,15 +297,36 @@ class HiveService {
   }
 
   /// Get medication logs for a specific date
-  static Future<List<Map<String, dynamic>>?> getMedicationLogsForDate(DateTime date) async {
+  static Future<List<Map<String, dynamic>>?> getMedicationLogsForDate(
+      DateTime date) async {
     try {
-      final box = await _openBox('medicationLogs');
+      final box = await _openBox(medicationLogsBoxName);
       final dateKey = DateFormat('yyyy-MM-dd').format(date);
       final logs = await box.get('logs_$dateKey');
-      return logs != null ? List<Map<String, dynamic>>.from(logs) : null;
+      if (logs == null) return null;
+
+      // Cast each map in the list to Map<String, dynamic>
+      return (logs as List)
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
     } catch (e) {
       devPrint('Error getting medication logs: $e');
       return null;
+    }
+  }
+
+  /// Save medication logs for a specific date
+  static Future<void> saveMedicationLogsForDate(
+      DateTime date, List<Map<String, dynamic>> logs) async {
+    try {
+      final box = await _openBox(medicationLogsBoxName);
+      final dateKey = DateFormat('yyyy-MM-dd').format(date);
+      await box.put('logs_$dateKey', logs);
+      devPrint('Successfully saved medication logs for date $dateKey');
+      devPrint('Stored value: ${box.get('logs_$dateKey')}');
+    } catch (e) {
+      devPrint('Error saving medication logs: $e');
+      rethrow;
     }
   }
 }

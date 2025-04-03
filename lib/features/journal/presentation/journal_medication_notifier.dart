@@ -62,7 +62,7 @@ class JournalMedicationNotifier extends StateNotifier<JournalMedicationState> {
       // Get today's medications from the provider
       final pillIntakeNotifier = _ref.read(pillIntakeProvider.notifier);
       final today = DateTime.now();
-      final medications = pillIntakeNotifier.journalLog.getMedicationsForTheDay(today);
+      final medications = await pillIntakeNotifier.journalLog.getMedicationsForTheDay(today);
       
       // Filter for untaken medications
       final untakenMeds = medications.where((med) => !med.isTaken).toList();
@@ -91,7 +91,7 @@ class JournalMedicationNotifier extends StateNotifier<JournalMedicationState> {
 extension MedicationNotifierExtension on ConsumerState {
   /// Check for untaken medications and show notifications
   Future<void> checkUntakenMedications() async {
-    ref.read(journalMedicationNotifierProvider.notifier).checkUntakenMedications();
+    await ref.read(journalMedicationNotifierProvider.notifier).checkUntakenMedications();
   }
   
   /// Reset the medication check flag

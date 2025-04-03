@@ -961,12 +961,15 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        _showPillTakenDialog(context);
-                        setState(() {
-
-                          devPrint(medicineLog.isTaken);
-                          medicineLog.isTaken = true;
-                          devPrint(medicineLog.isTaken);
+                        
+                        // Get the pill intake notifier and use the async version of pillTaken
+                        final pillIntakeNotifier = ref.read(pillIntakeProvider.notifier);
+                        pillIntakeNotifier.pillTaken(medicineLog, selectedDate).then((_) {
+                          _showPillTakenDialog(context);
+                          setState(() {
+                            // Log for debugging
+                            devPrint('Pill taken: ${medicineLog.isTaken}');
+                          });
                         });
                       },
                       style: ElevatedButton.styleFrom(

@@ -7,10 +7,10 @@ import '../data/journal_log.dart';
 class SelectedDateNotifier extends StateNotifier<DateTime> {
   SelectedDateNotifier() : super(DateTime.now().normalize());
 
-  void setDate(DateTime date, WidgetRef ref) {
+  Future<void> setDate(DateTime date, WidgetRef ref) async {
     state = date.normalize();
     final pillIntakeNotifier = ref.read(pillIntakeProvider.notifier);
-    pillIntakeNotifier.populateJournal(state);
+    await pillIntakeNotifier.populateJournal(state);
   }
   
 }
@@ -21,33 +21,54 @@ class PillIntakeNotifier extends StateNotifier<List<IntakeLog>> {
   final JournalLog _journalLog = JournalLog();
 
   PillIntakeNotifier() : super([]) {
-    populateJournal(DateTime.now().normalize());
+    // Initialize with empty state, then populate asynchronously
+    _initJournal();
+  }
+  
+  Future<void> _initJournal() async {
+    await populateJournal(DateTime.now().normalize());
   }
 
-  void populateJournal(DateTime selectedDate) => state = _journalLog.getMedicationsForTheDay(selectedDate);
+  Future<void> populateJournal(DateTime selectedDate) async {
+    state = await _journalLog.getMedicationsForTheDay(selectedDate);
+  }
 
-  void pillTaken(IntakeLog log) {
+  Future<void> pillTaken(IntakeLog log, DateTime date) async {
     log.isTaken = true;
+    
+    // Get the normalized date
+    final normalizedDate = date.normalize();
+    
+    // Save the updated logs to persistent storage
+    await _journalLog.saveMedicationLogs(normalizedDate);
   }
   
   // Getter to access the journal log
   JournalLog get journalLog => _journalLog;
 
+  /// Get the days of the week with the most missed doses
+  /// Uses in-memory data only - ensure data is loaded before calling
   List<String> getMissedDoseDays() {
-    Map<String, int> missedDoseDays = {};
+    final Map<String, int> missedDoseDays = {};
     
     // Use the existing medicationLogs data
     _journalLog.medicationLogs.forEach((date, intakeLogs) {
-      String dayOfWeek = DateFormat('EEEE').format(date);
-      int missedDoses = intakeLogs.where((log) => !log.isTaken).length;
-      if (missedDoses > 0) {
-        missedDoseDays.update(dayOfWeek, (count) => count + missedDoses, 
-            ifAbsent: () => missedDoses);
+      if (intakeLogs.isNotEmpty) {
+        final String dayOfWeek = DateFormat('EEEE').format(date);
+        final int missedDoses = intakeLogs.where((log) => !log.isTaken).length;
+        if (missedDoses > 0) {
+          missedDoseDays.update(dayOfWeek, (count) => count + missedDoses, 
+              ifAbsent: () => missedDoses);
+        }
       }
     });
 
     // Get the top 2 days with most missed doses
-    var sortedDays = missedDoseDays.entries.toList()
+    if (missedDoseDays.isEmpty) {
+      return [];
+    }
+    
+    final sortedDays = missedDoseDays.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
       
     return sortedDays.take(2).map((e) => e.key).toList();
