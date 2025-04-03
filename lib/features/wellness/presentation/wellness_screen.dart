@@ -6,6 +6,7 @@ import 'package:pillow/core/util/helpers.dart';
 import 'package:pillow/core/widgets/bottom_navigation.dart';
 import 'package:pillow/features/journal/presentation/journal_notifier.dart';
 import 'package:pillow/features/wellness/domain/wellness_tracker.dart';
+import 'package:pillow/features/wellness/domain/share_as_pdf.dart';
 import 'package:pillow/features/wellness/presentation/components/correlation_analysis.dart';
 import 'package:pillow/features/wellness/presentation/components/mood_painter.dart';
 import 'package:pillow/features/wellness/presentation/components/mood_trend_chart.dart';
@@ -15,8 +16,6 @@ import 'package:pillow/features/wellness/presentation/components/wellness_predic
 import 'package:pillow/features/wellness/presentation/wellness_notifier.dart';
 import 'package:pretty_animated_text/pretty_animated_text.dart';
 import 'package:intl/intl.dart';
-
-import '../domain/share_as_pdf.dart';
 
 //todo: Implement wellness data persistence and analytics
 
@@ -403,8 +402,30 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: CustomPaint(
-                          painter: ScatterPlotPainter(),
+                        child: FutureBuilder<List<Map<String, dynamic>>>(
+                          future: HiveService.getMedicationMoodCorrelation(
+                            startDate: _selectedDate.subtract(const Duration(days: 30)),
+                            endDate: _selectedDate,
+                          ),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(child: CircularProgressIndicator());
+                            }
+                            
+                            if (snapshot.hasError) {
+                              return Center(
+                                child: Text(
+                                  'Error loading data',
+                                  style: TextStyle(color: Colors.red[300]),
+                                ),
+                              );
+                            }
+                            
+                            final data = snapshot.data ?? [];
+                            return CustomPaint(
+                              painter: ScatterPlotPainter(correlationData: data),
+                            );
+                          },
                         ),
                       ),
                       Expanded(
@@ -1217,5 +1238,3 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
     }
   }
 }
-
-

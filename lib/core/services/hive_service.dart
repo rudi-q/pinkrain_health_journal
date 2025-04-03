@@ -235,6 +235,72 @@ class HiveService {
       return [];
     }
   }
+
+  /// Get correlation data between medication adherence and mood
+  /// Returns a list of data points where each point contains:
+  /// - x: medication adherence percentage (0-100)
+  /// - y: mood level (1-5)
+  /// - date: the date of the data point
+  static Future<List<Map<String, dynamic>>> getMedicationMoodCorrelation({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    try {
+      final List<Map<String, dynamic>> correlationData = [];
+      
+      // Get all dates in the range
+      final daysInRange = endDate.difference(startDate).inDays + 1;
+      
+      for (int i = 0; i < daysInRange; i++) {
+        final date = startDate.add(Duration(days: i));
+        
+        // Get mood data for this date
+        final moodData = await getMoodForDate(date);
+        
+        // Only proceed if we have mood data
+        if (moodData != null && moodData.containsKey('mood')) {
+          final moodValue = moodData['mood'] as int;
+          
+          // Get medication logs for this date
+          final medicationLogs = await getMedicationLogsForDate(date);
+          
+          if (medicationLogs != null && medicationLogs.isNotEmpty) {
+            // Calculate adherence percentage
+            int totalMeds = medicationLogs.length;
+            int takenMeds = medicationLogs.where((log) => log['taken'] == true).length;
+            
+            // Avoid division by zero
+            double adherencePercentage = totalMeds > 0 ? (takenMeds / totalMeds) * 100 : 0;
+            
+            // Add data point
+            correlationData.add({
+              'x': adherencePercentage,
+              'y': moodValue.toDouble(),
+              'date': date,
+            });
+          }
+        }
+      }
+      
+      return correlationData;
+    } catch (e) {
+      devPrint('Error getting medication-mood correlation: $e');
+      return [];
+    }
+  }
+
+  /// Get medication logs for a specific date
+  static Future<List<Map<String, dynamic>>?> getMedicationLogsForDate(DateTime date) async {
+    try {
+      final box = await _openBox('medicationLogs');
+      final dateKey = DateFormat('yyyy-MM-dd').format(date);
+      final logs = await box.get('logs_$dateKey');
+      return logs != null ? List<Map<String, dynamic>>.from(logs) : null;
+    } catch (e) {
+      devPrint('Error getting medication logs: $e');
+      return null;
+    }
+  }
 }
 
 /// Model class for symptom entries
