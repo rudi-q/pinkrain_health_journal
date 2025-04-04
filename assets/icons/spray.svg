@@ -1,0 +1,10 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Property 1=spray">
+<g id="Group 4">
+<rect id="Rectangle 3" x="17.5" y="14.5" width="5" height="5" stroke="black"/>
+<path id="Vector 8" d="M24.5 9L36 7M25 13L36 15.5" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+<rect id="Rectangle 1" x="12.5" y="18.5" width="15" height="22" rx="2.5" fill="#FFD1FF" stroke="black"/>
+<path id="Rectangle 2" d="M15.5 10C15.5 8.61929 16.6193 7.5 18 7.5H24C24.2761 7.5 24.5 7.72386 24.5 8V14C24.5 14.2761 24.2761 14.5 24 14.5H16C15.7239 14.5 15.5 14.2761 15.5 14V10Z" fill="#8BE8CB" stroke="black" stroke-linejoin="round"/>
+</g>
+</g>
+</svg>

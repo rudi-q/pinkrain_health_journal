@@ -1,0 +1,10 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Property 1=drop">
+<g id="Vector 3">
+<mask id="path-1-inside-1_2241_2410" fill="white">
+<path d="M23.9009 9.25C11.671 19.75 10.3009 38.75 23.9009 38.75C37.5009 38.75 36.6712 21.25 23.9009 9.25Z"/>
+</mask>
+<path d="M23.9009 9.25C11.671 19.75 10.3009 38.75 23.9009 38.75C37.5009 38.75 36.6712 21.25 23.9009 9.25Z" fill="#8BE8CB" stroke="black" stroke-width="2" mask="url(#path-1-inside-1_2241_2410)"/>
+</g>
+</g>
+</svg>
