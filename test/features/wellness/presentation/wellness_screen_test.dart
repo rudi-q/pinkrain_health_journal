@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pillow/features/wellness/presentation/wellness_screen.dart';
+import 'package:pillow/core/util/helpers.dart';
 
 void main() {
   group('WellnessTrackerScreen', () {
@@ -279,7 +279,7 @@ void main() {
       expect(() => ''.capitalize(), returnsNormally);
       // If the implementation allows, also check the result
       // This might need to be adjusted based on the actual implementation
-      if (''.length > 0) {
+      if (''.isNotEmpty) {
         expect(''.capitalize(), '');
       }
     });

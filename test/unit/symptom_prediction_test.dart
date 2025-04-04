@@ -1,8 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
 import 'package:pillow/features/journal/data/symptom_prediction.dart';
 import 'package:pillow/features/journal/domain/tf_lite_symptom_pred.dart';
-import 'package:mockito/mockito.dart';
-import 'package:mockito/annotations.dart';
 import 'package:tflite_flutter/tflite_flutter.dart' as tfl;
 
 @GenerateMocks([tfl.Interpreter])
