@@ -1,21 +1,54 @@
 import 'package:flutter/material.dart';
-
+import 'package:go_router/go_router.dart';
 import '../../../core/widgets/appbar.dart';
-
+import '../domain/treatment_manager.dart';
 
 class DurationScreen extends StatefulWidget {
-  const DurationScreen({super.key});
+  final Treatment treatment;
+
+  const DurationScreen({
+    super.key,
+    required this.treatment,
+  });
 
   @override
   DurationScreenState createState() => DurationScreenState();
 }
 
 class DurationScreenState extends State<DurationScreen> {
-  String selectedStart = 'tomorrow';
-  String selectedDurationUnit = 'days';
+  final List<bool> selectedDays = List.generate(7, (index) => false);
   int selectedDuration = 5;
+  DateTime startDate = DateTime.now().add(const Duration(days: 1));
+  final TreatmentManager treatmentManager = TreatmentManager();
 
-  List<bool> selectedDays = [true, true, true, true, true, false, false];
+  List<Widget> _buildDayButtons() {
+    final List<String> days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    return List.generate(7, (index) {
+      return GestureDetector(
+        onTap: () {
+          setState(() {
+            selectedDays[index] = !selectedDays[index];
+          });
+        },
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: selectedDays[index] ? Colors.pink[100] : Colors.grey[200],
+          ),
+          child: Center(
+            child: Text(
+              days[index],
+              style: TextStyle(
+                color: selectedDays[index] ? Colors.black : Colors.grey[600],
+              ),
+            ),
+          ),
+        ),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,14 +71,14 @@ class DurationScreenState extends State<DurationScreen> {
                         thickness: 3,
                       ),
                     ),
-                    SizedBox(width: 5),
+                    const SizedBox(width: 5),
                     Expanded(
                       child: Divider(
                         color: Colors.pink[100],
                         thickness: 3,
                       ),
                     ),
-                    SizedBox(width: 5),
+                    const SizedBox(width: 5),
                     Expanded(
                       child: Divider(
                         color: Colors.pink[100],
@@ -56,21 +89,21 @@ class DurationScreenState extends State<DurationScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
             // Days Taken
-            Text(
+            const Text(
               'Days taken',
               style: TextStyle(fontSize: 18),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: _buildDayButtons(),
             ),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
             // Start Field
             DropdownButtonFormField<String>(
-              value: selectedStart,
+              value: 'tomorrow',
               decoration: InputDecoration(
                 labelText: 'Start',
                 filled: true,
@@ -92,11 +125,13 @@ class DurationScreenState extends State<DurationScreen> {
               }).toList(),
               onChanged: (String? newValue) {
                 setState(() {
-                  selectedStart = newValue!;
+                  startDate = newValue == 'tomorrow' 
+                      ? DateTime.now().add(const Duration(days: 1))
+                      : DateTime.now();
                 });
               },
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             // Duration Field
             Row(
               children: [
@@ -115,15 +150,15 @@ class DurationScreenState extends State<DurationScreen> {
                     keyboardType: TextInputType.number,
                     onChanged: (value) {
                       setState(() {
-                        selectedDuration = int.parse(value);
+                        selectedDuration = int.tryParse(value) ?? selectedDuration;
                       });
                     },
                   ),
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: selectedDurationUnit,
+                    value: 'days',
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.grey[200],
@@ -143,44 +178,51 @@ class DurationScreenState extends State<DurationScreen> {
                       );
                     }).toList(),
                     onChanged: (String? newValue) {
-                      setState(() {
-                        selectedDurationUnit = newValue!;
-                      });
+                      // No action needed
                     },
                   ),
                 ),
               ],
             ),
-            Spacer(),
+            const Spacer(),
             // Navigation Buttons
             Row(
               children: [
                 Expanded(
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () => context.go('/'),
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.grey[200],
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Previous',
                       style: TextStyle(color: Colors.black),
                     ),
                   ),
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 Expanded(
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () async {
+                      widget.treatment.treatmentPlan.startDate = startDate;
+                      widget.treatment.treatmentPlan.endDate = startDate.add(Duration(days: selectedDuration));
+                      
+                      await treatmentManager.saveTreatment(widget.treatment);
+                      
+                      if (mounted) {
+                        context.go('/pillbox');
+                      }
+                    },
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.pink[100],
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Add',
                       style: TextStyle(color: Colors.black),
                     ),
@@ -192,30 +234,5 @@ class DurationScreenState extends State<DurationScreen> {
         ),
       ),
     );
-  }
-
-  // Function to create day buttons (M, T, W, etc.)
-  List<Widget> _buildDayButtons() {
-    List<String> days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-    return List.generate(days.length, (index) {
-      return GestureDetector(
-        onTap: () {
-          setState(() {
-            selectedDays[index] = !selectedDays[index];
-          });
-        },
-        child: CircleAvatar(
-          radius: 20,
-          backgroundColor:
-          selectedDays[index] ? Colors.grey[800] : Colors.grey[300],
-          child: Text(
-            days[index],
-            style: TextStyle(
-              color: selectedDays[index] ? Colors.white : Colors.black,
-            ),
-          ),
-        ),
-      );
-    });
   }
 }

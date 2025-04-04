@@ -8,6 +8,7 @@ class HiveService {
   static const String moodBoxName = 'moodData';
   static const String symptomBoxName = 'symptomData';
   static const String medicationLogsBoxName = 'medicationLogs';
+  static const String treatmentsBoxName = 'treatments';
   static const String lastMoodDateKey = 'lastMoodDate';
   static const String userMoodKey = 'userMood';
   static const String userMoodDescriptionKey = 'userMoodDescription';
@@ -23,6 +24,7 @@ class HiveService {
       await _openBox(moodBoxName);
       await _openBox(symptomBoxName);
       await _openBox(medicationLogsBoxName);
+      await _openBox(treatmentsBoxName);
     } catch (e) {
       devPrint('Error initializing Hive: $e');
     }
@@ -327,6 +329,30 @@ class HiveService {
     } catch (e) {
       devPrint('Error saving medication logs: $e');
       rethrow;
+    }
+  }
+
+  /// Save a treatment
+  static Future<void> saveTreatment(Map<String, dynamic> treatment) async {
+    try {
+      final box = await _openBox(treatmentsBoxName);
+      final treatments = await getTreatments();
+      treatments.add(treatment);
+      await box.put('treatments', treatments);
+    } catch (e) {
+      devPrint('Error saving treatment: $e');
+    }
+  }
+
+  /// Get all treatments
+  static Future<List<Map<String, dynamic>>> getTreatments() async {
+    try {
+      final box = await _openBox(treatmentsBoxName);
+      final treatments = await box.get('treatments', defaultValue: <Map<String, dynamic>>[]);
+      return List<Map<String, dynamic>>.from(treatments);
+    } catch (e) {
+      devPrint('Error getting treatments: $e');
+      return [];
     }
   }
 }

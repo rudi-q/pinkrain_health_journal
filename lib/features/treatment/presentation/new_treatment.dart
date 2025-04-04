@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pillow/core/util/helpers.dart';
-import 'package:pillow/features/treatment/presentation/schedule.dart';
-
-import '../../../core/navigation/router.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/icons.dart';
 import '../domain/treatment_manager.dart';
 
@@ -20,6 +18,14 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
   String selectedColor = 'White';
   String selectedMealOption = 'Before meal';
   String selectedDoseUnit = 'mg';
+
+  final Map<String, Color> colorMap = {
+    'White': Colors.white,
+    'Yellow': Color(0xFFFFF3C4), // Soft pastel yellow
+    'Pink': Color(0xFFFFE4E8),   // Soft pastel pink
+    'Blue': Color(0xFFE3F2FD),   // Soft pastel blue
+    'Red': Color(0xFFFFE5E5),    // Soft pastel red
+  };
 
   final TextEditingController nameController = TextEditingController();
   final TextEditingController doseController = TextEditingController();
@@ -52,7 +58,7 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
           child: Padding(
             padding: const EdgeInsets.all(20.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 _buildProgressBar(),
                 SizedBox(height: 20),
@@ -88,28 +94,45 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
   }
 
   Widget _buildTreatmentTypeOptions() {
-    List<String> types = ['Tablets', 'Capsule', 'Drops', 'Cream', 'Spray'];
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: types.map((type) => _buildTreatmentTypeOption(type)).toList(),
+    List<String> types = ['Tablet', 'Capsule', 'Drops', 'Cream', 'Spray', 'Injection'];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: EdgeInsets.symmetric(horizontal: 8.0),
+      child: Row(
+        children: types.map((type) => Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4.0),
+          child: _buildTreatmentTypeOption(type),
+        )).toList(),
+      ),
     );
   }
 
   Widget _buildTreatmentTypeOption(String type) {
+    final isSelected = selectedTreatmentType == type;
     return GestureDetector(
       onTap: () => setState(() => selectedTreatmentType = type),
       child: Column(
         children: [
           Container(
+            key: ValueKey(selectedColor),
             width: 60,
             height: 60,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
+              color: isSelected ? Colors.pink[50] : Colors.transparent,
+              border: Border.all(
+                color: isSelected ? Colors.pink[200]! : Colors.grey[400]!,
+                width: 2,
+              ),
             ),
-            child: appImage('medicine', size: 30),
+            child: _futureBuildSvg(type),
           ),
           SizedBox(height: 5),
-          Text(type, style: TextStyle(fontSize: 12)),
+          Text(type,
+              style: TextStyle(
+                color: isSelected ? Colors.pink[400] : Colors.grey[700],
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              )),
         ],
       ),
     );
@@ -119,9 +142,8 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-            'Color',
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text('Color',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         SizedBox(height: 10),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -136,39 +158,36 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
   }
 
   Widget _buildColorOption(String color) {
+    final isSelected = selectedColor == color;
     return GestureDetector(
       onTap: () => setState(() => selectedColor = color),
       child: Container(
         margin: EdgeInsets.only(right: 10),
-        padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: _getColor(color),
-          borderRadius: BorderRadius.circular(20),
+          color: colorMap[color] ?? Colors.grey[300],
+          borderRadius: BorderRadius.circular(25),
           border: Border.all(
-            color: Colors.grey,
+            color: Colors.grey[300]!,
             width: 1,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withValues(alpha: 0.1),
+              spreadRadius: 0,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
-        child: Text(color),
+        child: Text(color,
+            style: TextStyle(
+              color: Colors.grey[800],
+              fontSize: 16,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            )),
       ),
     );
-  }
-
-  Color _getColor(String color) {
-    switch (color) {
-      case 'White':
-        return Colors.white;
-      case 'Yellow':
-        return Colors.yellow[200]!;
-      case 'Pink':
-        return Colors.pink[100]!;
-      case 'Blue':
-        return Colors.blue[200]!;
-      case 'Red':
-        return Colors.red[300]!;
-      default:
-        return Colors.grey;
-    }
   }
 
   Widget _buildNameField() {
@@ -280,20 +299,31 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
   }
 
   Widget _buildMealOption(String option) {
+    final isSelected = selectedMealOption == option;
     return GestureDetector(
       onTap: () => setState(() => selectedMealOption = option),
       child: Column(
         children: [
           Container(
+            key: ValueKey(selectedColor),
             width: 60,
             height: 60,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
+              color: isSelected ? Colors.pink[50] : Colors.transparent,
+              border: Border.all(
+                color: isSelected ? Colors.pink[200]! : Colors.grey[400]!,
+                width: 2,
+              ),
             ),
-            child: appImage('medicine', size: 30),
+            child: _futureBuildSvg(option.toLowerCase().replaceAll(' ', '-')/*, size: 30, useColorFilter: false*/),
           ),
           SizedBox(height: 5),
-          Text(option, style: TextStyle(fontSize: 12)),
+          Text(option,
+              style: TextStyle(
+                color: isSelected ? Colors.pink[400] : Colors.grey[700],
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              )),
         ],
       ),
     );
@@ -330,23 +360,13 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
             final treatment = Treatment.newTreatment(
               name: nameController.text,
               type: selectedTreatmentType,
-              color: selectedColor,
+              color: colorMap[selectedColor]?.toString() ?? Colors.white.toString(),
               dose: double.parse(doseController.text),
               doseUnit: selectedDoseUnit,
               mealOption: selectedMealOption,
-              comment: commentController.text.isNotEmpty
-                  ? commentController.text
-                  : null,
+              comment: commentController.text.isNotEmpty ? commentController.text : '',
             );
-
-            'Created new treatment: ${treatment.medicine.name}'.log();
-
-            try {
-              navigatorKey.currentState?.push(
-                  MaterialPageRoute(builder: (context) => ScheduleScreen()));
-            } on Exception catch (e) {
-              'Error: Failed to navigate to ScheduleScreen: $e'.log();
-            }
+            context.push('/schedule', extra: treatment);
           }
         },
         style: ElevatedButton.styleFrom(
@@ -380,14 +400,30 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
 
     if (errorMessage.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-          duration: Duration(seconds: 3),
-        ),
+        SnackBar(content: Text(errorMessage)),
       );
       return false;
     }
-
     return true;
+  }
+
+  FutureBuilder<SvgPicture> _futureBuildSvg(String text) {
+    return FutureBuilder<SvgPicture>(
+        future: appSvgDynamicImage(
+            fileName: text.toLowerCase(),
+            size: 30,
+            color: colorMap[selectedColor],
+            useColorFilter: false
+        ),
+        builder: (context, snapshot) {
+          return snapshot.data ??
+              appVectorImage(
+                  fileName: text.toLowerCase(),
+                  size: 30,
+                  color: colorMap[selectedColor],
+                  useColorFilter: false
+              );
+        }
+    );
   }
 }

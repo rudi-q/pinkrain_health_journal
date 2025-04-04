@@ -77,19 +77,21 @@ class PillboxScreen extends ConsumerWidget {
         ),
       ),
       // Bottom Navigation Bar
-      bottomNavigationBar: buildBottomNavigationBar(context: context, currentRoute: 'pillbox'),
+      bottomNavigationBar:
+          buildBottomNavigationBar(context: context, currentRoute: 'pillbox'),
     );
   }
 
   // Build Medication Cards
   List<Widget> _buildMedicationCards(WidgetRef ref, BuildContext context) {
     final IPillBox pillBox = ref.watch(pillBoxProvider);
-  
+
     return pillBox.pillStock.map((medicineInventory) {
       Medicine med = medicineInventory.medicine;
       return GestureDetector(
         onTap: () {
-          context.push('/medicine_detail/${medicineInventory.quantity}', extra: medicineInventory);
+          context.push('/medicine_detail/${medicineInventory.quantity}',
+              extra: medicineInventory);
         },
         child: Card(
           shape: RoundedRectangleBorder(
@@ -105,14 +107,19 @@ class PillboxScreen extends ConsumerWidget {
                 const SizedBox(height: 10),
                 Text(
                   med.name,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(med.type,
-                    style: const TextStyle(fontSize: 14, color: Colors.black54)),
+                    style:
+                        const TextStyle(fontSize: 14, color: Colors.black54)),
                 const Spacer(),
                 Text(
                   '${medicineInventory.quantity} pills left',
-                  style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.black87,
+                      fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -121,84 +128,85 @@ class PillboxScreen extends ConsumerWidget {
       );
     }).toList();
   }
+
 //todo: Improve medication form with more detailed information and validation
-void _showAddMedicineDialog(BuildContext context, WidgetRef ref) {
-  final nameController = TextEditingController();
-  final typeController = TextEditingController();
-  final quantityController = TextEditingController();
-  final unitController = TextEditingController();
-  final useCaseController = TextEditingController();
+  void _showAddMedicineDialog(BuildContext context, WidgetRef ref) {
+    final nameController = TextEditingController();
+    final typeController = TextEditingController();
+    final quantityController = TextEditingController();
+    final unitController = TextEditingController();
+    final useCaseController = TextEditingController();
 
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text('Add New Medication'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(labelText: 'Medication Name'),
-              ),
-              TextField(
-                controller: typeController,
-                decoration: InputDecoration(labelText: 'Medication Type'),
-              ),
-              TextField(
-                controller: quantityController,
-                decoration: InputDecoration(labelText: 'Quantity'),
-                keyboardType: TextInputType.number,
-              ),
-              TextField(
-                controller: unitController,
-                decoration: InputDecoration(labelText: 'Unit'),
-              ),
-              TextField(
-                controller: useCaseController,
-                decoration: InputDecoration(labelText: 'Use Case'),
-              )
-            ],
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Add New Medication'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(labelText: 'Medication Name'),
+                ),
+                TextField(
+                  controller: typeController,
+                  decoration: InputDecoration(labelText: 'Medication Type'),
+                ),
+                TextField(
+                  controller: quantityController,
+                  decoration: InputDecoration(labelText: 'Quantity'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: unitController,
+                  decoration: InputDecoration(labelText: 'Unit'),
+                ),
+                TextField(
+                  controller: useCaseController,
+                  decoration: InputDecoration(labelText: 'Use Case'),
+                )
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            child: Text('Cancel'),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          TextButton(
-            child: Text('Add'),
-            onPressed: () {
-              if (nameController.text.isNotEmpty &&
-                  typeController.text.isNotEmpty &&
-                  quantityController.text.isNotEmpty) {
-                final newMedicine = Medicine(
-                  name: nameController.text,
-                  type: typeController.text,
-                );
-                final quantity = int.tryParse(quantityController.text) ?? 0;
+          actions: [
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: Text('Add'),
+              onPressed: () {
+                if (nameController.text.isNotEmpty &&
+                    typeController.text.isNotEmpty &&
+                    quantityController.text.isNotEmpty) {
+                  final newMedicine = Medicine(
+                    name: nameController.text,
+                    type: typeController.text,
+                  );
+                  final quantity = int.tryParse(quantityController.text) ?? 0;
 
-                if(unitController.text.isNotEmpty &&
-                 useCaseController.text.isNotEmpty
-                ) {
-                  final specification = Specification(unit: unitController.text, useCase: useCaseController.text);
-                  newMedicine.addSpecification(specification);
+                  if (unitController.text.isNotEmpty &&
+                      useCaseController.text.isNotEmpty) {
+                    final specification = Specification(
+                        unit: unitController.text,
+                        useCase: useCaseController.text);
+                    newMedicine.addSpecification(specification);
+                  }
+
+                  PillBoxManager.addMedicine(
+                    medicine: newMedicine,
+                    quantity: quantity,
+                  );
+
+                  Navigator.of(context).pop();
                 }
-                
-                PillBoxManager.addMedicine(
-                  medicine: newMedicine,
-                  quantity: quantity,
-                );
-
-                
-                Navigator.of(context).pop();
-              }
-            },
-          ),
-        ],
-      );
-    },
-  );
-}
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
