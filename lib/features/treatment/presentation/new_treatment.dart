@@ -15,12 +15,12 @@ class NewTreatmentScreen extends StatefulWidget {
 
 class NewTreatmentScreenState extends State<NewTreatmentScreen> {
   final TreatmentManager treatmentManager = TreatmentManager();
-  
+
   String selectedTreatmentType = 'Tablets';
   String selectedColor = 'White';
   String selectedMealOption = 'Before meal';
   String selectedDoseUnit = 'mg';
-  
+
   final TextEditingController nameController = TextEditingController();
   final TextEditingController doseController = TextEditingController();
   final TextEditingController commentController = TextEditingController();
@@ -36,11 +36,10 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text('New treatment'),
         backgroundColor: Colors.transparent,
-        foregroundColor: Colors.black,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.close),
@@ -120,14 +119,16 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Color', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(
+            'Color',
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         SizedBox(height: 10),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
-            children: [
-              'White', 'Yellow', 'Pink', 'Blue', 'Red'
-            ].map((color) => _buildColorOption(color)).toList(),
+            children: ['White', 'Yellow', 'Pink', 'Blue', 'Red']
+                .map((color) => _buildColorOption(color))
+                .toList(),
           ),
         ),
       ],
@@ -155,12 +156,18 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
 
   Color _getColor(String color) {
     switch (color) {
-      case 'White': return Colors.white;
-      case 'Yellow': return Colors.yellow[200]!;
-      case 'Pink': return Colors.pink[100]!;
-      case 'Blue': return Colors.blue[200]!;
-      case 'Red': return Colors.red[300]!;
-      default: return Colors.grey;
+      case 'White':
+        return Colors.white;
+      case 'Yellow':
+        return Colors.yellow[200]!;
+      case 'Pink':
+        return Colors.pink[100]!;
+      case 'Blue':
+        return Colors.blue[200]!;
+      case 'Red':
+        return Colors.red[300]!;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -168,7 +175,8 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Name', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text('Name',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         SizedBox(height: 10),
         TextField(
           controller: nameController,
@@ -196,7 +204,8 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Dose', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text('Dose',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         SizedBox(height: 10),
         Row(
           children: [
@@ -258,7 +267,12 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
   }
 
   Widget _buildMealOptions() {
-    List<String> options = ['Before meal', 'After meal', 'With food', 'Never mind'];
+    List<String> options = [
+      'Before meal',
+      'After meal',
+      'With food',
+      'Never mind'
+    ];
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: options.map((option) => _buildMealOption(option)).toList(),
@@ -320,15 +334,16 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
               dose: double.parse(doseController.text),
               doseUnit: selectedDoseUnit,
               mealOption: selectedMealOption,
-              comment: commentController.text.isNotEmpty ? commentController.text : null,
+              comment: commentController.text.isNotEmpty
+                  ? commentController.text
+                  : null,
             );
-            
+
             'Created new treatment: ${treatment.medicine.name}'.log();
-            
+
             try {
               navigatorKey.currentState?.push(
-                  MaterialPageRoute(builder: (context) => ScheduleScreen())
-              );
+                  MaterialPageRoute(builder: (context) => ScheduleScreen()));
             } on Exception catch (e) {
               'Error: Failed to navigate to ScheduleScreen: $e'.log();
             }
@@ -345,14 +360,14 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
       ),
     );
   }
-  
+
   bool _validateInput() {
     String errorMessage = '';
-  
+
     if (nameController.text.isEmpty) {
       errorMessage += 'Please enter a name for the treatment.\n';
     }
-  
+
     if (doseController.text.isEmpty) {
       errorMessage += 'Please enter a dose for the treatment.\n';
     } else {
@@ -362,7 +377,7 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
         errorMessage += 'Please enter a valid number for the dose.\n';
       }
     }
-  
+
     if (errorMessage.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -372,7 +387,7 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
       );
       return false;
     }
-  
+
     return true;
   }
 }
