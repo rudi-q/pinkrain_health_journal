@@ -1,9 +1,8 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pillow/core/services/hive_service.dart';
 import 'package:pillow/core/util/helpers.dart';
-import 'package:pillow/features/journal/presentation/symtom_predicton_notifier.dart';
+import 'package:pillow/features/journal/presentation/symptom_predicton_notifier.dart';
 import 'package:pillow/features/wellness/presentation/components/mood_painter.dart';
 import 'package:intl/intl.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -29,12 +28,21 @@ class DailyMoodPrompt extends ConsumerStatefulWidget {
 class DailyMoodPromptState extends ConsumerState<DailyMoodPrompt> {
   int selectedMood = 2; // Default to neutral mood
   final TextEditingController _feelingsController = TextEditingController();
-  late List<SymptomPrediction> predictedSymptoms;
-  bool _loadingSymptomsPrediction = false;
+  late List<SymptomPrediction> predictedSymptoms =
+      []; // Initialize with empty list
+  final _isExpandedNotifier = ValueNotifier<bool>(false);
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize predicted symptoms
+    predictedSymptoms = ref.read(symptomPredictionProvider);
+  }
 
   @override
   void dispose() {
     _feelingsController.dispose();
+    _isExpandedNotifier.dispose();
     super.dispose();
   }
 
@@ -91,6 +99,7 @@ class DailyMoodPromptState extends ConsumerState<DailyMoodPrompt> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen to symptom predictions
     predictedSymptoms = ref.watch(symptomPredictionProvider);
     return Dialog(
       shape: RoundedRectangleBorder(
@@ -241,13 +250,26 @@ class DailyMoodPromptState extends ConsumerState<DailyMoodPrompt> {
       controller: _feelingsController,
       maxLines: 3,
       onChanged: (value) {
+        // Don't predict if text is too short
+        if (value.length <= 7) {
+          "Text too short for prediction (${value.length} chars)".log();
+          return;
+        }
+
+        // Don't predict if already in progress
+        if (SymptomPredictionNotifier.predictionInProgress) {
+          "Prediction already in progress, skipping".log();
+          return;
+        }
+
+        "Initiating prediction for possible symptoms".log();
         // Trigger symptom prediction when text changes
-        final symptomPredictionNotifier =
-            ref.read(symptomPredictionProvider.notifier);
-        symptomPredictionNotifier.reset();
-        if (value.length > 7) {
-          // Only predict after some meaningful text
+        try {
+          final symptomPredictionNotifier =
+              ref.read(symptomPredictionProvider.notifier);
           symptomPredictionNotifier.predict(value);
+        } catch (e, stack) {
+          "Error during symptom prediction: $e\n$stack".log();
         }
       },
       decoration: InputDecoration(
@@ -265,16 +287,21 @@ class DailyMoodPromptState extends ConsumerState<DailyMoodPrompt> {
   }
 
   Container _buildSymptomPredictionContainer() {
+    final notifier = ref.read(symptomPredictionProvider.notifier);
+    final initialPredictions = notifier.getInitialPredictions();
+    final additionalPredictions = notifier.getAdditionalPredictions();
+    final hasMorePredictions = additionalPredictions.isNotEmpty;
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.pink[50]!.withOpacity(0.5),
+        color: Colors.pink[50]!.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.pink[100]!.withOpacity(0.5)),
+        border: Border.all(color: Colors.pink[100]!.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.pink[100]!.withOpacity(0.1),
+            color: Colors.pink[100]!.withValues(alpha: 0.1),
             blurRadius: 10,
             spreadRadius: 0,
             offset: const Offset(0, 2),
@@ -302,67 +329,90 @@ class DailyMoodPromptState extends ConsumerState<DailyMoodPrompt> {
                   ),
                 ),
               ),
-              if (_loadingSymptomsPrediction)
-                CupertinoActivityIndicator(
-                  color: Colors.pink[300],
-                  radius: 10,
+              if (hasMorePredictions)
+                ValueListenableBuilder<bool>(
+                  valueListenable: _isExpandedNotifier,
+                  builder: (context, isExpanded, child) {
+                    return IconButton(
+                      icon: Icon(
+                        isExpanded ? Icons.remove : Icons.add,
+                        color: Colors.pink[400],
+                        size: 20,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () {
+                        _isExpandedNotifier.value = !isExpanded;
+                      },
+                    );
+                  },
                 ),
             ],
           ),
-          if (predictedSymptoms.isNotEmpty) ...[
+          if (initialPredictions.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: predictedSymptoms.map((symptom) {
-                final double probability = symptom.probability;
-                final bool isHighProbability = probability >= 0.4;
-
-                return Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(
-                      color: Colors.pink[100]!.withOpacity(0.5),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.pink[100]!.withOpacity(0.1),
-                        blurRadius: 4,
-                        spreadRadius: 0,
-                        offset: const Offset(0, 1),
-                      ),
+            ValueListenableBuilder<bool>(
+              valueListenable: _isExpandedNotifier,
+              builder: (context, isExpanded, child) {
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ...initialPredictions.map((symptom) => _buildSymptomChip(symptom)),
+                    if (isExpanded) ...[
+                      ...additionalPredictions.map((symptom) => _buildSymptomChip(symptom)),
                     ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.medical_services_outlined,
-                        size: isHighProbability ? 16 : 14,
-                        color: Colors.pink[300],
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${symptom.name} (${(probability * 100).toStringAsFixed(1)}%)',
-                        style: TextStyle(
-                          color: Colors.pink[700],
-                          fontSize: isHighProbability ? 14 : 12,
-                          fontWeight: isHighProbability
-                              ? FontWeight.w600
-                              : FontWeight.normal,
-                        ),
-                      ),
-                    ],
-                  ),
+                  ],
                 );
-              }).toList(),
+              },
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSymptomChip(SymptomPrediction symptom) {
+    final double probability = symptom.probability;
+    final bool isHighProbability = probability >= 0.4;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 6,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: Colors.pink[100]!.withValues(alpha: 0.5),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.pink[100]!.withValues(alpha: 0.1),
+            blurRadius: 4,
+            spreadRadius: 0,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.medical_services_outlined,
+            size: isHighProbability ? 16 : 14,
+            color: Colors.pink[300],
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '${symptom.name} (${(probability * 100).toStringAsFixed(1)}%)',
+            style: TextStyle(
+              color: Colors.pink[700],
+              fontSize: isHighProbability ? 14 : 12,
+              fontWeight: isHighProbability ? FontWeight.w600 : FontWeight.normal,
+            ),
+          ),
         ],
       ),
     );

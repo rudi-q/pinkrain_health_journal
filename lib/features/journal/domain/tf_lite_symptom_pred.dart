@@ -58,6 +58,9 @@ class SymptomPredictor {
   }
 
   Future<List<SymptomPrediction>> predictSymptoms(String inputText) async {
+    // Blacklisted symptoms that should never be predicted
+    const blacklistedSymptoms = {'hypnic jerks'};
+    
     var tokens = tokenize(inputText.replaceAll("can't sleep", "not_sleep"));
     var paddedTokens = padSequence(tokens, 20);
   
@@ -67,10 +70,11 @@ class SymptomPredictor {
     interpreter.run(input, output);
   
     var sortedIndices = output[0].asMap().entries
+        .where((entry) => !blacklistedSymptoms.contains(mlbClasses[entry.key]))  // Filter out blacklisted symptoms
         .toList()
         ..sort((a, b) => b.value.compareTo(a.value));
 
-    return sortedIndices.take(3)
+    return sortedIndices.take(6)
         .map((e) => SymptomPrediction(
       name: mlbClasses[e.key],
       probability: e.value,
