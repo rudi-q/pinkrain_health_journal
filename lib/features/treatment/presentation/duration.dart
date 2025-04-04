@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/widgets/appbar.dart';
 import '../domain/treatment_manager.dart';
+import '../../../features/journal/presentation/journal_notifier.dart';
 
-class DurationScreen extends StatefulWidget {
+class DurationScreen extends ConsumerStatefulWidget {
   final Treatment treatment;
 
   const DurationScreen({
@@ -12,10 +14,10 @@ class DurationScreen extends StatefulWidget {
   });
 
   @override
-  DurationScreenState createState() => DurationScreenState();
+  ConsumerState<DurationScreen> createState() => DurationScreenState();
 }
 
-class DurationScreenState extends State<DurationScreen> {
+class DurationScreenState extends ConsumerState<DurationScreen> {
   final List<bool> selectedDays = List.generate(7, (index) => false);
   int selectedDuration = 5;
   DateTime startDate = DateTime.now().add(const Duration(days: 1));
@@ -125,7 +127,7 @@ class DurationScreenState extends State<DurationScreen> {
               }).toList(),
               onChanged: (String? newValue) {
                 setState(() {
-                  startDate = newValue == 'tomorrow' 
+                  startDate = newValue == 'tomorrow'
                       ? DateTime.now().add(const Duration(days: 1))
                       : DateTime.now();
                 });
@@ -150,7 +152,8 @@ class DurationScreenState extends State<DurationScreen> {
                     keyboardType: TextInputType.number,
                     onChanged: (value) {
                       setState(() {
-                        selectedDuration = int.tryParse(value) ?? selectedDuration;
+                        selectedDuration =
+                            int.tryParse(value) ?? selectedDuration;
                       });
                     },
                   ),
@@ -190,7 +193,7 @@ class DurationScreenState extends State<DurationScreen> {
               children: [
                 Expanded(
                   child: TextButton(
-                    onPressed: () => context.go('/'),
+                    onPressed: () => context.pop(),
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.grey[200],
                       shape: RoundedRectangleBorder(
@@ -208,12 +211,18 @@ class DurationScreenState extends State<DurationScreen> {
                   child: TextButton(
                     onPressed: () async {
                       widget.treatment.treatmentPlan.startDate = startDate;
-                      widget.treatment.treatmentPlan.endDate = startDate.add(Duration(days: selectedDuration));
-                      
+                      widget.treatment.treatmentPlan.endDate =
+                          startDate.add(Duration(days: selectedDuration));
+
                       await treatmentManager.saveTreatment(widget.treatment);
-                      
+
                       if (mounted) {
-                        context.go('/pillbox');
+                        // Refresh the journal data for the current date
+                        final selectedDate = ref.read(selectedDateProvider);
+                        final pillIntakeNotifier = ref.read(pillIntakeProvider.notifier);
+                        await pillIntakeNotifier.populateJournal(selectedDate);
+                        
+                        context.go('/journal');
                       }
                     },
                     style: TextButton.styleFrom(

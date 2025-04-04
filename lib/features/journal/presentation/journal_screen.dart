@@ -738,8 +738,13 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
     final bool isTaken = medicineLog.isTaken;
     final medication = medicineLog.treatment;
     final String name = medication.medicine.name;
+    String type = medication.medicine.type.toLowerCase();
     final String dosage = '${medication.medicine.specs.dosage} ${medication.medicine.specs.unit}';
     final String time = medication.timeOfDay();
+
+    if (type.endsWith('s')) {
+      type = type.substring(0, type.length - 1);
+    }
 
     return InkWell(
       onTap: () => _showMedicationDetails(medicineLog),
@@ -753,7 +758,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                 SizedBox(
                   width: 40,
                   height: 40,
-                  child: appImage('medicine'),
+                  child: appVectorImage(fileName: type, useColorFilter: false),
                 ),
                 if (isTaken)
                   Positioned(
@@ -849,8 +854,8 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                   icon: appImage('one-time-medicine', size: 30),
                   text: 'One-time take',
                   onTap: () {
-                    // Handle one-time take
-                    Navigator.of(context).pop();
+                    Navigator.of(context).pop(); // Close the dialog
+                    context.push('/new_treatment'); // Navigate to new treatment screen
                   },
                 ),
                 SizedBox(height: 20),

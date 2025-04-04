@@ -17,13 +17,18 @@ final List<GoRoute> routes = [
   GoRoute(path: '/', builder: (context, state) => SplashScreen()),
   GoRoute(path: '/journal', builder: (context, state) => JournalScreen()),
   GoRoute(path: '/pillbox', builder: (context, state) => PillboxScreen()),
-  GoRoute(path: '/wellness', builder: (context, state) => WellnessTrackerScreen()),
+  GoRoute(
+      path: '/wellness', builder: (context, state) => WellnessTrackerScreen()),
   GoRoute(path: '/profile', builder: (context, state) => ProfileScreen()),
-  GoRoute(path: '/new_treatment', builder: (context, state) => NewTreatmentScreen()),
-  GoRoute(path: '/schedule', builder: (context, state) {
-    final treatment = state.extra as Treatment;
-    return ScheduleScreen(treatment: treatment);
-  }),
+  GoRoute(
+      path: '/new_treatment',
+      builder: (context, state) => NewTreatmentScreen()),
+  GoRoute(
+      path: '/schedule',
+      builder: (context, state) {
+        final treatment = state.extra as Treatment;
+        return ScheduleScreen(treatment: treatment);
+      }),
   GoRoute(
     path: '/duration',
     builder: (context, state) {

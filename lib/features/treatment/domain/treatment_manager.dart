@@ -1,5 +1,6 @@
 import 'package:pillow/core/models/medicine_model.dart';
 import 'package:pillow/core/services/hive_service.dart';
+import 'package:pillow/core/util/helpers.dart';
 import '../data/treatment.dart';
 
 class Treatment {
@@ -171,5 +172,26 @@ class TreatmentManager {
   Future<void> saveTreatment(Treatment treatment) async {
     _treatments.add(treatment);
     await HiveService.saveTreatment(treatment.toJson());
+
+    // Create medication logs for each day in the treatment period
+    final startDate = treatment.treatmentPlan.startDate.normalize();
+    final endDate = treatment.treatmentPlan.endDate.normalize();
+    final daysInTreatment = endDate.difference(startDate).inDays + 1;
+
+    for (var i = 0; i < daysInTreatment; i++) {
+      final date = startDate.add(Duration(days: i));
+      final logs = await HiveService.getMedicationLogsForDate(date) ?? [];
+      
+      logs.add({
+        'medicine_name': treatment.medicine.name,
+        'medicine_type': treatment.medicine.type,
+        'medicine_color': treatment.medicine.color,
+        'dosage': treatment.medicine.specs.dosage,
+        'unit': treatment.medicine.specs.unit,
+        'is_taken': false,
+      });
+
+      await HiveService.saveMedicationLogsForDate(date, logs);
+    }
   }
 }

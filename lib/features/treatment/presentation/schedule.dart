@@ -15,8 +15,7 @@ class ScheduleScreen extends StatefulWidget {
 }
 
 class ScheduleScreenState extends State<ScheduleScreen> {
-  List<String> doses = ['Dose 1'];
-  String selectedTime = '10:00';
+  Map<String, String> doseTimes = {'Dose 1': '10:00'};
   String selectedReminder = 'at time of event';
 
   @override
@@ -50,13 +49,14 @@ class ScheduleScreenState extends State<ScheduleScreen> {
               ListView.builder(
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(),
-                itemCount: doses.length,
+                itemCount: doseTimes.length,
                 itemBuilder: (context, index) {
+                  String doseKey = doseTimes.keys.elementAt(index);
                   return Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Row(
                       children: [
-                        Text('Dose ${index + 1}'),
+                        Text(doseKey),
                         Spacer(),
                         TextButton(
                           onPressed: () async {
@@ -66,11 +66,11 @@ class ScheduleScreenState extends State<ScheduleScreen> {
                             );
                             if (time != null) {
                               setState(() {
-                                selectedTime = '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
+                                doseTimes[doseKey] = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
                               });
                             }
                           },
-                          child: Text(selectedTime),
+                          child: Text(doseTimes[doseKey]!),
                         ),
                       ],
                     ),
@@ -81,7 +81,8 @@ class ScheduleScreenState extends State<ScheduleScreen> {
               ElevatedButton(
                 onPressed: () {
                   setState(() {
-                    doses.add('Dose ${doses.length + 1}');
+                    String newDose = 'Dose ${doseTimes.length + 1}';
+                    doseTimes[newDose] = '10:00';
                   });
                 },
                 style: ElevatedButton.styleFrom(
@@ -130,12 +131,15 @@ class ScheduleScreenState extends State<ScheduleScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: ElevatedButton(
                   onPressed: () {
+                    // Parse the first dose time for the treatment plan
+                    String firstDoseTime = doseTimes.values.first;
+                    List<String> timeParts = firstDoseTime.split(':');
                     widget.treatment.treatmentPlan.timeOfDay = DateTime(
                       DateTime.now().year,
                       DateTime.now().month,
                       DateTime.now().day,
-                      int.parse(selectedTime.split(':')[0]),
-                      int.parse(selectedTime.split(':')[1]),
+                      int.parse(timeParts[0]),
+                      int.parse(timeParts[1]),
                     );
                     context.push('/duration', extra: widget.treatment);
                   },

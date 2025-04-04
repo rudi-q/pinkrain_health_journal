@@ -11,7 +11,7 @@ class IntakeLog {
   bool isTaken;
 
   IntakeLog(this.treatment, {this.isTaken = false});
-  
+
   /// Convert IntakeLog to a Map for storage
   Map<String, dynamic> toMap() {
     return {
@@ -23,7 +23,7 @@ class IntakeLog {
       'is_taken': isTaken,
     };
   }
-  
+
   /// Create IntakeLog from a Map
   static IntakeLog fromMap(Map<String, dynamic> map) {
     try {
@@ -34,12 +34,13 @@ class IntakeLog {
       final dynamic dosageValue = map['dosage'];
       final dynamic unitValue = map['unit'];
       final dynamic isTakenValue = map['is_taken'];
-      
+
       // Convert name, type, and color with safe defaults
-      final String name = (nameValue is String) ? nameValue : 'Unknown Medicine';
+      final String name =
+          (nameValue is String) ? nameValue : 'Unknown Medicine';
       final String type = (typeValue is String) ? typeValue : 'pill';
       final String color = (colorValue is String) ? colorValue : 'white';
-      
+
       // Convert dosage with safe default
       double dosage = 1.0;
       if (dosageValue != null) {
@@ -47,14 +48,15 @@ class IntakeLog {
           dosage = dosageValue.toDouble();
         } else if (dosageValue is double) {
           dosage = dosageValue;
-        } else if (dosageValue is String && double.tryParse(dosageValue) != null) {
+        } else if (dosageValue is String &&
+            double.tryParse(dosageValue) != null) {
           dosage = double.parse(dosageValue);
         }
       }
-      
+
       // Convert unit with safe default
       final String unit = (unitValue is String) ? unitValue : 'mg';
-      
+
       // Check if already taken
       bool taken = false;
       if (isTakenValue != null) {
@@ -64,22 +66,24 @@ class IntakeLog {
           taken = isTakenValue != 0;
         } else if (isTakenValue is String) {
           final String lowerValue = isTakenValue.toLowerCase();
-          taken = lowerValue == 'true' || lowerValue == '1' || lowerValue == 'yes';
+          taken =
+              lowerValue == 'true' || lowerValue == '1' || lowerValue == 'yes';
         }
       }
-      
+
       // Create full object hierarchy
       final medicine = Medicine(name: name, type: type, color: color);
       medicine.addSpecification(Specification(dosage: dosage, unit: unit));
-      
+
       final treatmentPlan = TreatmentPlan(
         startDate: DateTime.now().subtract(const Duration(days: 7)),
         endDate: DateTime.now().add(const Duration(days: 7)),
         timeOfDay: DateTime(2023, 1, 1, 12, 0),
       );
-      
-      final treatment = Treatment(medicine: medicine, treatmentPlan: treatmentPlan);
-      
+
+      final treatment =
+          Treatment(medicine: medicine, treatmentPlan: treatmentPlan);
+
       // Create and return the intake log
       return IntakeLog(treatment, isTaken: taken);
     } catch (e) {
@@ -87,13 +91,13 @@ class IntakeLog {
       'Error creating IntakeLog from map: $e'.log();
       final defaultMedicine = Medicine(name: 'Error Medicine', type: 'pill');
       defaultMedicine.addSpecification(Specification(dosage: 1.0, unit: 'mg'));
-      
+
       final defaultPlan = TreatmentPlan(
         startDate: DateTime.now().subtract(const Duration(days: 7)),
         endDate: DateTime.now().add(const Duration(days: 7)),
         timeOfDay: DateTime(2023, 1, 1, 12, 0),
       );
-      
+
       return IntakeLog(
         Treatment(medicine: defaultMedicine, treatmentPlan: defaultPlan),
       );
@@ -113,11 +117,11 @@ class JournalLog {
     date = date.normalize();
     try {
       final logs = await HiveService.getMedicationLogsForDate(date);
-      
+
       if (logs != null && logs.isNotEmpty) {
         // Convert the logs back to IntakeLog objects with safer type handling
         final List<IntakeLog> intakeLogs = [];
-        
+
         for (final dynamic logEntry in logs) {
           try {
             if (logEntry is Map) {
@@ -128,7 +132,7 @@ class JournalLog {
                   typedMap[key] = value;
                 }
               });
-              
+
               if (typedMap.isNotEmpty) {
                 intakeLogs.add(IntakeLog.fromMap(typedMap));
               }
@@ -138,7 +142,7 @@ class JournalLog {
             // Skip this entry and continue with others
           }
         }
-        
+
         // Only update if we successfully parsed any logs
         if (intakeLogs.isNotEmpty) {
           medicationLogs[date] = intakeLogs;
@@ -149,26 +153,26 @@ class JournalLog {
       // If there's an error, we'll fall back to sample data
       'Error loading medication logs: $e'.log();
     }
-    
+
     // If we don't have stored logs or there was an error, use sample data
     if (!medicationLogs.containsKey(date) || medicationLogs[date]!.isEmpty) {
       final treatments = Treatment.getSample();
-      medicationLogs[date] = treatments.map((treatment) => IntakeLog(treatment)).toList();
+      medicationLogs[date] =
+          treatments.map((treatment) => IntakeLog(treatment)).toList();
     }
   }
-  
+
   /// Save medication logs to Hive storage
   Future<void> saveMedicationLogs(DateTime date) async {
     date = date.normalize();
     try {
       // Ensure we have valid data to save
-      if (medicationLogs.containsKey(date) && 
-          medicationLogs[date] != null && 
+      if (medicationLogs.containsKey(date) &&
+          medicationLogs[date] != null &&
           medicationLogs[date]!.isNotEmpty) {
-        
         // Convert each log to a map, handling any potential errors
         final List<Map<String, dynamic>> logs = [];
-        
+
         for (final log in medicationLogs[date]!) {
           try {
             logs.add(log.toMap());
@@ -177,7 +181,7 @@ class JournalLog {
             // Continue with other logs
           }
         }
-        
+
         // Only save if we have valid logs
         if (logs.isNotEmpty) {
           await HiveService.saveMedicationLogsForDate(date, logs);
@@ -190,12 +194,12 @@ class JournalLog {
 
   Future<List<IntakeLog>> getMedicationsForTheDay(DateTime date) async {
     date = date.normalize();
-    
+
     // Check if we already have logs for this date in memory
     if (!medicationLogs.containsKey(date) || medicationLogs[date]!.isEmpty) {
       await _loadMedicationLogs(date);
     }
-    
+
     return medicationLogs[date] ?? [];
   }
 
@@ -210,10 +214,10 @@ class JournalLog {
     DateTime currentDate = startDate.normalize();
 
     while (!currentDate.isAfter(endDate)) {
-      final hasMedsForDate = medicationLogs.containsKey(currentDate) && 
-                       medicationLogs[currentDate] != null && 
-                       medicationLogs[currentDate]!.isNotEmpty;
-                       
+      final hasMedsForDate = medicationLogs.containsKey(currentDate) &&
+          medicationLogs[currentDate] != null &&
+          medicationLogs[currentDate]!.isNotEmpty;
+
       if (hasMedsForDate) {
         for (final log in medicationLogs[currentDate]!) {
           if (log.treatment.medicine.name == treatment.medicine.name) {
@@ -222,7 +226,7 @@ class JournalLog {
           }
         }
       }
-      
+
       // Increment day safely
       final nextDate = currentDate.add(const Duration(days: 1));
       currentDate = DateTime(nextDate.year, nextDate.month, nextDate.day);
@@ -231,7 +235,7 @@ class JournalLog {
     if (totalDays == 0) return 0.0;
     return takenCount / totalDays;
   }
-  
+
   /// Asynchronous version of getAdherenceRate that loads data from storage
   Future<double> getAdherenceRateAsync(
       Treatment treatment, DateTime startDate, DateTime endDate) async {
@@ -239,12 +243,12 @@ class JournalLog {
     DateTime currentDate = startDate.normalize();
     while (!currentDate.isAfter(endDate)) {
       await getMedicationsForTheDay(currentDate);
-      
+
       // Increment day safely
       final nextDate = currentDate.add(const Duration(days: 1));
       currentDate = DateTime(nextDate.year, nextDate.month, nextDate.day);
     }
-    
+
     // Use the synchronous version now that all data is loaded
     return getAdherenceRate(treatment, startDate, endDate);
   }
