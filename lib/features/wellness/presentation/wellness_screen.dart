@@ -272,12 +272,13 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         BlurText(
+                          key: ValueKey(_selectedDate.getNameOf(_selectedDateOption)),
                           text:
                               "${_selectedDate.getNameOf(_selectedDateOption)}'s Wellness Report",
                           duration: const Duration(milliseconds: 800),
                           type: AnimationType.word,
                           textStyle: const TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
