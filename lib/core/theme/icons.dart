@@ -41,6 +41,9 @@ SvgPicture appVectorImage({
   Color? color,
   bool? useColorFilter
 }){
+  if (fileName == 'pill'){
+    fileName = 'tablet';
+  }
   try{
     return SvgPicture.asset(
       'assets/icons/$fileName.svg',
