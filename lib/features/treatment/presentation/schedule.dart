@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../domain/treatment_manager.dart';
 
 class ScheduleScreen extends StatefulWidget {

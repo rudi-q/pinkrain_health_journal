@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/journal/presentation/journal_screen.dart';
-import '../../features/pillbox/presentation/pillbox_screen.dart';
-import '../../features/splash/splash_screen.dart';
-import '../../features/wellness/presentation/wellness_screen.dart';
 import '../../features/pillbox/presentation/medicine_detail_screen.dart';
+import '../../features/pillbox/presentation/pillbox_screen.dart';
 import '../../features/profile/presentation/profile.dart';
+import '../../features/splash/splash_screen.dart';
+import '../../features/treatment/domain/treatment_manager.dart';
 import '../../features/treatment/presentation/duration.dart';
 import '../../features/treatment/presentation/new_treatment.dart';
 import '../../features/treatment/presentation/schedule.dart';
-import '../../features/treatment/domain/treatment_manager.dart';
+import '../../features/wellness/presentation/wellness_screen.dart';
 import '../models/medicine_model.dart';
 
 final List<GoRoute> routes = [

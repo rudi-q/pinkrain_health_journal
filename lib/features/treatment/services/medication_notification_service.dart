@@ -1,13 +1,13 @@
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:pillow/features/journal/data/journal_log.dart';
-import 'package:pillow/alarm_experiments.dart' as notification_impl;
 import 'package:pillow/core/util/helpers.dart';
+import 'package:pillow/features/journal/data/journal_log.dart';
+import 'package:pillow/features/journal/domain/push_notifications.dart' as notification_impl;
 
 /// Service to handle medication notifications
-/// This service uses the NotificationService from alarm_experiments.dart
+/// This service uses the NotificationService from push_notifications.dart
 /// to show notifications for untaken medications
 class MedicationNotificationService {
   static final MedicationNotificationService _instance =

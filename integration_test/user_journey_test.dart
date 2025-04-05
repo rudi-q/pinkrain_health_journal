@@ -1,24 +1,21 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:integration_test/integration_test.dart';
-import 'package:pillow/core/util/helpers.dart';
-import 'package:pillow/main.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:integration_test/integration_test.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pillow/core/services/hive_service.dart';
+import 'package:pillow/core/util/helpers.dart';
 // Import your screen widgets
 import 'package:pillow/features/journal/presentation/journal_screen.dart';
 import 'package:pillow/features/journal/presentation/journal_screen_wrapper.dart';
+import 'package:pillow/features/pillbox/presentation/pillbox_screen.dart';
+import 'package:pillow/features/splash/splash_screen.dart';
 import 'package:pillow/features/wellness/presentation/wellness_screen.dart'
     show WellnessTrackerScreen;
-import 'package:pillow/features/pillbox/presentation/pillbox_screen.dart';
-import 'package:pillow/core/services/hive_service.dart';
-
-// Import your components
-import 'package:pillow/features/journal/presentation/medication_notification_widget.dart';
-import 'package:pillow/features/splash/splash_screen.dart';
+import 'package:pillow/main.dart';
 
 void main() async {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();

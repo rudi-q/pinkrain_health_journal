@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
 import '../../../core/widgets/appbar.dart';
-import '../domain/treatment_manager.dart';
 import '../../../features/journal/presentation/journal_notifier.dart';
+import '../domain/treatment_manager.dart';
 
 class DurationScreen extends ConsumerStatefulWidget {
   final Treatment treatment;
