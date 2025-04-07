@@ -989,11 +989,11 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
               SizedBox(height: 10),
               Center(
                 child: TextButton(
-                  child: Text('Postpone', style: TextStyle(color: Colors.grey)),
                   onPressed: () {
                     // Handle postpone action
                     Navigator.pop(context);
                   },
+                  child: Text('Postpone', style: TextStyle(color: Colors.grey)),
                 ),
               ),
             ],
@@ -1093,163 +1093,20 @@ class EditMoodDialog extends StatefulWidget {
   });
 
   @override
-  EditMoodDialogState createState() => EditMoodDialogState();
+  State<EditMoodDialog> createState() => EditMoodDialogState();
 }
 
 class EditMoodDialogState extends State<EditMoodDialog> {
-  late int selectedMood;
-  late TextEditingController descriptionController;
-
-  @override
-  void initState() {
-    super.initState();
-    selectedMood = widget.initialMood;
-    descriptionController = TextEditingController(text: widget.initialDescription);
-  }
-
-  @override
-  void dispose() {
-    descriptionController.dispose();
-    super.dispose();
-  }
-
-  String _getMoodLabel(int mood) {
-    switch (mood) {
-      case 0:
-        return 'Very Sad';
-      case 1:
-        return 'Sad';
-      case 2:
-        return 'Neutral';
-      case 3:
-        return 'Happy';
-      case 4:
-        return 'Very Happy';
-      default:
-        return 'Neutral';
-    }
-  }
-
-  void _saveMoodData() async {
-    final dateKey = widget.date.toIso8601String().split('T')[0];
-
-    // Create updated mood data
-    final moodData = {
-      'mood': selectedMood,
-      'description': descriptionController.text,
-      'timestamp': DateTime.now().millisecondsSinceEpoch,
-    };
-
-    // Save to Hive
-    try {
-      // Check if box is open, if not open it
-      if (!Hive.isBoxOpen(HiveService.moodBoxName)) {
-        await Hive.openBox(HiveService.moodBoxName);
-      }
-
-      final box = Hive.box(HiveService.moodBoxName);
-      await box.put(dateKey, moodData);
-
-      widget.onComplete();
-    } catch (e) {
-      devPrint('Error saving mood data: $e');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Edit Your Mood',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(
-                5,
-                (index) => GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedMood = index;
-                    });
-                  },
-                  child: Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: selectedMood == index ? Colors.grey[300] : Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: selectedMood == index ? Colors.grey[400]! : Colors.grey[300]!,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        getMoodEmoji(index),
-                        style: TextStyle(fontSize: 24),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 10),
-            Text(
-              _getMoodLabel(selectedMood),
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            SizedBox(height: 20),
-            TextField(
-              controller: descriptionController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: 'Describe how you feel...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                filled: true,
-                fillColor: Colors.grey[100],
-              ),
-            ),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('Cancel'),
-                ),
-                SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: _saveMoodData,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.pink[100],
-                    foregroundColor: Colors.white,
-                  ),
-                  child: Text('Save'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+    // Instead of using a custom edit dialog, we reuse DailyMoodPrompt
+    // but pass in the initial values and date
+    return DailyMoodPrompt(
+      onComplete: widget.onComplete,
+      date: widget.date,
+      initialMood: widget.initialMood,
+      initialDescription: widget.initialDescription,
+      isEditing: true, // Flag to indicate this is an edit operation
     );
   }
 }

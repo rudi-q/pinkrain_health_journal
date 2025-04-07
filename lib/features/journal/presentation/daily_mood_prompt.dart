@@ -12,13 +12,18 @@ import 'journal_screen.dart';
 
 class DailyMoodPrompt extends ConsumerStatefulWidget {
   final Function onComplete;
-  final DateTime?
-      date; // Optional date parameter, defaults to today if not provided
+  final DateTime? date; // Optional date parameter, defaults to today if not provided
+  final int? initialMood; // Initial mood for editing
+  final String? initialDescription; // Initial description for editing
+  final bool isEditing; // Flag to indicate if this is an edit operation
 
   const DailyMoodPrompt({
     super.key,
     required this.onComplete,
     this.date,
+    this.initialMood,
+    this.initialDescription,
+    this.isEditing = false,
   });
 
   @override
@@ -26,17 +31,23 @@ class DailyMoodPrompt extends ConsumerStatefulWidget {
 }
 
 class DailyMoodPromptState extends ConsumerState<DailyMoodPrompt> {
-  int selectedMood = 2; // Default to neutral mood
+  late int selectedMood;
   final TextEditingController _feelingsController = TextEditingController();
-  late List<SymptomPrediction> predictedSymptoms =
-      []; // Initialize with empty list
+  late List<SymptomPrediction> predictedSymptoms = []; // Initialize with empty list
   final _isExpandedNotifier = ValueNotifier<bool>(false);
 
   @override
   void initState() {
     super.initState();
-    // Initialize predicted symptoms
-    predictedSymptoms = ref.read(symptomPredictionProvider);
+    // Initialize mood and description with provided values or defaults
+    selectedMood = widget.initialMood ?? 2; // Default to neutral if not editing
+    if (widget.initialDescription != null) {
+      _feelingsController.text = widget.initialDescription!;
+    }
+    // Only load predicted symptoms for new entries
+    if (!widget.isEditing) {
+      predictedSymptoms = ref.read(symptomPredictionProvider);
+    }
   }
 
   @override
