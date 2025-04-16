@@ -1,6 +1,10 @@
+import 'dart:ui';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:math';
+import 'package:flutter/services.dart';
+import 'package:pretty_animated_text/pretty_animated_text.dart';
 
 import '../../../core/widgets/appbar.dart';
 import '../../../core/widgets/bottom_navigation.dart';
@@ -184,6 +188,109 @@ class BreathingExerciseNotifier extends StateNotifier<BreathingState> {
   }
 }
 
+// Particle model for CustomPainter
+class _BreathingParticle {
+  final double baseAngle;
+  final double orbitRadius;
+  final double size;
+  final double speedFactor;
+  final Color color;
+  _BreathingParticle({
+    required this.baseAngle,
+    required this.orbitRadius,
+    required this.size,
+    required this.speedFactor,
+    required this.color,
+  });
+}
+
+// CustomPainter for breathing particles
+class _ParticlePainter extends CustomPainter {
+  final List<_BreathingParticle> particles;
+  final double animationValue;
+  final double orbRadius;
+  _ParticlePainter({
+    required this.particles,
+    required this.animationValue,
+    required this.orbRadius,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    for (final p in particles) {
+      // Animate angle for smooth orbit
+      final angle = p.baseAngle + animationValue * 2 * pi * p.speedFactor;
+      final r = (orbRadius / 2) + p.orbitRadius * (0.7 + 0.3 * animationValue);
+      final dx = center.dx + cos(angle) * r;
+      final dy = center.dy + sin(angle) * r;
+      final paint = Paint()
+        ..color = p.color.withValues(alpha:0.2 + 0.6 * animationValue)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+      canvas.drawCircle(Offset(dx, dy), p.size, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ParticlePainter oldDelegate) =>
+      oldDelegate.animationValue != animationValue ||
+      oldDelegate.orbRadius != orbRadius ||
+      oldDelegate.particles != particles;
+}
+
+Color _getStageColor(BreathingStage stage) {
+  switch (stage) {
+    case BreathingStage.inhale:
+      return Colors.blue;
+    case BreathingStage.hold:
+      return Colors.purple;
+    case BreathingStage.exhale:
+      return Colors.pink;
+    case BreathingStage.rest:
+      return Colors.indigo;
+    default:
+      return Colors.blue;
+  }
+}
+
+Color _getSecondaryStageColor(BreathingStage stage) {
+  switch (stage) {
+    case BreathingStage.inhale:
+      return Colors.cyan;
+    case BreathingStage.hold:
+      return Colors.deepPurple;
+    case BreathingStage.exhale:
+      return Colors.red;
+    case BreathingStage.rest:
+      return Colors.lightBlue;
+    default:
+      return Colors.lightBlue;
+  }
+}
+
+// Helper to get the duration for the current stage
+int _getDuration(String exerciseType, BreathingStage stage) {
+  switch (exerciseType) {
+    case 'box':
+      return 4; // All stages are 4 seconds in box breathing
+    case '4-7-8':
+      switch (stage) {
+        case BreathingStage.inhale:
+          return 4;
+        case BreathingStage.hold:
+          return 7;
+        case BreathingStage.exhale:
+          return 8;
+        case BreathingStage.rest:
+          return 0; // No rest in 4-7-8
+        default:
+          return 4;
+      }
+    default:
+      return 5;
+  }
+}
+
 class BreathBreakScreen extends ConsumerStatefulWidget {
   const BreathBreakScreen({super.key});
 
@@ -201,6 +308,11 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
   late Animation<Color?> _gradientStartAnimation;
   late Animation<Color?> _gradientEndAnimation;
   
+  // Particle system
+  static const int _particleCount = 14;
+  late List<_BreathingParticle> _particles;
+  final Random _particleRandom = Random();
+
   // Stage-based gradient colors
   final Map<BreathingStage, List<Color>> _stageColors = {
     BreathingStage.inhale: [Colors.blue[50]!, Colors.blue[200]!],
@@ -210,6 +322,11 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
     BreathingStage.initial: [Colors.grey[50]!, Colors.grey[200]!],
     BreathingStage.completed: [Colors.green[50]!, Colors.green[200]!],
   };
+  
+  // Sound feedback control
+  bool _enableSound = true;
+  bool _enableHaptic = true;
+  BreathingStage? _lastStage;
 
   @override
   void initState() {
@@ -229,6 +346,27 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
       begin: _stageColors[BreathingStage.initial]![1],
       end: _stageColors[BreathingStage.initial]![1],
     ).animate(_animationController);
+
+    // Initialize particles
+    _initParticles();
+  }
+
+  void _initParticles() {
+    // Create a fixed set of particles with random orbits and speeds
+    _particles = List.generate(_particleCount, (i) {
+      final angle = _particleRandom.nextDouble() * 2 * pi;
+      final orbitRadius = 120 + _particleRandom.nextDouble() * 40;
+      final size = 4 + _particleRandom.nextDouble() * 5;
+      final speed = 0.5 + _particleRandom.nextDouble() * 0.8;
+      final color = Colors.white.withAlpha(120 + _particleRandom.nextInt(80));
+      return _BreathingParticle(
+        baseAngle: angle,
+        orbitRadius: orbitRadius,
+        size: size,
+        speedFactor: speed,
+        color: color,
+      );
+    });
   }
 
   @override
@@ -298,12 +436,26 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
           });
         }
         
+        // Provide haptic and sound feedback on stage transitions
+        if (_lastStage != next.stage && next.stage != BreathingStage.initial && next.stage != BreathingStage.completed) {
+          _provideFeedback(next.stage);
+          _lastStage = next.stage;
+        }
+        
         // Reset state on completion
         if (next.stage == BreathingStage.completed) {
           if (isExerciseStarted) {
             setState(() {
               isExerciseStarted = false;
             });
+            
+            // Completion feedback
+            if (_enableHaptic) {
+              HapticFeedback.mediumImpact();
+              Future.delayed(const Duration(milliseconds: 300), () {
+                HapticFeedback.mediumImpact();
+              });
+            }
           }
         }
       });
@@ -312,95 +464,126 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
     return Scaffold(
       appBar: buildAppBar('Breath Break'),
       extendBodyBehindAppBar: true, // Allow gradient to extend behind AppBar
-      body: AnimatedBuilder(
-        animation: _animationController,
-        builder: (context, child) {
-          return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  _gradientStartAnimation.value ?? _stageColors[breathingState.stage]![0],
-                  _gradientEndAnimation.value ?? _stageColors[breathingState.stage]![1],
-                ],
+      backgroundColor: Colors.transparent, // Make scaffold background transparent
+      body: Stack(
+        children: [
+          AnimatedBuilder(
+            animation: _animationController,
+            builder: (context, child) {
+              return Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      (_gradientStartAnimation.value ?? _stageColors[breathingState.stage]![0]).withValues(alpha:0.95),
+                      (_gradientStartAnimation.value ?? _stageColors[breathingState.stage]![0]).withValues(alpha:0.75),
+                      (_gradientEndAnimation.value ?? _stageColors[breathingState.stage]![1]).withValues(alpha:0.75),
+                      (_gradientEndAnimation.value ?? _stageColors[breathingState.stage]![1]).withValues(alpha:0.95),
+                    ],
+                    stops: const [0.0, 0.10, 0.90, 1.0], // Smooth fade at top and bottom
+                  ),
+                ),
+              );
+            },
+          ),
+          // Content layer
+          SafeArea(
+            bottom: false,
+            child: SingleChildScrollView(
+              child: Container(
+                width: MediaQuery.of(context).size.width,
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    if (!isExerciseStarted) _buildExerciseSelector(),
+                    if (isExerciseStarted) _buildExerciseInProgress(breathingState),
+                    const SizedBox(height: 30),
+                  ],
+                ),
               ),
             ),
-            child: child,
-          );
-        },
-        child: SingleChildScrollView(
-          child: Container(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                SizedBox(height: AppBar().preferredSize.height + 20),
-                if (!isExerciseStarted) _buildExerciseSelector(),
-                if (isExerciseStarted) _buildExerciseInProgress(breathingState),
-                const SizedBox(height: 30),
-                if (!isExerciseStarted)
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        isExerciseStarted = true;
-                      });
-                      notifier.startExercise(selectedExercise, selectedCycles);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.pink[100],
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 40,
-                        vertical: 15,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    child: const Text(
-                      'Start Exercise',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                  ),
-                // Fixed position buttons when exercise is in progress
-                if (isExerciseStarted && breathingState.stage != BreathingStage.completed)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 30),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton(
+          ),
+          // Static control buttons at the bottom
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              // Add extra padding to account for the height of the navbar
+              padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 80.0),
+              child: isExerciseStarted
+                  ? (breathingState.stage != BreathingStage.completed
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                notifier.stopExercise();
+                                setState(() {
+                                  isExerciseStarted = false;
+                                });
+                                if (_enableHaptic) {
+                                  HapticFeedback.mediumImpact();
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[300],
+                                foregroundColor: Colors.black87,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              child: const Text('Stop'),
+                            ),
+                            const SizedBox(width: 20),
+                            ElevatedButton(
+                              onPressed: () {
+                                if (_animationController.isAnimating) {
+                                  _animationController.stop();
+                                  notifier.pauseExercise();
+                                  setState(() {});
+                                } else {
+                                  _animationController.forward();
+                                  notifier.resumeExercise();
+                                  setState(() {});
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.pink[100],
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              child: Text(_animationController.isAnimating ? 'Pause' : 'Resume'),
+                            ),
+                            const SizedBox(width: 20),
+                            ElevatedButton(
+                              onPressed: () {
+                                notifier.stopExercise();
+                                setState(() {
+                                  isExerciseStarted = false;
+                                });
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.pink[100],
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              child: const Text('Done'),
+                            ),
+                          ],
+                        )
+                      : ElevatedButton(
                           onPressed: () {
-                            notifier.stopExercise();
                             setState(() {
                               isExerciseStarted = false;
                             });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey[300],
-                            foregroundColor: Colors.black87,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          child: const Text('Stop'),
-                        ),
-                        const SizedBox(width: 20),
-                        ElevatedButton(
-                          onPressed: () {
-                            if (_animationController.isAnimating) {
-                              _animationController.stop();
-                              notifier.pauseExercise();
-                              // Force update to properly show Resume text
-                              setState(() {});
-                            } else {
-                              notifier.resumeExercise();
-                              // Force update to properly show Pause text
-                              setState(() {});
-                            }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.pink[100],
@@ -409,69 +592,37 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
                               borderRadius: BorderRadius.circular(30),
                             ),
                           ),
-                          child: Text(
-                            // Use the notifier's state to determine if paused
-                            breathingState.secondsRemaining > 0 && _animationController.isAnimating 
-                              ? 'Pause' 
-                              : 'Resume',
-                          ),
+                          child: const Text('Done'),
+                        ))
+                  : ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          isExerciseStarted = true;
+                        });
+                        notifier.startExercise(selectedExercise, selectedCycles);
+                        if (_enableHaptic) {
+                          HapticFeedback.lightImpact();
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.pink[100],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
                         ),
-                      ],
+                      ),
+                      child: const Text('Start Exercise', style: TextStyle(fontSize: 18)),
                     ),
-                  ),
-                if (isExerciseStarted && breathingState.stage == BreathingStage.completed)
-                  Column(
-                    children: [
-                      const Text(
-                        'Great job!',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        "You've completed your breathing exercise. How do you feel?",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      const SizedBox(height: 30),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _buildFeelingButton('😌 Calm'),
-                          _buildFeelingButton('😊 Better'),
-                          _buildFeelingButton('😐 Same'),
-                        ],
-                      ),
-                      const SizedBox(height: 30),
-                      ElevatedButton(
-                        onPressed: () {
-                          notifier.stopExercise();
-                          setState(() {
-                            isExerciseStarted = false;
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.pink[100],
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: const Text('Done'),
-                      ),
-                    ],
-                  ),
-              ],
             ),
           ),
-        ),
+        ],
       ),
       bottomNavigationBar: buildBottomNavigationBar(
         context: context,
         currentRoute: 'breath',
       ),
+      extendBody: true, // Extend content behind bottom navigation bar
     );
   }
 
@@ -571,7 +722,7 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
           boxShadow: isSelected
               ? [
             BoxShadow(
-              color: Colors.pink[100]!.withValues(alpha:0.3),
+              color: Colors.pink[100]!.withAlpha(30),
               spreadRadius: 1,
               blurRadius: 4,
               offset: const Offset(0, 2),
@@ -641,9 +792,12 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
           ),
         ),
         const SizedBox(height: 20),
-        Text(
-          stageText,
-          style: const TextStyle(
+        BlurText(
+          key: ValueKey(stageText),
+          text: stageText,
+          duration: const Duration(milliseconds: 800),
+          type: AnimationType.word,
+          textStyle: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
@@ -657,41 +811,138 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
           ),
         ),
         const SizedBox(height: 50),
-        AnimatedBuilder(
-          animation: _animationController,
-          builder: (context, child) {
-            return Container(
-              width: 200 + (_animationController.value * 100),
-              height: 200 + (_animationController.value * 100),
-              decoration: BoxDecoration(
-                color: Colors.pink[50],
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.pink[100]!.withValues(alpha:0.5),
-                    spreadRadius: 1,
-                    blurRadius: 15 * _animationController.value,
-                    offset: const Offset(0, 0),
-                  ),
-                ],
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            // Progress indicator
+            SizedBox(
+              width: 328, // 8px larger than orb for clear separation
+              height: 328,
+              child: CircularProgressIndicator(
+                value: (() {
+                  final stageTotal = _getStageDuration(state.exerciseType, state.stage);
+                  if (stageTotal == 0) return 0.0;
+                  return (stageTotal - state.secondsRemaining) / stageTotal;
+                })(),
+                strokeWidth: 3, // thinner line
+                backgroundColor: Colors.transparent, // Remove background ring
+                color: Colors.white.withAlpha(120), // subtle, semi-transparent
               ),
-              child: Center(
-                child: Container(
-                  width: 180 + (_animationController.value * 80),
-                  height: 180 + (_animationController.value * 80),
-                  decoration: BoxDecoration(
-                    color: Colors.pink[100],
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    _getStageIcon(state.stage),
-                    color: Colors.white,
-                    size: 40 + (_animationController.value * 20),
-                  ),
-                ),
-              ),
-            );
-          },
+            ),
+            // Enhanced breathing orb
+            AnimatedBuilder(
+              animation: _animationController,
+              builder: (context, child) {
+                final Color primaryColor = _getStageColor(state.stage);
+                final Color secondaryColor = _getSecondaryStageColor(state.stage);
+                final double orbRadius = 320;
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Glassmorphic + iridescent border effect
+                    Container(
+                      width: 320,
+                      height: 320,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          center: Alignment(0, -0.2),
+                          radius: 0.85,
+                          colors: [
+                            Colors.white.withValues(alpha:0.6), // glass base
+                            primaryColor.withValues(alpha:0.15), // pastel tint
+                            Colors.white.withValues(alpha:0.12),
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.7, 0.95, 1.0],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: primaryColor.withValues(alpha:0.18),
+                            blurRadius: 32,
+                            spreadRadius: 8,
+                          ),
+                        ],
+                        border: Border.all(
+                          width: 6,
+                          style: BorderStyle.solid,
+                          // Iridescent sweep gradient border
+                          color: Colors.transparent,
+                        ),
+                      ),
+                      child: Stack(
+                        children: [
+                          // Frosted glass effect
+                          ClipOval(
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                              child: Container(
+                                color: Colors.white.withValues(alpha:0.08),
+                              ),
+                            ),
+                          ),
+                          // Iridescent edge overlay
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              child: CustomPaint(
+                                painter: _IridescentBorderPainter(primaryColor, secondaryColor),
+                              ),
+                            ),
+                          ),
+                          // Gloss highlight
+                          Positioned(
+                            top: 48, // moved higher for subtlety
+                            left: 84, // narrower gloss
+                            right: 84,
+                            child: Container(
+                              height: 20, // smaller, more subtle
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Colors.white.withValues(alpha:0.07), // much lower opacity
+                                    Colors.white.withValues(alpha:0.0),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.white.withValues(alpha:0.04),
+                                    blurRadius: 24,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          // Breathing icon
+                          Center(
+                            child: Icon(
+                              _getStageIcon(state.stage),
+                              color: Colors.white.withValues(alpha:0.92),
+                              size: 48,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Custom painted particles
+                    IgnorePointer(
+                      child: CustomPaint(
+                        painter: _ParticlePainter(
+                          particles: _particles,
+                          animationValue: _animationController.value,
+                          orbRadius: orbRadius,
+                        ),
+                        size: Size((orbRadius + 40).toDouble(), (orbRadius + 40).toDouble()),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
         ),
       ],
     );
@@ -706,7 +957,7 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
       case BreathingStage.exhale:
         return 'Breathe Out';
       case BreathingStage.rest:
-        return 'Rest';
+        return 'Hold again';
       case BreathingStage.completed:
         return 'Completed';
       default:
@@ -750,5 +1001,119 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
       ),
       child: Text(label),
     );
+  }
+
+  // Provide appropriate feedback based on breathing stage
+  void _provideFeedback(BreathingStage stage) {
+    // Haptic feedback
+    if (_enableHaptic) {
+      switch (stage) {
+        case BreathingStage.inhale:
+          HapticFeedback.lightImpact();
+          break;
+        case BreathingStage.hold:
+          HapticFeedback.selectionClick();
+          break;
+        case BreathingStage.exhale:
+          HapticFeedback.mediumImpact();
+          break;
+        case BreathingStage.rest:
+          HapticFeedback.selectionClick();
+          break;
+        default:
+          break;
+      }
+    }
+    
+    // TODO: Add sound feedback using AudioPlayer or similar
+    // This would require adding a dependency to pubspec.yaml
+    // Example: 
+    // if (_enableSound) {
+    //   final player = AudioPlayer();
+    //   player.play(AssetSource('sounds/${stage.toString().split('.').last}.mp3'));
+    // }
+  }
+  
+  Widget _buildFeedbackToggle({
+    required IconData icon,
+    required bool enabled,
+    required VoidCallback onToggle,
+  }) {
+    return GestureDetector(
+      onTap: onToggle,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: enabled ? Colors.white.withAlpha(255) : Colors.white.withAlpha(127),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          color: enabled ? Colors.white : Colors.white.withAlpha(127),
+          size: 20,
+        ),
+      ),
+    );
+  }
+}
+
+class _IridescentBorderPainter extends CustomPainter {
+  final Color primary;
+  final Color secondary;
+  _IridescentBorderPainter(this.primary, this.secondary);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final paint = Paint()
+      ..shader = SweepGradient(
+        startAngle: 0,
+        endAngle: 6.28319, // 2*pi
+        colors: [
+          primary.withValues(alpha:0.7),
+          secondary.withValues(alpha:0.7),
+          primary.withValues(alpha:0.7),
+        ],
+        stops: const [0.0, 0.5, 1.0],
+      ).createShader(rect)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6;
+    canvas.drawCircle(size.center(Offset.zero), size.width / 2 - 3, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _IridescentBorderPainter oldDelegate) => true;
+}
+
+int _getStageDuration(String exerciseType, BreathingStage stage) {
+  switch (exerciseType) {
+    case 'box':
+      return 4;
+    case '4-7-8':
+      switch (stage) {
+        case BreathingStage.inhale:
+          return 4;
+        case BreathingStage.hold:
+          return 7;
+        case BreathingStage.exhale:
+          return 8;
+        case BreathingStage.rest:
+          return 2;
+        default:
+          return 4;
+      }
+    case 'calm':
+      switch (stage) {
+        case BreathingStage.inhale:
+          return 5;
+        case BreathingStage.exhale:
+          return 5;
+        case BreathingStage.rest:
+          return 2;
+        default:
+          return 5;
+      }
+    default:
+      return 4;
   }
 }
