@@ -13,6 +13,7 @@ Widget buildBottomNavigationBar({required BuildContext context, required String 
         buildNavItem(context, 'Journal', 'journal', currentRoute == 'journal'),
         buildNavItem(context, 'Pillbox', 'pillbox', currentRoute == 'pillbox'),
         buildNavItem(context, 'Wellness', 'wellness', currentRoute == 'wellness'),
+        buildNavItem(context, 'Breath', 'breath', currentRoute == 'breath'),
         buildNavItem(context, 'Profile', 'profile', currentRoute == 'profile'),
       ],
     ),
