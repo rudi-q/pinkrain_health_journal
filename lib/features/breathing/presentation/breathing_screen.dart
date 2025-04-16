@@ -196,6 +196,20 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
   String selectedExercise = 'box';
   int selectedCycles = 4;
   bool isExerciseStarted = false;
+  
+  // Background gradient animation controllers
+  late Animation<Color?> _gradientStartAnimation;
+  late Animation<Color?> _gradientEndAnimation;
+  
+  // Stage-based gradient colors
+  final Map<BreathingStage, List<Color>> _stageColors = {
+    BreathingStage.inhale: [Colors.blue[50]!, Colors.blue[200]!],
+    BreathingStage.hold: [Colors.purple[50]!, Colors.purple[200]!],
+    BreathingStage.exhale: [Colors.pink[50]!, Colors.pink[200]!],
+    BreathingStage.rest: [Colors.indigo[50]!, Colors.indigo[200]!],
+    BreathingStage.initial: [Colors.grey[50]!, Colors.grey[200]!],
+    BreathingStage.completed: [Colors.green[50]!, Colors.green[200]!],
+  };
 
   @override
   void initState() {
@@ -204,12 +218,17 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
       vsync: this,
       duration: const Duration(seconds: 8),
     );
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
+    
+    // Initialize gradient animations
+    _gradientStartAnimation = ColorTween(
+      begin: _stageColors[BreathingStage.initial]![0],
+      end: _stageColors[BreathingStage.initial]![0],
+    ).animate(_animationController);
+    
+    _gradientEndAnimation = ColorTween(
+      begin: _stageColors[BreathingStage.initial]![1],
+      end: _stageColors[BreathingStage.initial]![1],
+    ).animate(_animationController);
   }
 
   @override
@@ -217,171 +236,235 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
     final breathingState = ref.watch(breathingExerciseProvider);
     final notifier = ref.read(breathingExerciseProvider.notifier);
 
-    // Update animation based on breathing state
-    if (breathingState.stage != BreathingStage.initial &&
-        breathingState.stage != BreathingStage.completed) {
-      isExerciseStarted = true;
-
-      // Configure animation based on current stage
-      double targetValue = 0.0;
-      switch (breathingState.stage) {
-        case BreathingStage.inhale:
-          targetValue = 1.0; // Expand
-          break;
-        case BreathingStage.hold:
-          targetValue = 1.0; // Stay expanded
-          break;
-        case BreathingStage.exhale:
-          targetValue = 0.0; // Contract
-          break;
-        case BreathingStage.rest:
-          targetValue = 0.0; // Stay contracted
-          break;
-        default:
-          targetValue = 0.5;
-      }
-
-      // Calculate animation duration based on remaining time
-      final duration = Duration(
-        seconds: breathingState.secondsRemaining,
-        milliseconds: 100, // Small buffer
-      );
-
-      _animationController.duration = duration;
-
-      if (targetValue == 1.0 && _animationController.value < 1.0) {
-        _animationController.forward();
-      } else if (targetValue == 0.0 && _animationController.value > 0.0) {
-        _animationController.reverse();
-      }
-    }
-
-    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
+    ref.listen<BreathingState>(breathingExerciseProvider, (prev, next) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Start exercise if transitioned from initial to another stage
+        if (prev?.stage == BreathingStage.initial &&
+            next.stage != BreathingStage.initial &&
+            next.stage != BreathingStage.completed) {
+          if (!isExerciseStarted) {
+            setState(() {
+              isExerciseStarted = true;
+            });
+          }
+        }
+        // Handle animation controller based on stage
+        double targetValue = 0.5;
+        switch (next.stage) {
+          case BreathingStage.inhale:
+          case BreathingStage.hold:
+            targetValue = 1.0;
+            break;
+          case BreathingStage.exhale:
+          case BreathingStage.rest:
+            targetValue = 0.0;
+            break;
+          default:
+            targetValue = 0.5;
+        }
+        final duration = Duration(
+          seconds: next.secondsRemaining,
+          milliseconds: 100,
+        );
+        _animationController.duration = duration;
+        if (targetValue == 1.0 && _animationController.value < 1.0) {
+          _animationController.forward();
+        } else if (targetValue == 0.0 && _animationController.value > 0.0) {
+          _animationController.reverse();
+        }
+        
+        // Update gradient colors based on current stage
+        if (prev?.stage != next.stage && next.stage != BreathingStage.initial) {
+          setState(() {
+            _gradientStartAnimation = ColorTween(
+              begin: _gradientStartAnimation.value ?? _stageColors[next.stage]![0],
+              end: _stageColors[next.stage]![0],
+            ).animate(
+              CurvedAnimation(
+                parent: _animationController,
+                curve: Curves.easeInOut,
+              ),
+            );
+            
+            _gradientEndAnimation = ColorTween(
+              begin: _gradientEndAnimation.value ?? _stageColors[next.stage]![1],
+              end: _stageColors[next.stage]![1],
+            ).animate(
+              CurvedAnimation(
+                parent: _animationController,
+                curve: Curves.easeInOut,
+              ),
+            );
+          });
+        }
+        
+        // Reset state on completion
+        if (next.stage == BreathingStage.completed) {
+          if (isExerciseStarted) {
+            setState(() {
+              isExerciseStarted = false;
+            });
+          }
+        }
+      });
+    });
 
     return Scaffold(
-      backgroundColor: backgroundColor,
       appBar: buildAppBar('Breath Break'),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              if (!isExerciseStarted) _buildExerciseSelector(),
-              if (isExerciseStarted) _buildExerciseInProgress(breathingState),
-              const SizedBox(height: 30),
-              if (!isExerciseStarted)
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      isExerciseStarted = true;
-                    });
-                    notifier.startExercise(selectedExercise, selectedCycles);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.pink[100],
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 40,
-                      vertical: 15,
+      extendBodyBehindAppBar: true, // Allow gradient to extend behind AppBar
+      body: AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  _gradientStartAnimation.value ?? _stageColors[breathingState.stage]![0],
+                  _gradientEndAnimation.value ?? _stageColors[breathingState.stage]![1],
+                ],
+              ),
+            ),
+            child: child,
+          );
+        },
+        child: SingleChildScrollView(
+          child: Container(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(height: AppBar().preferredSize.height + 20),
+                if (!isExerciseStarted) _buildExerciseSelector(),
+                if (isExerciseStarted) _buildExerciseInProgress(breathingState),
+                const SizedBox(height: 30),
+                if (!isExerciseStarted)
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        isExerciseStarted = true;
+                      });
+                      notifier.startExercise(selectedExercise, selectedCycles);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.pink[100],
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 40,
+                        vertical: 15,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+                    child: const Text(
+                      'Start Exercise',
+                      style: TextStyle(fontSize: 18),
                     ),
                   ),
-                  child: const Text(
-                    'Start Exercise',
-                    style: TextStyle(fontSize: 18),
-                  ),
-                ),
-              if (isExerciseStarted && breathingState.stage != BreathingStage.completed)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        notifier.stopExercise();
-                        setState(() {
-                          isExerciseStarted = false;
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[300],
-                        foregroundColor: Colors.black87,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      child: const Text('Stop'),
-                    ),
-                    const SizedBox(width: 20),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (_animationController.isAnimating) {
-                          _animationController.stop();
-                          notifier.pauseExercise();
-                        } else {
-                          notifier.resumeExercise();
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.pink[100],
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      child: Text(
-                        _animationController.isAnimating ? 'Pause' : 'Resume',
-                      ),
-                    ),
-                  ],
-                ),
-              if (isExerciseStarted && breathingState.stage == BreathingStage.completed)
-                Column(
-                  children: [
-                    const Text(
-                      'Great job!',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      "You've completed your breathing exercise. How do you feel?",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16),
-                    ),
-                    const SizedBox(height: 30),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                // Fixed position buttons when exercise is in progress
+                if (isExerciseStarted && breathingState.stage != BreathingStage.completed)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 30),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _buildFeelingButton('😌 Calm'),
-                        _buildFeelingButton('😊 Better'),
-                        _buildFeelingButton('😐 Same'),
+                        ElevatedButton(
+                          onPressed: () {
+                            notifier.stopExercise();
+                            setState(() {
+                              isExerciseStarted = false;
+                            });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey[300],
+                            foregroundColor: Colors.black87,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: const Text('Stop'),
+                        ),
+                        const SizedBox(width: 20),
+                        ElevatedButton(
+                          onPressed: () {
+                            if (_animationController.isAnimating) {
+                              _animationController.stop();
+                              notifier.pauseExercise();
+                              // Force update to properly show Resume text
+                              setState(() {});
+                            } else {
+                              notifier.resumeExercise();
+                              // Force update to properly show Pause text
+                              setState(() {});
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.pink[100],
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: Text(
+                            // Use the notifier's state to determine if paused
+                            breathingState.secondsRemaining > 0 && _animationController.isAnimating 
+                              ? 'Pause' 
+                              : 'Resume',
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 30),
-                    ElevatedButton(
-                      onPressed: () {
-                        notifier.stopExercise();
-                        setState(() {
-                          isExerciseStarted = false;
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.pink[100],
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                  ),
+                if (isExerciseStarted && breathingState.stage == BreathingStage.completed)
+                  Column(
+                    children: [
+                      const Text(
+                        'Great job!',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      child: const Text('Done'),
-                    ),
-                  ],
-                ),
-            ],
+                      const SizedBox(height: 20),
+                      const Text(
+                        "You've completed your breathing exercise. How do you feel?",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      const SizedBox(height: 30),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildFeelingButton('😌 Calm'),
+                          _buildFeelingButton('😊 Better'),
+                          _buildFeelingButton('😐 Same'),
+                        ],
+                      ),
+                      const SizedBox(height: 30),
+                      ElevatedButton(
+                        onPressed: () {
+                          notifier.stopExercise();
+                          setState(() {
+                            isExerciseStarted = false;
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.pink[100],
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: const Text('Done'),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -390,6 +473,12 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
         currentRoute: 'breath',
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Widget _buildExerciseSelector() {
@@ -482,7 +571,7 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
           boxShadow: isSelected
               ? [
             BoxShadow(
-              color: Colors.pink[100]!.withOpacity(0.3),
+              color: Colors.pink[100]!.withValues(alpha:0.3),
               spreadRadius: 1,
               blurRadius: 4,
               offset: const Offset(0, 2),
@@ -541,7 +630,7 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
 
   Widget _buildExerciseInProgress(BreathingState state) {
     final String stageText = _getStageText(state.stage);
-
+    
     return Column(
       children: [
         Text(
@@ -579,7 +668,7 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.pink[100]!.withOpacity(0.5),
+                    color: Colors.pink[100]!.withValues(alpha:0.5),
                     spreadRadius: 1,
                     blurRadius: 15 * _animationController.value,
                     offset: const Offset(0, 0),
