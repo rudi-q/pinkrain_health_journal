@@ -9,6 +9,7 @@ import '../../features/profile/presentation/profile.dart';
 import '../../features/splash/splash_screen.dart';
 import '../../features/treatment/domain/treatment_manager.dart';
 import '../../features/treatment/presentation/duration.dart';
+import '../../features/treatment/presentation/edit_treatment.dart';
 import '../../features/treatment/presentation/new_treatment.dart';
 import '../../features/treatment/presentation/schedule.dart';
 import '../../features/wellness/presentation/wellness_screen.dart';
@@ -44,6 +45,12 @@ final List<GoRoute> routes = [
       inventory: state.extra as MedicineInventory,
     ),
   ),
+  GoRoute(
+      path: '/edit_treatment',
+      builder: (context, state) {
+        final treatment = state.extra as Treatment;
+        return EditTreatmentScreen(treatment: treatment);
+      }),
 ];
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();

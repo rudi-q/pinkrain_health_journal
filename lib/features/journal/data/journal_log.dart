@@ -19,6 +19,8 @@ class IntakeLog {
       'medicine_color': treatment.medicine.color,
       'dosage': treatment.medicine.specs.dosage,
       'unit': treatment.medicine.specs.unit,
+      'treatment_plan_start_date': treatment.treatmentPlan.startDate.toIso8601String(),
+      'treatment_plan_end_date': treatment.treatmentPlan.endDate.toIso8601String(),
       'is_taken': isTaken,
     };
   }
@@ -33,6 +35,8 @@ class IntakeLog {
       final dynamic dosageValue = map['dosage'];
       final dynamic unitValue = map['unit'];
       final dynamic isTakenValue = map['is_taken'];
+      final dynamic startDateValue = map['treatment_plan_start_date'];
+      final dynamic endDateValue = map['treatment_plan_end_date'];
 
       // Convert name, type, and color with safe defaults
       final String name =
@@ -70,13 +74,24 @@ class IntakeLog {
         }
       }
 
+      // Convert start and end dates with safe defaults
+      DateTime startDate = DateTime.now().subtract(const Duration(days: 7));
+      if (startDateValue is String) {
+        startDate = DateTime.parse(startDateValue);
+      }
+
+      DateTime endDate = DateTime.now().add(const Duration(days: 7));
+      if (endDateValue is String) {
+        endDate = DateTime.parse(endDateValue);
+      }
+
       // Create full object hierarchy
       final medicine = Medicine(name: name, type: type, color: color);
       medicine.addSpecification(Specification(dosage: dosage, unit: unit));
 
       final treatmentPlan = TreatmentPlan(
-        startDate: DateTime.now().subtract(const Duration(days: 7)),
-        endDate: DateTime.now().add(const Duration(days: 7)),
+        startDate: startDate,
+        endDate: endDate,
         timeOfDay: DateTime(2023, 1, 1, 12, 0),
       );
 

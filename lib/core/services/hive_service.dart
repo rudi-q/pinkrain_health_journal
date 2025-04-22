@@ -344,12 +344,47 @@ class HiveService {
     }
   }
 
+  /// Update a treatment
+  static Future<void> updateTreatment(Map<String, dynamic> oldTreatment, Map<String, dynamic> updatedTreatment) async {
+    try {
+      final box = await _openBox(treatmentsBoxName);
+      final treatments = await getTreatments();
+      // Find the index by matching all fields (or you can refine this to use only unique fields)
+      final index = treatments.indexWhere((t) => _treatmentEquals(t, oldTreatment));
+      if (index != -1) {
+        treatments[index] = updatedTreatment;
+        await box.put('treatments', treatments);
+      } else {
+        devPrint('Treatment to update not found.');
+      }
+    } catch (e) {
+      devPrint('Error updating treatment: $e');
+    }
+  }
+
+  /// Helper to compare two treatments (by medicine name and plan start/end)
+  static bool _treatmentEquals(Map<String, dynamic> a, Map<String, dynamic> b) {
+    // Defensive checks for null or missing keys
+    if (a['medicine']?['name'] == null || b['medicine']?['name'] == null ||
+        a['treatmentPlan']?['startDate'] == null || b['treatmentPlan']?['startDate'] == null ||
+        a['treatmentPlan']?['endDate'] == null || b['treatmentPlan']?['endDate'] == null) {
+      devPrint("Treatment comparison failed due to missing keys.");
+      return false;
+    }
+    return a['medicine']['name'] == b['medicine']['name'] &&
+        (a['treatmentPlan']['startDate'] as String) == (b['treatmentPlan']['startDate'] as String) &&
+        (a['treatmentPlan']['endDate'] as String) == (b['treatmentPlan']['endDate'] as String);
+  }
+
   /// Get all treatments
   static Future<List<Map<String, dynamic>>> getTreatments() async {
     try {
       final box = await _openBox(treatmentsBoxName);
-      final treatments = await box.get('treatments', defaultValue: <Map<String, dynamic>>[]);
-      return List<Map<String, dynamic>>.from(treatments);
+      final dynamic raw = await box.get('treatments', defaultValue: []);
+      final List rawList = raw as List;
+      return rawList
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
     } catch (e) {
       devPrint('Error getting treatments: $e');
       return [];

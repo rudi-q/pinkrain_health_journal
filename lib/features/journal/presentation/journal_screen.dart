@@ -804,6 +804,11 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
             Icon(Icons.chevron_right, color: Colors.grey),
+            SizedBox(width: 8),
+            IconButton(
+              icon: Icon(Icons.edit, color: Colors.grey),
+              onPressed: () => context.push('/edit_treatment', extra: medicineLog.treatment),
+            ),
           ],
         ),
       ),
@@ -937,9 +942,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                   ),
                   IconButton(
                     icon: Icon(Icons.edit, color: Colors.grey),
-                    onPressed: () {
-                      // Handle edit action
-                    },
+                    onPressed: () => context.push('/edit_treatment', extra: medication),
                   ),
                 ],
               ),

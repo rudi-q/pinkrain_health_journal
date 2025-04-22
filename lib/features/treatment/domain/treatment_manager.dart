@@ -195,4 +195,25 @@ class TreatmentManager {
       await HiveService.saveMedicationLogsForDate(date, logs);
     }
   }
+
+  /// Update an existing treatment
+  Future<void> updateTreatment(Treatment oldTreatment, Treatment updatedTreatment) async {
+    // Ensure in-memory list is up-to-date
+    await loadTreatments();
+    final oldJson = oldTreatment.toJson();
+    final updatedJson = updatedTreatment.toJson();
+    // Persist update
+    await HiveService.updateTreatment(oldJson, updatedJson);
+    // Update in-memory list
+    final index = _treatments.indexWhere((t) =>
+      t.medicine.name == oldTreatment.medicine.name &&
+      t.treatmentPlan.startDate.toIso8601String() == oldTreatment.treatmentPlan.startDate.toIso8601String() &&
+      t.treatmentPlan.endDate.toIso8601String() == oldTreatment.treatmentPlan.endDate.toIso8601String()
+    );
+    if (index != -1) {
+      _treatments[index] = updatedTreatment;
+    } else {
+      devPrint('Old treatment not found in memory during update.');
+    }
+  }
 }
