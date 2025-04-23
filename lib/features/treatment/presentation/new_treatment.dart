@@ -3,6 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/icons.dart';
+import '../../../core/util/helpers.dart';
 import '../domain/treatment_manager.dart';
 
 class NewTreatmentScreen extends StatefulWidget {
@@ -358,14 +359,19 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
       child: ElevatedButton(
         onPressed: () {
           if (_validateInput()) {
+            // Generate a unique ID for this new treatment
+            final uniqueId = generateUniqueId();
+            devPrint("Creating new treatment with generated ID: $uniqueId");
+            
             final treatment = Treatment.newTreatment(
+              id: uniqueId, // Explicitly pass the generated ID
               name: nameController.text,
               type: selectedTreatmentType,
               color: colorMap[selectedColor]?.toString() ?? Colors.white.toString(),
               dose: double.parse(doseController.text),
-              doseUnit: selectedDoseUnit,
+              unit: selectedDoseUnit,
               mealOption: selectedMealOption,
-              comment: commentController.text.isNotEmpty ? commentController.text : '',
+              instructions: commentController.text.isNotEmpty ? commentController.text : '',
             );
             context.push('/schedule', extra: treatment);
           }

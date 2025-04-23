@@ -29,8 +29,8 @@ class PillIntakeNotifier extends StateNotifier<List<IntakeLog>> {
     await populateJournal(DateTime.now().normalize());
   }
 
-  Future<void> populateJournal(DateTime selectedDate) async {
-    state = await _journalLog.getMedicationsForTheDay(selectedDate);
+  Future<void> populateJournal(DateTime selectedDate, {bool forceReload = false}) async {
+    state = await _journalLog.getMedicationsForTheDay(selectedDate, forceReload: forceReload);
   }
 
   Future<void> pillTaken(IntakeLog log, DateTime date) async {
@@ -43,7 +43,18 @@ class PillIntakeNotifier extends StateNotifier<List<IntakeLog>> {
     await _journalLog.saveMedicationLogs(normalizedDate);
   }
   
-  // Getter to access the journal log
+  /// Force reload all medication data from storage
+  Future<void> forceReloadMedicationData(DateTime selectedDate) async {
+    // Clear all cached data
+    _journalLog.clearAllCachedMedicationLogs();
+    
+    // Reload from storage for the specific date with force reload flag
+    await populateJournal(selectedDate, forceReload: true);
+    
+    "Medication data forcefully reloaded for ${selectedDate.toString()}".log();
+  }
+
+  /// Getter to access the journal log
   JournalLog get journalLog => _journalLog;
 
   /// Get the days of the week with the most missed doses

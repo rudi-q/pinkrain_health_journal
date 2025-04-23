@@ -2,6 +2,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pillow/core/util/helpers.dart' show devPrint;
+import 'package:pillow/features/treatment/domain/treatment_manager.dart' show generateUniqueId;
 
 class HiveService {
   static const String userPrefsBox = 'userPreferences';
@@ -338,9 +339,12 @@ class HiveService {
       final box = await _openBox(treatmentsBoxName);
       final treatments = await getTreatments();
       treatments.add(treatment);
-      await box.put('treatments', treatments);
+      // Sanitize and store
+      final sanitizedList = _sanitizeList(treatments);
+      await box.put('treatments', sanitizedList);
     } catch (e) {
       devPrint('Error saving treatment: $e');
+      rethrow; // Rethrow to allow proper error handling upstream
     }
   }
 
@@ -349,31 +353,98 @@ class HiveService {
     try {
       final box = await _openBox(treatmentsBoxName);
       final treatments = await getTreatments();
+      
+      // CRITICAL ID FIX: Ensure the updated treatment has a valid ID
+      if (!updatedTreatment.containsKey('id') || updatedTreatment['id'] == null || updatedTreatment['id'].toString().isEmpty) {
+        // If old treatment had an ID, use it
+        if (oldTreatment.containsKey('id') && oldTreatment['id'] != null && oldTreatment['id'].toString().isNotEmpty) {
+          updatedTreatment['id'] = oldTreatment['id'];
+          devPrint("Preserved existing ID from old treatment: ${oldTreatment['id']}");
+        } else {
+          // Otherwise generate a new one
+          updatedTreatment['id'] = generateUniqueId();
+          devPrint("Created new ID for treatment without ID: ${updatedTreatment['id']}");
+        }
+      }
+      
       // Find the index by matching all fields (or you can refine this to use only unique fields)
       final index = treatments.indexWhere((t) => _treatmentEquals(t, oldTreatment));
       if (index != -1) {
+        devPrint("Updating treatment at index $index with ID: ${updatedTreatment['id']}");
         treatments[index] = updatedTreatment;
-        await box.put('treatments', treatments);
+        // Sanitize and store
+        final sanitizedList = _sanitizeList(treatments);
+        await box.put('treatments', sanitizedList);
       } else {
         devPrint('Treatment to update not found.');
       }
     } catch (e) {
       devPrint('Error updating treatment: $e');
+      rethrow; // Rethrow to allow proper error handling upstream
     }
   }
 
-  /// Helper to compare two treatments (by medicine name and plan start/end)
+  /// Delete a treatment
+  static Future<void> deleteTreatment(Map<String, dynamic> treatment) async {
+    try {
+      final box = await _openBox(treatmentsBoxName);
+      final treatments = await getTreatments();
+      
+      // Find the index of the treatment to delete
+      final index = treatments.indexWhere((t) => _treatmentEquals(t, treatment));
+      
+      if (index != -1) {
+        // Remove the treatment from the list
+        treatments.removeAt(index);
+        
+        // Sanitize and store the updated list
+        final sanitizedList = _sanitizeList(treatments);
+        await box.put('treatments', sanitizedList);
+        devPrint('Successfully deleted treatment');
+      } else {
+        devPrint('Treatment to delete not found.');
+      }
+    } catch (e) {
+      devPrint('Error deleting treatment: $e');
+      rethrow; // Rethrow to allow proper error handling upstream
+    }
+  }
+
+  /// Helper to compare two treatments (by ID with name fallback)
   static bool _treatmentEquals(Map<String, dynamic> a, Map<String, dynamic> b) {
-    // Defensive checks for null or missing keys
-    if (a['medicine']?['name'] == null || b['medicine']?['name'] == null ||
-        a['treatmentPlan']?['startDate'] == null || b['treatmentPlan']?['startDate'] == null ||
-        a['treatmentPlan']?['endDate'] == null || b['treatmentPlan']?['endDate'] == null) {
-      devPrint("Treatment comparison failed due to missing keys.");
+    try {
+      // First try to match by ID (preferred method)
+      if (a['id'] != null && b['id'] != null) {
+        final aId = a['id'].toString();
+        final bId = b['id'].toString();
+        
+        if (aId.isNotEmpty && bId.isNotEmpty) {
+          devPrint("Comparing treatments by ID: $aId vs $bId");
+          return aId == bId;
+        }
+      }
+      
+      // Fallback to medicine name comparison (for backward compatibility)
+      if (a['medicine'] == null || b['medicine'] == null) {
+        devPrint("Treatment comparison failed due to missing main keys.");
+        return false;
+      }
+      
+      // Compare by medicine name as fallback
+      final aMedicineName = a['medicine']['name']?.toString().toLowerCase();
+      final bMedicineName = b['medicine']['name']?.toString().toLowerCase();
+      
+      if (aMedicineName == null || bMedicineName == null) {
+        devPrint("Treatment comparison failed due to missing medicine name.");
+        return false;
+      }
+      
+      devPrint("Comparing treatments by name: $aMedicineName vs $bMedicineName");
+      return aMedicineName == bMedicineName;
+    } catch (e) {
+      devPrint("Error in treatment comparison: $e");
       return false;
     }
-    return a['medicine']['name'] == b['medicine']['name'] &&
-        (a['treatmentPlan']['startDate'] as String) == (b['treatmentPlan']['startDate'] as String) &&
-        (a['treatmentPlan']['endDate'] as String) == (b['treatmentPlan']['endDate'] as String);
   }
 
   /// Get all treatments
@@ -382,13 +453,43 @@ class HiveService {
       final box = await _openBox(treatmentsBoxName);
       final dynamic raw = await box.get('treatments', defaultValue: []);
       final List rawList = raw as List;
-      return rawList
-          .map((item) => Map<String, dynamic>.from(item as Map))
-          .toList();
+      // Use consistent sanitization approach
+      return _sanitizeList(rawList).cast<Map<String, dynamic>>();
     } catch (e) {
       devPrint('Error getting treatments: $e');
       return [];
     }
+  }
+
+  /// Helper method to sanitize maps for consistent storage/retrieval
+  static Map<String, dynamic> _sanitizeMap(Map<dynamic, dynamic> map) {
+    return Map<String, dynamic>.fromEntries(
+      map.entries.map((entry) {
+        final key = entry.key.toString();
+        final value = entry.value;
+        
+        if (value is Map) {
+          return MapEntry(key, _sanitizeMap(value as Map<dynamic, dynamic>));
+        } else if (value is List) {
+          return MapEntry(key, _sanitizeList(value));
+        } else {
+          return MapEntry(key, value);
+        }
+      }),
+    );
+  }
+  
+  /// Helper method to sanitize lists that may contain maps
+  static List<dynamic> _sanitizeList(List<dynamic> list) {
+    return list.map((item) {
+      if (item is Map) {
+        return _sanitizeMap(item as Map<dynamic, dynamic>);
+      } else if (item is List) {
+        return _sanitizeList(item);
+      } else {
+        return item;
+      }
+    }).toList();
   }
 }
 

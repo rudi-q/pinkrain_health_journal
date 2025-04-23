@@ -13,7 +13,14 @@ class IntakeLog {
 
   /// Convert IntakeLog to a Map for storage
   Map<String, dynamic> toMap() {
+    // Debug the ID being stored
+    final treatmentId = treatment.id;
+    if (treatmentId.isEmpty) {
+      devPrint("WARNING: Empty treatment ID in toMap for ${treatment.medicine.name}");
+    }
+    
     return {
+      'treatment_id': treatmentId,
       'medicine_name': treatment.medicine.name,
       'medicine_type': treatment.medicine.type,
       'medicine_color': treatment.medicine.color,
@@ -37,6 +44,13 @@ class IntakeLog {
       final dynamic isTakenValue = map['is_taken'];
       final dynamic startDateValue = map['treatment_plan_start_date'];
       final dynamic endDateValue = map['treatment_plan_end_date'];
+      final dynamic treatmentIdValue = map['treatment_id'];
+
+      // Get treatment ID safely
+      final String treatmentId = (treatmentIdValue is String) ? treatmentIdValue : '';
+      if (treatmentId.isEmpty) {
+        devPrint("WARNING: Empty treatment ID in fromMap for $nameValue");
+      }
 
       // Convert name, type, and color with safe defaults
       final String name =
@@ -51,70 +65,100 @@ class IntakeLog {
           dosage = dosageValue.toDouble();
         } else if (dosageValue is double) {
           dosage = dosageValue;
-        } else if (dosageValue is String &&
-            double.tryParse(dosageValue) != null) {
-          dosage = double.parse(dosageValue);
+        } else if (dosageValue is String) {
+          try {
+            dosage = double.parse(dosageValue);
+          } catch (e) {
+            // Keep default
+          }
         }
       }
 
       // Convert unit with safe default
       final String unit = (unitValue is String) ? unitValue : 'mg';
 
-      // Check if already taken
-      bool taken = false;
+      // Convert taken status with safe default
+      bool isTaken = false;
       if (isTakenValue != null) {
         if (isTakenValue is bool) {
-          taken = isTakenValue;
+          isTaken = isTakenValue;
         } else if (isTakenValue is int) {
-          taken = isTakenValue != 0;
+          isTaken = isTakenValue != 0;
         } else if (isTakenValue is String) {
-          final String lowerValue = isTakenValue.toLowerCase();
-          taken =
-              lowerValue == 'true' || lowerValue == '1' || lowerValue == 'yes';
+          isTaken = isTakenValue.toLowerCase() == 'true' ||
+              isTakenValue == '1';
         }
       }
 
-      // Convert start and end dates with safe defaults
-      DateTime startDate = DateTime.now().subtract(const Duration(days: 7));
-      if (startDateValue is String) {
-        startDate = DateTime.parse(startDateValue);
+      DateTime startDate = DateTime.now();
+      try {
+        if (startDateValue is String) {
+          startDate = DateTime.parse(startDateValue);
+        }
+      } catch (e) {
+        // Default logic
       }
 
-      DateTime endDate = DateTime.now().add(const Duration(days: 7));
-      if (endDateValue is String) {
-        endDate = DateTime.parse(endDateValue);
+      DateTime endDate = startDate.add(const Duration(days: 7));
+      try {
+        if (endDateValue is String) {
+          endDate = DateTime.parse(endDateValue);
+        }
+      } catch (e) {
+        // Default logic
       }
 
-      // Create full object hierarchy
-      final medicine = Medicine(name: name, type: type, color: color);
-      medicine.addSpecification(Specification(dosage: dosage, unit: unit));
+      // Create a medicine object
+      final medicine = Medicine(
+        name: name,
+        type: type,
+        color: color,
+      );
 
+      // Add specification
+      medicine.addSpecification(
+        Specification(
+          dosage: dosage,
+          unit: unit,
+          useCase: '',
+        ),
+      );
+
+      // Create treatment plan
       final treatmentPlan = TreatmentPlan(
         startDate: startDate,
         endDate: endDate,
+        mealOption: 'No preference',
+        instructions: '',
+        frequency: const Duration(days: 1),
         timeOfDay: DateTime(2023, 1, 1, 12, 0),
       );
 
-      final treatment =
-          Treatment(medicine: medicine, treatmentPlan: treatmentPlan);
+      // Create the treatment with the explicit ID
+      final treatment = Treatment(
+        id: treatmentId,
+        medicine: medicine, 
+        treatmentPlan: treatmentPlan
+      );
+      
+      // Log the ID we're using
+      devPrint("Created treatment from map with ID: '$treatmentId'");
 
-      // Create and return the intake log
-      return IntakeLog(treatment, isTaken: taken);
+      return IntakeLog(treatment, isTaken: isTaken);
     } catch (e) {
-      // If anything fails, return a basic log
-      'Error creating IntakeLog from map: $e'.log();
-      final defaultMedicine = Medicine(name: 'Error Medicine', type: 'pill');
-      defaultMedicine.addSpecification(Specification(dosage: 1.0, unit: 'mg'));
-
-      final defaultPlan = TreatmentPlan(
-        startDate: DateTime.now().subtract(const Duration(days: 7)),
+      devPrint('Error in IntakeLog.fromMap: $e');
+      // Create a fallback log entry
+      final medicine = Medicine(name: 'Error Loading', type: 'pill', color: 'red')
+        ..addSpecification(Specification(dosage: 0.0, unit: 'mg', useCase: ''));
+      
+      final plan = TreatmentPlan(
+        startDate: DateTime.now(),
         endDate: DateTime.now().add(const Duration(days: 7)),
         timeOfDay: DateTime(2023, 1, 1, 12, 0),
       );
-
-      return IntakeLog(
-        Treatment(medicine: defaultMedicine, treatmentPlan: defaultPlan),
-      );
+      
+      final treatment = Treatment(medicine: medicine, treatmentPlan: plan);
+      return IntakeLog(treatment);
     }
   }
 }
@@ -130,7 +174,13 @@ class JournalLog {
   Future<void> _loadMedicationLogs(DateTime date) async {
     date = date.normalize();
     try {
+      // First, try to load from storage
       final logs = await HiveService.getMedicationLogsForDate(date);
+
+      // CRITICAL FIX: Always check for up-to-date treatment data
+      final treatmentManager = TreatmentManager();
+      await treatmentManager.loadTreatments(); // Ensure latest treatments are loaded
+      final latestTreatments = treatmentManager.treatments;
 
       if (logs != null && logs.isNotEmpty) {
         // Convert the logs back to IntakeLog objects with safer type handling
@@ -148,7 +198,19 @@ class JournalLog {
               });
 
               if (typedMap.isNotEmpty) {
-                intakeLogs.add(IntakeLog.fromMap(typedMap));
+                // Create the base IntakeLog
+                final intakeLog = IntakeLog.fromMap(typedMap);
+                
+                // CRITICAL FIX: Update with the latest treatment data if it exists
+                final treatmentId = intakeLog.treatment.id;
+                final matchingTreatment = latestTreatments.firstWhere(
+                  (t) => t.id == treatmentId,
+                  orElse: () => intakeLog.treatment,
+                );
+                
+                // Use the updated treatment but preserve the intake status
+                final updatedIntakeLog = IntakeLog(matchingTreatment, isTaken: intakeLog.isTaken);
+                intakeLogs.add(updatedIntakeLog);
               }
             }
           } catch (parseError) {
@@ -206,12 +268,15 @@ class JournalLog {
     }
   }
 
-  Future<List<IntakeLog>> getMedicationsForTheDay(DateTime date) async {
+  Future<List<IntakeLog>> getMedicationsForTheDay(DateTime date, {bool forceReload = false}) async {
     date = date.normalize();
 
-    // Check if we already have logs for this date in memory
-    if (!medicationLogs.containsKey(date) || medicationLogs[date]!.isEmpty) {
+    // Always reload from storage if force reload is requested
+    if (forceReload || !medicationLogs.containsKey(date) || medicationLogs[date]!.isEmpty) {
       await _loadMedicationLogs(date);
+      "Medications for ${date.toString()} loaded from storage (force: $forceReload)".log();
+    } else {
+      "Using cached medications for ${date.toString()}".log();
     }
 
     return medicationLogs[date] ?? [];
@@ -234,7 +299,7 @@ class JournalLog {
 
       if (hasMedsForDate) {
         for (final log in medicationLogs[currentDate]!) {
-          if (log.treatment.medicine.name == treatment.medicine.name) {
+          if (log.treatment.id == treatment.id) {
             takenCount += log.isTaken ? 1 : 0;
             totalDays++;
           }
@@ -265,5 +330,102 @@ class JournalLog {
 
     // Use the synchronous version now that all data is loaded
     return getAdherenceRate(treatment, startDate, endDate);
+  }
+
+  /// Force reload medication logs for a specific date by clearing the cache
+  Future<List<IntakeLog>> forceReloadMedicationLogs(DateTime date) async {
+    date = date.normalize();
+    // PERFORMANCE FIX: Only remove the specific date entry instead of clearing all
+    medicationLogs.remove(date);
+    
+    // CRITICAL FIX: Ensure we get the most up-to-date treatments
+    final treatmentManager = TreatmentManager();
+    await treatmentManager.loadTreatments(); // Reload fresh from storage
+    
+    devPrint("Force reloading medication logs for ${date.toString().split(' ')[0]} with ${treatmentManager.treatments.length} current treatments");
+    
+    // Get the existing logs if any
+    final existingLogs = await HiveService.getMedicationLogsForDate(date);
+    bool needsUpdate = false;
+    
+    // Create a new list for this date
+    final updatedLogs = <IntakeLog>[];
+    
+    if (existingLogs != null && existingLogs.isNotEmpty) {
+      devPrint("Found ${existingLogs.length} existing logs for this date");
+      
+      // For each existing log, try to find the updated treatment
+      for (final logMap in existingLogs) {
+        final medicineName = logMap['medicine_name'] as String?;
+        final isTaken = logMap['is_taken'] as bool? ?? false;
+        String treatmentId = logMap['treatment_id'] as String? ?? '';
+        
+        devPrint("Processing journal entry for: $medicineName (ID: $treatmentId)");
+        
+        // First try to find by ID if present
+        Treatment? updatedTreatment;
+        if (treatmentId.isNotEmpty) {
+          try {
+            updatedTreatment = treatmentManager.treatments.firstWhere(
+              (t) => t.id == treatmentId
+            );
+            devPrint("Found treatment by ID match: ${updatedTreatment.medicine.name}");
+          } catch (e) {
+            // No treatment found by ID
+            devPrint("No treatment found with ID: $treatmentId");
+          }
+        }
+        
+        // If ID didn't match or was empty, try by name
+        if (updatedTreatment == null && medicineName != null && medicineName.isNotEmpty) {
+          try {
+            updatedTreatment = treatmentManager.treatments.firstWhere(
+              (t) => t.medicine.name.toLowerCase() == medicineName.toLowerCase()
+            );
+            devPrint("Found treatment by name match: ${updatedTreatment.medicine.name} with ID: ${updatedTreatment.id}");
+            
+            // If we found by name but ID is different, it's an update
+            if (treatmentId != updatedTreatment.id) {
+              devPrint("ID changed from '$treatmentId' to '${updatedTreatment.id}'");
+              needsUpdate = true;
+            }
+          } catch (e) {
+            devPrint("No treatment found with name: $medicineName");
+          }
+        }
+        
+        // If we found a treatment, create an updated log
+        if (updatedTreatment != null) {
+          final log = IntakeLog(updatedTreatment, isTaken: isTaken);
+          updatedLogs.add(log);
+          devPrint("Added log for ${updatedTreatment.medicine.name} with ID: ${updatedTreatment.id}");
+        }
+      }
+    } else {
+      // No existing logs, create new ones from all current treatments
+      devPrint("No existing logs, creating new ones from current treatments");
+      for (final treatment in treatmentManager.treatments) {
+        final log = IntakeLog(treatment);
+        updatedLogs.add(log);
+        needsUpdate = true;
+        devPrint("Created new log for ${treatment.medicine.name} with ID: ${treatment.id}");
+      }
+    }
+    
+    // Update our in-memory store
+    medicationLogs[date] = updatedLogs;
+    
+    // If we made changes, save them
+    if (needsUpdate || updatedLogs.length != (existingLogs?.length ?? 0)) {
+      await saveMedicationLogs(date);
+      devPrint("Saved updated medication logs with ${updatedLogs.length} entries");
+    }
+    
+    return updatedLogs;
+  }
+  
+  /// Clear all cached medication logs to force reload from storage
+  void clearAllCachedMedicationLogs() {
+    medicationLogs.clear();
   }
 }

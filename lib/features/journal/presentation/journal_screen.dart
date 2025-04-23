@@ -1073,10 +1073,19 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
   }
 
   Future<void> _refreshJournal() async {
-    // Simulate a data fetch operation
-    await Future.delayed(Duration(seconds: 1));
-    final selectedDateNotifier = ref.read(selectedDateProvider.notifier);
-    selectedDateNotifier.setDate(DateTime.now(), ref);
+    try {
+      // Force reload from Hive storage
+      final pillIntakeNotifier = ref.read(pillIntakeProvider.notifier);
+      await pillIntakeNotifier.forceReloadMedicationData(selectedDate);
+      
+      // Also update the date
+      final selectedDateNotifier = ref.read(selectedDateProvider.notifier);
+      await selectedDateNotifier.setDate(selectedDate, ref);
+      
+      "Journal refreshed with force reload".log();
+    } catch (e) {
+      "Error refreshing journal: $e".log();
+    }
   }
 }
 
