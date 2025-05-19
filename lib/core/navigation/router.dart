@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pillow/features/journal/presentation/journal_screen_wrapper.dart';
 
 import '../../features/breathing/presentation/breathing_screen.dart';
+import '../../features/guided-meditation/guided_audio.dart';
 import '../../features/pillbox/presentation/medicine_detail_screen.dart';
 import '../../features/pillbox/presentation/pillbox_screen.dart';
 import '../../features/profile/presentation/profile.dart';
@@ -20,6 +21,7 @@ final List<GoRoute> routes = [
   GoRoute(path: '/journal', builder: (context, state) => JournalScreenWrapper()),
   GoRoute(path: '/pillbox', builder: (context, state) => PillboxScreen()),
   GoRoute(path: '/breath', builder: (context, state) => BreathBreakScreen()),
+  GoRoute(path: '/meditation', builder: (context, state) => GuidedMeditationScreen()),
   GoRoute(
       path: '/wellness', builder: (context, state) => WellnessTrackerScreen()),
   GoRoute(path: '/profile', builder: (context, state) => ProfileScreen()),
