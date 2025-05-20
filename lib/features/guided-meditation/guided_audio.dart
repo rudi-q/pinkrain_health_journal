@@ -10,12 +10,14 @@ class MeditationTrack {
   final String subtitle;
   final String description;
   final String assetPath;
+  final String category;
 
   MeditationTrack({
     required this.title,
     required this.subtitle,
     required this.description,
     required this.assetPath,
+    required this.category,
   });
 }
 
@@ -33,67 +35,92 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> {
   MeditationTrack? _nowPlaying;
 
   final List<MeditationTrack> tracks = [
+    // Self-Acceptance
     MeditationTrack(
       title: "The Voice You Needed",
       subtitle: "5 min grounding",
       description: "Calm your nerves",
       assetPath: "assets/audio-tracks/The_Voice_You_Needed.m4a",
+      category: "Self-Acceptance",
     ),
     MeditationTrack(
-      title: "You’re Not a Burden",
+      title: "You're Not a Burden",
       subtitle: "5 min grounding",
-      description: "You’re allowed to exist",
-      assetPath: "assets/audio-tracks/You’re_Not_a_Burden.m4a",
-    ),
-    MeditationTrack(
-      title: "This Isn’t Laziness",
-      subtitle: "5 min grounding",
-      description: "Understand your stillness",
-      assetPath: "assets/audio-tracks/This_Isn’t_Laziness.m4a",
-    ),
-    MeditationTrack(
-      title: "Grief That Doesn’t Have a Name",
-      subtitle: "5 min grounding",
-      description: "Hold space for the unnamed",
-      assetPath: "assets/audio-tracks/Grief_That_Doesn’t_Have_a_Name.m4a",
-    ),
-    MeditationTrack(
-      title: "You Don’t Have to Earn Rest",
-      subtitle: "5 min grounding",
-      description: "Rest is your right",
-      assetPath: "assets/audio-tracks/You_Don’t_Have_to_Earn_Rest.m4a",
+      description: "You're allowed to exist",
+      assetPath: "assets/audio-tracks/You're_Not_a_Burden.m4a",
+      category: "Self-Acceptance",
     ),
     MeditationTrack(
       title: "The Quiet Part of You Still Counts",
       subtitle: "5 min grounding",
       description: "Even your silence is worthy",
       assetPath: "assets/audio-tracks/The_Quiet_Part_of_You_Still_Counts.m4a",
+      category: "Self-Acceptance",
     ),
+
+    // Rest & Stillness
+    MeditationTrack(
+      title: "This Isn't Laziness",
+      subtitle: "5 min grounding",
+      description: "Understand your stillness",
+      assetPath: "assets/audio-tracks/This_Isn't_Laziness.m4a",
+      category: "Rest & Stillness",
+    ),
+    MeditationTrack(
+      title: "You Don't Have to Earn Rest",
+      subtitle: "5 min grounding",
+      description: "Rest is your right",
+      assetPath: "assets/audio-tracks/You_Don't_Have_to_Earn_Rest.m4a",
+      category: "Rest & Stillness",
+    ),
+
+    // Emotional Processing
     MeditationTrack(
       title: "What You Feel is Real",
       subtitle: "5 min grounding",
       description: "Affirm your inner truth",
       assetPath: "assets/audio-tracks/What_You_Feel_is_Real.m4a",
+      category: "Emotional Processing",
     ),
     MeditationTrack(
-      title: "For When You’re Numb and Don’t Know Why",
+      title: "For When You're Numb and Don't Know Why",
       subtitle: "5 min grounding",
       description: "Sit with the fog",
-      assetPath: "assets/audio-tracks/For_When_You’re_Numb_and_Don’t_Know_Why.m4a",
+      assetPath: "assets/audio-tracks/For_When_You're_Numb_and_Don't_Know_Why.m4a",
+      category: "Emotional Processing",
     ),
     MeditationTrack(
-      title: "The Anger You’ve Been Swallowing",
+      title: "The Anger You've Been Swallowing",
       subtitle: "5 min grounding",
       description: "Let it surface safely",
-      assetPath: "assets/audio-tracks/The_Anger_You’ve_Been_Swallowing.m4a",
+      assetPath: "assets/audio-tracks/The_Anger_You've_Been_Swallowing.m4a",
+      category: "Emotional Processing",
+    ),
+
+    // Grief & Loss
+    MeditationTrack(
+      title: "Grief That Doesn't Have a Name",
+      subtitle: "5 min grounding",
+      description: "Hold space for the unnamed",
+      assetPath: "assets/audio-tracks/Grief_That_Doesn't_Have_a_Name.m4a",
+      category: "Grief & Loss",
     ),
     MeditationTrack(
       title: "When You Miss Who You Used to Be",
       subtitle: "5 min grounding",
       description: "Grieve your old self gently",
       assetPath: "assets/audio-tracks/When_You_Miss_Who_You_Used_to_Be.m4a",
+      category: "Grief & Loss",
     ),
   ];
+
+  // Get unique categories from tracks
+  List<String> get categories => tracks.map((track) => track.category).toSet().toList();
+
+  // Get tracks for a specific category
+  List<MeditationTrack> getTracksByCategory(String category) {
+    return tracks.where((track) => track.category == category).toList();
+  }
 
   Future<void> _playTrack(MeditationTrack track) async {
     // 1. Stop any current playback
@@ -132,28 +159,102 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> {
     return GestureDetector(
       onTap: () => _playTrack(track),
       child: Container(
-        padding: EdgeInsets.all(16),
-        margin: EdgeInsets.symmetric(vertical: 6, horizontal: 20),
+        padding: EdgeInsets.all(14),
+        margin: EdgeInsets.symmetric(vertical: 4, horizontal: 12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.05),
+              spreadRadius: 1,
+              blurRadius: 2,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
         child: Row(
           children: [
-            Icon(Icons.spa, color: Colors.pink.shade200),
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.pink[100],
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.spa, color: Colors.white, size: 20),
+            ),
             SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(track.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                  Text(track.subtitle, style: TextStyle(color: Colors.grey.shade700)),
-                  Text(track.description, style: TextStyle(color: Colors.grey.shade500)),
+                  Text(
+                    track.title, 
+                    style: TextStyle(
+                      fontSize: 15, 
+                      fontWeight: FontWeight.w600
+                    )
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    track.subtitle, 
+                    style: TextStyle(
+                      color: Colors.grey.shade700,
+                      fontSize: 13,
+                    )
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    track.description, 
+                    style: TextStyle(
+                      color: Colors.grey.shade500,
+                      fontSize: 12,
+                    )
+                  ),
                 ],
               ),
             ),
+            Icon(Icons.play_circle_outline, color: Colors.pink[200], size: 28),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCategorySection(String category) {
+    final categoryTracks = getTracksByCategory(category);
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.pink[50],
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(left: 20, right: 20, top: 16, bottom: 8),
+            child: Text(
+              category,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade800,
+              ),
+            ),
+          ),
+          ...categoryTracks.map((track) => _buildTrackCard(track)).toList(),
+          SizedBox(height: 8),
+        ],
       ),
     );
   }
@@ -251,6 +352,33 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> {
     );
   }
 
+  Widget _buildHeader() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Find Your Peace',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey.shade800,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Select a meditation track from the categories below to begin your mindfulness journey.',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -273,12 +401,12 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> {
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
+            child: ListView(
               padding: EdgeInsets.only(bottom: 20),
-              itemCount: tracks.length,
-              itemBuilder: (context, index) {
-                return _buildTrackCard(tracks[index]);
-              },
+              children: [
+                _buildHeader(),
+                ...categories.map((category) => _buildCategorySection(category)).toList(),
+              ],
             ),
           ),
           _buildPlayer(),
