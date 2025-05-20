@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math';
 import 'package:flutter/services.dart';
 import 'package:pretty_animated_text/pretty_animated_text.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/appbar.dart';
 import '../../../core/widgets/bottom_navigation.dart';
@@ -303,11 +304,11 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
   String selectedExercise = 'box';
   int selectedCycles = 4;
   bool isExerciseStarted = false;
-  
+
   // Background gradient animation controllers
   late Animation<Color?> _gradientStartAnimation;
   late Animation<Color?> _gradientEndAnimation;
-  
+
   // Particle system
   static const int _particleCount = 14;
   late List<_BreathingParticle> _particles;
@@ -322,7 +323,7 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
     BreathingStage.initial: [Colors.grey[50]!, Colors.grey[200]!],
     BreathingStage.completed: [Colors.green[50]!, Colors.green[200]!],
   };
-  
+
   // Sound feedback control
   bool _enableSound = true;
   bool _enableHaptic = true;
@@ -335,13 +336,13 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
       vsync: this,
       duration: const Duration(seconds: 8),
     );
-    
+
     // Initialize gradient animations
     _gradientStartAnimation = ColorTween(
       begin: _stageColors[BreathingStage.initial]![0],
       end: _stageColors[BreathingStage.initial]![0],
     ).animate(_animationController);
-    
+
     _gradientEndAnimation = ColorTween(
       begin: _stageColors[BreathingStage.initial]![1],
       end: _stageColors[BreathingStage.initial]![1],
@@ -410,7 +411,7 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
         } else if (targetValue == 0.0 && _animationController.value > 0.0) {
           _animationController.reverse();
         }
-        
+
         // Update gradient colors based on current stage
         if (prev?.stage != next.stage && next.stage != BreathingStage.initial) {
           setState(() {
@@ -423,7 +424,7 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
                 curve: Curves.easeInOut,
               ),
             );
-            
+
             _gradientEndAnimation = ColorTween(
               begin: _gradientEndAnimation.value ?? _stageColors[next.stage]![1],
               end: _stageColors[next.stage]![1],
@@ -435,20 +436,20 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
             );
           });
         }
-        
+
         // Provide haptic and sound feedback on stage transitions
         if (_lastStage != next.stage && next.stage != BreathingStage.initial && next.stage != BreathingStage.completed) {
           _provideFeedback(next.stage);
           _lastStage = next.stage;
         }
-        
+
         // Reset state on completion
         if (next.stage == BreathingStage.completed) {
           if (isExerciseStarted) {
             setState(() {
               isExerciseStarted = false;
             });
-            
+
             // Completion feedback
             if (_enableHaptic) {
               HapticFeedback.mediumImpact();
@@ -462,7 +463,22 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
     });
 
     return Scaffold(
-      appBar: buildAppBar('Breath Break'),
+      appBar: AppBar(
+        title: Text(
+          'Breath Break',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => context.go('/mindfulness'),
+        ),
+      ),
       extendBodyBehindAppBar: true, // Allow gradient to extend behind AppBar
       backgroundColor: Colors.transparent, // Make scaffold background transparent
       body: Stack(
@@ -781,7 +797,7 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
 
   Widget _buildExerciseInProgress(BreathingState state) {
     final String stageText = _getStageText(state.stage);
-    
+
     return Column(
       children: [
         Text(
@@ -1024,7 +1040,7 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
           break;
       }
     }
-    
+
     // TODO: Add sound feedback using AudioPlayer or similar
     // This would require adding a dependency to pubspec.yaml
     // Example: 
@@ -1033,7 +1049,7 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
     //   player.play(AssetSource('sounds/${stage.toString().split('.').last}.mp3'));
     // }
   }
-  
+
   Widget _buildFeedbackToggle({
     required IconData icon,
     required bool enabled,

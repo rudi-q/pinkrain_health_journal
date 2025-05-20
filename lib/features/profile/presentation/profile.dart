@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pillow/core/widgets/bottom_navigation.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/widgets/appbar.dart';
 
@@ -20,7 +22,22 @@ class ProfileScreenState extends State<ProfileScreen> {
     final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: buildAppBar('Profile'),
+      appBar: AppBar(
+        title: Text(
+          'Profile',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => context.go('/journal'),
+        ),
+      ),
       body: Container(
         color: Colors.transparent,
         child: Padding(
@@ -69,8 +86,53 @@ class ProfileScreenState extends State<ProfileScreen> {
                 style: TextStyle(fontSize: 18, color: Colors.grey),
               ),
               SizedBox(height: 20),
-              _buildHelpTile('Get in touch'),
-              _buildHelpTile('Privacy Policy'),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text('Get in touch', style: TextStyle(fontSize: 16)),
+                trailing: Icon(Icons.chevron_right),
+                onTap: () async {
+                  final Uri emailUri = Uri(
+                    scheme: 'mailto',
+                    path: 'hello@doubl.one',
+                    query: 'subject=Pillow%20App%20Support',
+                  );
+
+                  try {
+                    if (await canLaunchUrl(emailUri)) {
+                      await launchUrl(emailUri);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Could not launch email client')),
+                      );
+                    }
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error launching email: $e')),
+                    );
+                  }
+                },
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                onTap: () async {
+                  final Uri privacyUri = Uri.parse('https://doubl.one/pillow/privacy.html');
+                  try {
+                    if (await canLaunchUrl(privacyUri)) {
+                      await launchUrl(privacyUri, mode: LaunchMode.externalApplication);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Could not launch privacy policy')),
+                      );
+                    }
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error launching privacy policy: $e')),
+                    );
+                  }
+                },
+                title: Text('Privacy Policy', style: TextStyle(fontSize: 16)),
+                trailing: Icon(Icons.chevron_right),
+              ),
               _buildHelpTile('Delete Account and All Data'),
               Spacer()
             ],

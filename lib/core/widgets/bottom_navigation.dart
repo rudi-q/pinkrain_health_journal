@@ -13,9 +13,8 @@ Widget buildBottomNavigationBar({required BuildContext context, required String 
         buildNavItem(context, 'Journal', 'journal', currentRoute == 'journal'),
         buildNavItem(context, 'Pillbox', 'pillbox', currentRoute == 'pillbox'),
         buildNavItem(context, 'Wellness', 'wellness', currentRoute == 'wellness'),
-        buildNavItem(context, 'Breath', 'breath', currentRoute == 'breath'),
-        buildNavItem(context, 'Meditation', 'meditation', currentRoute == 'meditation'),
-        buildNavItem(context, 'Profile', 'profile', currentRoute == 'profile'),
+        buildNavItem(context, 'Mindfulness', 'mindfulness', 
+            currentRoute == 'mindfulness' || currentRoute == 'breath' || currentRoute == 'meditation'),
       ],
     ),
   );
@@ -40,7 +39,7 @@ GestureDetector buildNavItem(BuildContext context, String label, String route, b
         padding: EdgeInsets.all(8),
         child: appVectorImage(fileName: route)
         ),
-        
+
         Text(label),
       ],
     ),

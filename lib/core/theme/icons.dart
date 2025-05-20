@@ -44,6 +44,9 @@ SvgPicture appVectorImage({
   if (fileName == 'pill'){
     fileName = 'tablet';
   }
+  if (fileName == 'mindfulness'){
+    fileName = 'meditation';
+  }
   try{
     return SvgPicture.asset(
       'assets/icons/$fileName.svg',
@@ -92,9 +95,3 @@ Color darkenColor(Color color, [double factor = 0.8]) {
   // Return the new color, preserving the original alpha
   return Color.fromARGB(color.alpha, red, green, blue);
 }
-
-
-
-
-
-

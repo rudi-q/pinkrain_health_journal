@@ -128,7 +128,35 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
     final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: buildAppBar('Journal'),
+      appBar: AppBar(
+        title: Text(
+          'Journal',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        actions: [
+          GestureDetector(
+            onTap: () {
+              context.go('/profile');
+            },
+            child: Container(
+              margin: EdgeInsets.only(right: 16),
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.pink[50],
+              ),
+              child: appVectorImage(fileName: 'profile'),
+            ),
+          ),
+        ],
+      ),
       body: RefreshIndicator(
             color: Colors.pink[100],
             backgroundColor: Colors.white,
@@ -970,7 +998,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        
+
                         // Get the pill intake notifier and use the async version of pillTaken
                         final pillIntakeNotifier = ref.read(pillIntakeProvider.notifier);
                         pillIntakeNotifier.pillTaken(medicineLog, selectedDate).then((_) {
@@ -1077,11 +1105,11 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
       // Force reload from Hive storage
       final pillIntakeNotifier = ref.read(pillIntakeProvider.notifier);
       await pillIntakeNotifier.forceReloadMedicationData(selectedDate);
-      
+
       // Also update the date
       final selectedDateNotifier = ref.read(selectedDateProvider.notifier);
       await selectedDateNotifier.setDate(selectedDate, ref);
-      
+
       "Journal refreshed with force reload".log();
     } catch (e) {
       "Error refreshing journal: $e".log();
