@@ -28,11 +28,14 @@ class GuidedMeditationScreen extends StatefulWidget {
   GuidedMeditationScreenState createState() => GuidedMeditationScreenState();
 }
 
-class GuidedMeditationScreenState extends State<GuidedMeditationScreen> {
-  final AudioPlayer _player = AudioPlayer();
+class GuidedMeditationScreenState extends State<GuidedMeditationScreen> with WidgetsBindingObserver {
+  late final AudioPlayer _player;
   Duration _position = Duration.zero;
   Duration _duration = Duration(minutes: 5);
   MeditationTrack? _nowPlaying;
+  bool _isLoading = false;
+  String? _errorMessage;
+  bool _isPlayerInitialized = false;
 
   final List<MeditationTrack> tracks = [
     // Self-Acceptance
@@ -47,7 +50,7 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> {
       title: "You're Not a Burden",
       subtitle: "5 min grounding",
       description: "You're allowed to exist",
-      assetPath: "assets/audio-tracks/You're_Not_a_Burden.m4a",
+      assetPath: "assets/audio-tracks/Youre_Not_a_Burden.m4a", // Sanitized path
       category: "Self-Acceptance",
     ),
     MeditationTrack(
@@ -63,14 +66,14 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> {
       title: "This Isn't Laziness",
       subtitle: "5 min grounding",
       description: "Understand your stillness",
-      assetPath: "assets/audio-tracks/This_Isn't_Laziness.m4a",
+      assetPath: "assets/audio-tracks/This_Isnt_Laziness.m4a", // Sanitized path
       category: "Rest & Stillness",
     ),
     MeditationTrack(
       title: "You Don't Have to Earn Rest",
       subtitle: "5 min grounding",
       description: "Rest is your right",
-      assetPath: "assets/audio-tracks/You_Don't_Have_to_Earn_Rest.m4a",
+      assetPath: "assets/audio-tracks/You_Dont_Have_to_Earn_Rest.m4a", // Sanitized path
       category: "Rest & Stillness",
     ),
 
@@ -86,14 +89,14 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> {
       title: "For When You're Numb and Don't Know Why",
       subtitle: "5 min grounding",
       description: "Sit with the fog",
-      assetPath: "assets/audio-tracks/For_When_You're_Numb_and_Don't_Know_Why.m4a",
+      assetPath: "assets/audio-tracks/For_When_Youre_Numb_and_Dont_Know_Why.m4a", // Sanitized path
       category: "Emotional Processing",
     ),
     MeditationTrack(
       title: "The Anger You've Been Swallowing",
       subtitle: "5 min grounding",
       description: "Let it surface safely",
-      assetPath: "assets/audio-tracks/The_Anger_You've_Been_Swallowing.m4a",
+      assetPath: "assets/audio-tracks/The_Anger_Youve_Been_Swallowing.m4a", // Sanitized path
       category: "Emotional Processing",
     ),
 
@@ -102,7 +105,7 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> {
       title: "Grief That Doesn't Have a Name",
       subtitle: "5 min grounding",
       description: "Hold space for the unnamed",
-      assetPath: "assets/audio-tracks/Grief_That_Doesn't_Have_a_Name.m4a",
+      assetPath: "assets/audio-tracks/Grief_That_Doesnt_Have_a_Name.m4a", // Sanitized path
       category: "Grief & Loss",
     ),
     MeditationTrack(
@@ -122,48 +125,235 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> {
     return tracks.where((track) => track.category == category).toList();
   }
 
+  @override
+  void initState() {
+    super.initState();
+    // Register observer for app lifecycle events
+    WidgetsBinding.instance.addObserver(this);
+
+    // Initialize the audio player
+    _initializePlayer();
+  }
+
+  Future<void> _initializePlayer() async {
+    // Only initialize if not already initialized
+    if (_isPlayerInitialized) {
+      print("[DEBUG_LOG] Player already initialized, skipping initialization");
+      return;
+    }
+
+    print("[DEBUG_LOG] Initializing audio player");
+    try {
+      _player = AudioPlayer();
+      _isPlayerInitialized = true;
+      print("[DEBUG_LOG] AudioPlayer instance created successfully");
+
+      // Set up position stream listener
+      print("[DEBUG_LOG] Setting up position stream listener");
+      _player.positionStream.listen((position) {
+        if (mounted) {
+          setState(() => _position = position);
+        }
+      });
+
+      // Set up duration stream listener
+      print("[DEBUG_LOG] Setting up duration stream listener");
+      _player.durationStream.listen((duration) {
+        if (mounted && duration != null) {
+          setState(() => _duration = duration);
+        }
+      });
+
+      // Set up player completion listener
+      print("[DEBUG_LOG] Setting up player state stream listener");
+      _player.playerStateStream.listen((playerState) {
+        if (playerState.processingState == ProcessingState.completed) {
+          print("[DEBUG_LOG] Track completed, checking for next track");
+          // Auto-play next track when current one completes
+          if (_nowPlaying != null) {
+            final currentIndex = tracks.indexOf(_nowPlaying!);
+            if (currentIndex < tracks.length - 1) {
+              print("[DEBUG_LOG] Auto-playing next track");
+              _playTrack(tracks[currentIndex + 1]);
+            } else {
+              print("[DEBUG_LOG] No more tracks to play");
+            }
+          }
+        }
+      });
+
+      // Handle errors
+      print("[DEBUG_LOG] Setting up playback event stream error listener");
+      _player.playbackEventStream.listen(
+        (event) {},
+        onError: (Object e, StackTrace st) {
+          print("[DEBUG_LOG] Playback event stream error: $e");
+          if (e is PlayerException) {
+            print("[DEBUG_LOG] PlayerException: code=${e.code}, message=${e.message}");
+            setState(() {
+              _errorMessage = "Error code: ${e.code}, message: ${e.message}";
+            });
+          } else {
+            setState(() {
+              _errorMessage = "An error occurred: $e";
+            });
+          }
+        }
+      );
+
+      print("[DEBUG_LOG] Audio player initialized successfully");
+    } catch (e) {
+      print("[DEBUG_LOG] Failed to initialize audio player: $e");
+      setState(() {
+        _isPlayerInitialized = false;
+        _errorMessage = "Failed to initialize audio player: $e";
+      });
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      // App is in background, pause playback
+      _player.pause();
+    }
+  }
+
   Future<void> _playTrack(MeditationTrack track) async {
-    // 1. Stop any current playback
-    await _player.stop();
+    if (!_isPlayerInitialized) {
+      setState(() {
+        _errorMessage = "Audio player is not initialized. Please restart the app.";
+      });
+      return;
+    }
 
-    // 2. Reset position state (optional, but keeps UI in sync)
     setState(() {
-      _position = Duration.zero;
-      _duration = Duration.zero;
+      _isLoading = true;
+      _errorMessage = null;
     });
 
-    // 3. Load the new asset and seek to start
-    await _player.setAsset(track.assetPath);
-    await _player.seek(Duration.zero);
+    // Track the retry count
+    int retryCount = 0;
+    const int maxRetries = 3;
 
-    // 4. Update nowPlaying and start
-    setState(() => _nowPlaying = track);
-    _player.play();
+    Future<bool> attemptLoadTrack() async {
+      try {
+        // 1. Stop any current playback
+        await _player.stop();
 
-    // 5. Listen for updates as before
-    _player.positionStream.listen((pos) {
-      setState(() => _position = pos);
+        // 2. Reset position state
+        setState(() {
+          _position = Duration.zero;
+          _duration = Duration.zero;
+        });
+
+        // 3. Load the new asset and seek to start
+        print("[DEBUG_LOG] Loading track: ${track.title} from ${track.assetPath}");
+        try {
+          // Sanitize the asset path by replacing apostrophes with empty strings
+          // This is necessary because Flutter's asset loader has issues with apostrophes
+          String sanitizedPath = track.assetPath.replaceAll("'", "");
+          print("[DEBUG_LOG] Sanitized asset path: $sanitizedPath");
+
+          await _player.setAsset(sanitizedPath);
+          print("[DEBUG_LOG] Asset loaded successfully");
+          await _player.seek(Duration.zero);
+          print("[DEBUG_LOG] Seek completed successfully");
+          return true;
+        } catch (e) {
+          print("[DEBUG_LOG] Error loading track (attempt ${retryCount + 1}): $e");
+          if (e.toString().contains("Unable to load")) {
+            print("[DEBUG_LOG] Asset loading error - file may not exist or be inaccessible");
+          } else if (e.toString().contains("format")) {
+            print("[DEBUG_LOG] Format error - file may be corrupted or in unsupported format");
+          }
+          return false;
+        }
+      } catch (e) {
+        print("[DEBUG_LOG] Unexpected error in attemptLoadTrack (attempt ${retryCount + 1}): $e");
+        return false;
+      }
+    }
+
+    while (retryCount < maxRetries) {
+      bool success = await attemptLoadTrack();
+      if (success) {
+        // Track loaded successfully
+        setState(() {
+          _nowPlaying = track;
+          _isLoading = false;
+        });
+
+        try {
+          print("[DEBUG_LOG] Starting playback for track: ${track.title}");
+          await _player.play();
+          print("[DEBUG_LOG] Playback started successfully");
+          return; // Exit the method if successful
+        } catch (e) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = "Failed to play track: $e";
+          });
+          print("[DEBUG_LOG] Error playing track: $e");
+          return; // Exit on play error
+        }
+      } else {
+        // Track failed to load, increment retry count
+        retryCount++;
+        print("[DEBUG_LOG] Track loading attempt $retryCount failed");
+
+        if (retryCount < maxRetries) {
+          // Wait before retrying (exponential backoff)
+          int delayMs = 500 * retryCount;
+          print("[DEBUG_LOG] Waiting ${delayMs}ms before retry ${retryCount + 1}");
+          await Future.delayed(Duration(milliseconds: delayMs));
+        }
+      }
+    }
+
+    // If we get here, all retries failed
+    print("[DEBUG_LOG] All $maxRetries attempts to load track failed: ${track.title}");
+    setState(() {
+      _isLoading = false;
+      _errorMessage = "Failed to load track (${track.title}) after multiple attempts. Please try again later.";
     });
-    _player.durationStream.listen((dur) {
-      if (dur != null) setState(() => _duration = dur);
-    });
+
+    // Check if the asset file exists in the assets directory
+    print("[DEBUG_LOG] Asset path that failed: ${track.assetPath}");
+    print("[DEBUG_LOG] Please verify this file exists in the assets directory and is correctly referenced in pubspec.yaml");
   }
 
   @override
   void dispose() {
-    _player.dispose();
+    // Remove observer
+    WidgetsBinding.instance.removeObserver(this);
+
+    // Release audio resources
+    if (_isPlayerInitialized) {
+      _player.stop();
+      _player.dispose();
+    }
+
     super.dispose();
   }
 
   Widget _buildTrackCard(MeditationTrack track) {
+    final bool isPlaying = _nowPlaying?.title == track.title;
+
     return GestureDetector(
-      onTap: () => _playTrack(track),
+      onTap: () {
+        if (_isLoading) return; // Prevent multiple taps while loading
+        _playTrack(track);
+      },
       child: Container(
         padding: EdgeInsets.all(14),
         margin: EdgeInsets.symmetric(vertical: 4, horizontal: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isPlaying ? Colors.pink[50] : Colors.white,
           borderRadius: BorderRadius.circular(12),
+          border: isPlaying 
+            ? Border.all(color: Colors.pink[200]!, width: 1.5) 
+            : null,
           boxShadow: [
             BoxShadow(
               color: Colors.grey.withOpacity(0.05),
@@ -178,10 +368,14 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> {
             Container(
               padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.pink[100],
+                color: isPlaying ? Colors.pink[300] : Colors.pink[100],
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.spa, color: Colors.white, size: 20),
+              child: Icon(
+                isPlaying ? Icons.music_note : Icons.spa, 
+                color: Colors.white, 
+                size: 20
+              ),
             ),
             SizedBox(width: 16),
             Expanded(
@@ -192,14 +386,15 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> {
                     track.title, 
                     style: TextStyle(
                       fontSize: 15, 
-                      fontWeight: FontWeight.w600
+                      fontWeight: isPlaying ? FontWeight.bold : FontWeight.w600,
+                      color: isPlaying ? Colors.pink[700] : Colors.black,
                     )
                   ),
                   SizedBox(height: 2),
                   Text(
                     track.subtitle, 
                     style: TextStyle(
-                      color: Colors.grey.shade700,
+                      color: isPlaying ? Colors.pink[400] : Colors.grey.shade700,
                       fontSize: 13,
                     )
                   ),
@@ -214,7 +409,11 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> {
                 ],
               ),
             ),
-            Icon(Icons.play_circle_outline, color: Colors.pink[200], size: 28),
+            Icon(
+              isPlaying ? Icons.pause_circle_filled : Icons.play_circle_outline, 
+              color: isPlaying ? Colors.pink[400] : Colors.pink[200], 
+              size: 28
+            ),
           ],
         ),
       ),
@@ -266,14 +465,130 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> {
   }
 
   Widget _buildPlayer() {
+    // Show error message if there is one
+    if (_errorMessage != null) {
+      // Determine if this is a track loading error or player initialization error
+      bool isTrackError = _errorMessage!.contains("Failed to load track") || 
+                          _errorMessage!.contains("Failed to play track");
+
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        margin: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.red[50],
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.red[200]!),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.error_outline, color: Colors.red, size: 32),
+            SizedBox(height: 8),
+            Text(
+              isTrackError ? "Track Playback Error" : "Audio Player Error",
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red[700]),
+            ),
+            SizedBox(height: 4),
+            Text(
+              _errorMessage!,
+              style: TextStyle(fontSize: 14, color: Colors.red[700]),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 8),
+            if (isTrackError && _nowPlaying != null)
+              Text(
+                "Track: ${_nowPlaying!.title}",
+                style: TextStyle(fontSize: 14, color: Colors.red[700], fontStyle: FontStyle.italic),
+                textAlign: TextAlign.center,
+              ),
+            SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _errorMessage = null;
+                    });
+                    if (isTrackError && _nowPlaying != null) {
+                      // Retry playing the current track
+                      _playTrack(_nowPlaying!);
+                    } else {
+                      // Reinitialize the player
+                      _initializePlayer();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[100],
+                    foregroundColor: Colors.red[700],
+                  ),
+                  child: Text("Retry"),
+                ),
+                if (isTrackError)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _errorMessage = null;
+                          _nowPlaying = null;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[300],
+                        foregroundColor: Colors.grey[700],
+                      ),
+                      child: Text("Dismiss"),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Show loading indicator
+    if (_isLoading) {
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        margin: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.pink[300]!),
+            ),
+            SizedBox(height: 16),
+            Text(
+              "Loading audio...",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // No track selected
     if (_nowPlaying == null) return SizedBox.shrink();
 
+    // Normal player UI
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       margin: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -300,8 +615,10 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> {
             activeColor: Colors.pink.shade300,
             inactiveColor: Colors.pink.shade100,
             onChanged: (value) {
-              final newPos = Duration(milliseconds: value.toInt());
-              _player.seek(newPos);
+              if (_isPlayerInitialized) {
+                final newPos = Duration(milliseconds: value.toInt());
+                _player.seek(newPos);
+              }
             },
           ),
 
@@ -315,22 +632,27 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> {
                 icon: Icon(Icons.skip_previous, size: 32),
                 color: Colors.pink.shade300,
                 onPressed: () {
-                  // find previous track
-                  final currentIndex = tracks.indexOf(_nowPlaying!);
-                  if (currentIndex > 0) {
-                    _playTrack(tracks[currentIndex - 1]);
+                  if (_isPlayerInitialized && _nowPlaying != null) {
+                    final currentIndex = tracks.indexOf(_nowPlaying!);
+                    if (currentIndex > 0) {
+                      _playTrack(tracks[currentIndex - 1]);
+                    }
                   }
                 },
               ),
               SizedBox(width: 16),
               IconButton(
                 icon: Icon(
-                  _player.playing ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                  _isPlayerInitialized && _player.playing 
+                    ? Icons.pause_circle_filled 
+                    : Icons.play_circle_filled,
                   size: 48,
                 ),
                 color: Colors.pink.shade300,
                 onPressed: () {
-                  _player.playing ? _player.pause() : _player.play();
+                  if (_isPlayerInitialized) {
+                    _player.playing ? _player.pause() : _player.play();
+                  }
                 },
               ),
               SizedBox(width: 16),
@@ -338,10 +660,11 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> {
                 icon: Icon(Icons.skip_next, size: 32),
                 color: Colors.pink.shade300,
                 onPressed: () {
-                  // find next track
-                  final currentIndex = tracks.indexOf(_nowPlaying!);
-                  if (currentIndex < tracks.length - 1) {
-                    _playTrack(tracks[currentIndex + 1]);
+                  if (_isPlayerInitialized && _nowPlaying != null) {
+                    final currentIndex = tracks.indexOf(_nowPlaying!);
+                    if (currentIndex < tracks.length - 1) {
+                      _playTrack(tracks[currentIndex + 1]);
+                    }
                   }
                 },
               ),
