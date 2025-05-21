@@ -2,8 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pillow/core/widgets/bottom_navigation.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/widgets/appbar.dart';
+
+// Model class for notification sounds
+class NotificationSound {
+  final String name;
+  final String assetPath;
+
+  NotificationSound({required this.name, required this.assetPath});
+}
 
 
 class ProfileScreen extends StatefulWidget {
@@ -16,6 +26,90 @@ class ProfileScreen extends StatefulWidget {
 class ProfileScreenState extends State<ProfileScreen> {
   bool isReminderEnabled = true;
   bool isFillUpPillboxEnabled = false;
+
+  // Audio player for previewing notification sounds
+  late AudioPlayer _audioPlayer;
+
+  // List of available notification sounds
+  final List<NotificationSound> _notificationSounds = [
+    NotificationSound(name: 'Default', assetPath: ''),
+    NotificationSound(name: 'Gentle Chime', assetPath: 'assets/audio-tracks/The_Voice_You_Needed.m4a'),
+    NotificationSound(name: 'Soft Bell', assetPath: 'assets/audio-tracks/What_You_Feel_is_Real.m4a'),
+    NotificationSound(name: 'Calm Tone', assetPath: 'assets/audio-tracks/You_Don\'t_Have_to_Earn_Rest.m4a'),
+  ];
+
+  // Currently selected notification sound
+  NotificationSound? _selectedSound;
+
+  // Key for storing the selected sound in SharedPreferences
+  static const String _selectedSoundKey = 'selected_notification_sound';
+
+  @override
+  void initState() {
+    super.initState();
+    _initAudioPlayer();
+    _loadSavedSound();
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  // Initialize the audio player
+  Future<void> _initAudioPlayer() async {
+    _audioPlayer = AudioPlayer();
+  }
+
+  // Load the saved notification sound preference
+  Future<void> _loadSavedSound() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedSoundPath = prefs.getString(_selectedSoundKey);
+
+    if (savedSoundPath != null) {
+      // Find the sound with the saved path
+      final sound = _notificationSounds.firstWhere(
+        (sound) => sound.assetPath == savedSoundPath,
+        orElse: () => _notificationSounds[0], // Default sound if not found
+      );
+      setState(() {
+        _selectedSound = sound;
+      });
+    } else {
+      // Use default sound if no preference is saved
+      setState(() {
+        _selectedSound = _notificationSounds[0];
+      });
+    }
+  }
+
+  // Play the selected notification sound as a preview
+  Future<void> _playSound(NotificationSound sound) async {
+    try {
+      // Stop any current playback
+      await _audioPlayer.stop();
+
+      // If it's the default sound, just return (no preview for default)
+      if (sound.assetPath.isEmpty) return;
+
+      // Load and play the sound
+      await _audioPlayer.setAsset(sound.assetPath);
+      await _audioPlayer.play();
+    } catch (e) {
+      print('Error playing notification sound: $e');
+    }
+  }
+
+  // Save the selected notification sound preference
+  Future<void> _saveSelectedSound(NotificationSound sound) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_selectedSoundKey, sound.assetPath);
+
+    setState(() {
+      _selectedSound = sound;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,11 +168,58 @@ class ProfileScreenState extends State<ProfileScreen> {
                   isReminderEnabled = value;
                 });
               }),
-              _buildSwitchTile('Fill-up Pillbox', isFillUpPillboxEnabled, (value) {
+           /*   _buildSwitchTile('Fill-up Pillbox', isFillUpPillboxEnabled, (value) {
                 setState(() {
                   isFillUpPillboxEnabled = value;
                 });
               }),
+
+              // Notification Sound Selection
+              if (isReminderEnabled) ...[
+                SizedBox(height: 20),
+                Text(
+                  'Notification Sound',
+                  style: TextStyle(fontSize: 16),
+                ),
+                SizedBox(height: 10),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    children: _notificationSounds.map((sound) {
+                      final isSelected = _selectedSound?.name == sound.name;
+                      return ListTile(
+                        title: Text(sound.name),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Preview button
+                            if (sound.assetPath.isNotEmpty)
+                              IconButton(
+                                icon: Icon(Icons.play_circle_outline),
+                                onPressed: () => _playSound(sound),
+                              ),
+                            // Selection indicator
+                            Radio<String>(
+                              value: sound.name,
+                              groupValue: _selectedSound?.name,
+                              onChanged: (value) {
+                                _saveSelectedSound(sound);
+                              },
+                              activeColor: Colors.pink[300],
+                            ),
+                          ],
+                        ),
+                        onTap: () {
+                          _saveSelectedSound(sound);
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],*/
               SizedBox(height: 30),
               // Help Section
               Text(
@@ -134,6 +275,21 @@ class ProfileScreenState extends State<ProfileScreen> {
                 trailing: Icon(Icons.chevron_right),
               ),
               _buildHelpTile('Delete Account and All Data'),
+              Spacer(),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    "🔒 Your privacy is important to us; all your data remains securely stored on your device, never sent to our servers. 🕊️",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Outfit',
+                      fontSize: 16,
+                      color: Colors.black87
+                    ),
+                  ),
+                ),
+              ),
               Spacer()
             ],
           ),

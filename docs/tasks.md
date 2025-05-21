@@ -2,13 +2,40 @@
 
 ## Architecture and Code Organization
 1. [ ] Implement proper layered architecture across all features (separate data, domain, and presentation layers)
-2. [ ] Create consistent folder structure for all features (currently some features have different structures)
+2. [ ] Create a consistent folder structure for all features (currently some features have different structures)
 3. [ ] Extract business logic from UI components into separate service classes
-4. [ ] Implement dependency injection pattern for better testability
+4. [ ] Implement dependency injection patterns for better testability
 5. [ ] Create a unified error handling strategy across the application
 6. [ ] Refactor large files (like breathing_screen.dart with 1100+ lines) into smaller, more focused components
 7. [ ] Standardize state management approach (currently using Riverpod, ensure consistent usage)
 8. [ ] Create reusable UI component library for common elements
+
+## Wellness Screen Improvements
+1. [ ] Refactor WellnessTrackerScreen (1200+ lines) into smaller components
+2. [ ] Extract date navigation logic into a separate reusable component
+3. [ ] Move mood tracking logic from UI to a proper service class
+4. [ ] Implement proper data persistence for wellness data (replace static MoodTracker)
+5. [ ] Create a proper domain model for wellness data with relationships between entities
+6. [ ] Separate medication adherence tracking into its own component with proper data handling
+7. [ ] Implement proper error handling for data loading operations
+8. [ ] Replace hardcoded sample data in correlation analysis with actual user data
+9. [ ] Create a dedicated wellness repository to handle data operations
+10. [ ] Implement caching strategy for wellness data to improve performance
+11. [ ] Add proper loading states for asynchronous data operations
+12. [ ] Optimize widget rebuilds by using selective state management
+13. [ ] Implement proper analytics tracking for wellness features
+14. [ ] Add unit tests for wellness domain logic and data handling
+15. [ ] Create widget tests for wellness screen components
+16. [ ] Improve accessibility of wellness visualizations (screen reader support, color contrast)
+17. [ ] Add proper error states for data loading failures
+18. [ ] Implement data export functionality for wellness reports
+19. [ ] Add data validation for user inputs in wellness tracking
+20. [ ] Create a wellness insights engine that provides personalized recommendations
+21. [ ] Implement proper localization for all wellness screen text
+22. [ ] Add animations for state transitions that follow Material Design guidelines
+23. [ ] Create a comprehensive onboarding flow for wellness tracking features
+24. [ ] Implement proper deep linking support for wellness screen sections
+25. [ ] Add support for different measurement units and preferences
 
 ## Code Quality and Best Practices
 1. [ ] Remove all WithAlpha extensions with WithValues(alpha:)
@@ -47,7 +74,7 @@
 2. [ ] Add loading indicators for async operations
 3. [ ] Improve accessibility (screen reader support, contrast ratios, etc.)
 4. [ ] Implement proper form validation with user feedback
-5. [ ] Add onboarding flow for new users
+5. [ ] Add an onboarding flow for new users
 6. [ ] Implement proper navigation patterns (back button behavior, deep linking)
 7. [ ] Add proper empty states for lists and data-dependent views
 8. [ ] Implement proper keyboard handling for forms
