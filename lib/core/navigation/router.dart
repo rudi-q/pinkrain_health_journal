@@ -45,9 +45,19 @@ final List<GoRoute> routes = [
   ),
   GoRoute(
     path: '/medicine_detail/:id',
-    builder: (context, state) => MedicineDetailScreen(
-      inventory: state.extra as MedicineInventory,
-    ),
+    builder: (context, state) {
+      try {
+        final inventory = state.extra as MedicineInventory;
+        return MedicineDetailScreen(
+          inventory: inventory,
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+        return Container();
+      }
+    },
   ),
   GoRoute(
       path: '/edit_treatment',

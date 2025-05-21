@@ -215,6 +215,51 @@ class Treatment {
     return treatments;
   }
 
+  static List<Treatment> getSampleForPillBox() {
+    List<Treatment> treatments = [];
+
+    Medicine medicine;
+    TreatmentPlan treatmentPlan;
+    Treatment newTreatment;
+
+    medicine = Medicine(name: 'Paracetamol', type: 'pill');
+    medicine.addSpecification(Specification(dosage: 20, unit: 'mg'));
+
+    treatmentPlan = TreatmentPlan(
+        startDate: DateTime.now(),
+        endDate: DateTime.now().add(Duration(days: 2)),
+        mealOption: 'After dinner',
+        instructions: 'Take 1 tablet every night before bed',
+        timeOfDay: DateTime(2023, 1, 1, 11, 0));
+    newTreatment = Treatment(medicine: medicine, treatmentPlan: treatmentPlan);
+
+    treatments.add(newTreatment);
+
+    medicine = Medicine(name: 'Levocetirizine', type: 'pill');
+    medicine.addSpecification(Specification(dosage: 20, unit: 'mg'));
+
+    treatmentPlan = TreatmentPlan(
+        startDate: DateTime.now(),
+        endDate: DateTime.now().add(Duration(days: 1)),
+        timeOfDay: DateTime(2023, 1, 1, 12, 0));
+    newTreatment = Treatment(medicine: medicine, treatmentPlan: treatmentPlan);
+
+    treatments.add(newTreatment);
+
+    medicine = Medicine(name: 'Aspirin', type: 'tablet');
+    medicine.addSpecification(Specification(dosage: 20, unit: 'mg'));
+
+    treatmentPlan = TreatmentPlan(
+        startDate: DateTime.now(),
+        endDate: DateTime.now().add(Duration(days: 3)),
+        timeOfDay: DateTime(2023, 1, 1, 23, 0));
+    newTreatment = Treatment(medicine: medicine, treatmentPlan: treatmentPlan);
+
+    treatments.add(newTreatment);
+
+    return treatments;
+  }
+
   static TreatmentPlan getPlanByMedicineName(String medicineName) {
     return Treatment.getSample()
         .firstWhere((t) => t.medicine.name == medicineName)

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pillow/core/util/helpers.dart' show devPrint;
 import 'package:pillow/features/treatment/domain/treatment_manager.dart' show generateUniqueId;
+import 'package:pillow/features/pillbox/data/pillbox_model.dart';
 
 class HiveService {
   static const String userPrefsBox = 'userPreferences';
@@ -10,6 +11,7 @@ class HiveService {
   static const String symptomBoxName = 'symptomData';
   static const String medicationLogsBoxName = 'medicationLogs';
   static const String treatmentsBoxName = 'treatments';
+  static const String pillboxBoxName = 'pillboxData';
   static const String lastMoodDateKey = 'lastMoodDate';
   static const String userMoodKey = 'userMood';
   static const String userMoodDescriptionKey = 'userMoodDescription';
@@ -26,6 +28,7 @@ class HiveService {
       await _openBox(symptomBoxName);
       await _openBox(medicationLogsBoxName);
       await _openBox(treatmentsBoxName);
+      await _openBox(pillboxBoxName);
     } catch (e) {
       devPrint('Error initializing Hive: $e');
     }
@@ -469,7 +472,7 @@ class HiveService {
         final value = entry.value;
         
         if (value is Map) {
-          return MapEntry(key, _sanitizeMap(value as Map<dynamic, dynamic>));
+          return MapEntry(key, _sanitizeMap(value));
         } else if (value is List) {
           return MapEntry(key, _sanitizeList(value));
         } else {
@@ -483,13 +486,33 @@ class HiveService {
   static List<dynamic> _sanitizeList(List<dynamic> list) {
     return list.map((item) {
       if (item is Map) {
-        return _sanitizeMap(item as Map<dynamic, dynamic>);
+        return _sanitizeMap(item);
       } else if (item is List) {
         return _sanitizeList(item);
       } else {
         return item;
       }
     }).toList();
+  }
+
+  // --- Pillbox Persistence ---
+  static Future<void> savePillBox(List pillStock) async {
+    final box = await _openBox(pillboxBoxName);
+    // Use MedicineInventorySerialization extension instead of direct toJson call
+    final data = pillStock.map((item) => MedicineInventorySerialization(item).toJson()).toList();
+    devPrint('[HiveService.savePillBox] Saving: $data');
+    await box.put('pillbox', data);
+  }
+
+  static Future<List> loadPillBox() async {
+    final box = await _openBox(pillboxBoxName);
+    final data = box.get('pillbox', defaultValue: []);
+    devPrint('[HiveService.loadPillBox] Loaded: $data');
+    if (data is List) {
+      // Defer deserialization to caller to avoid dependency on extensions here
+      return data;
+    }
+    return [];
   }
 }
 
