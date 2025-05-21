@@ -21,13 +21,7 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
   String selectedMealOption = 'Before meal';
   String selectedDoseUnit = 'mg';
 
-  final Map<String, Color> colorMap = {
-    'White': Colors.white,
-    'Yellow': Color(0xFFFFF3C4), // Soft pastel yellow
-    'Pink': Color(0xFFFFE4E8),   // Soft pastel pink
-    'Blue': Color(0xFFE3F2FD),   // Soft pastel blue
-    'Red': Color(0xFFFFE5E5),    // Soft pastel red
-  };
+
 
   final TextEditingController nameController = TextEditingController();
   final TextEditingController doseController = TextEditingController();
@@ -127,7 +121,7 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
                 width: 2,
               ),
             ),
-            child: _futureBuildSvg(type),
+            child: futureBuildSvg(type, selectedColor),
           ),
           SizedBox(height: 5),
           Text(type,
@@ -318,7 +312,7 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
                 width: 2,
               ),
             ),
-            child: _futureBuildSvg(option.toLowerCase().replaceAll(' ', '-')/*, size: 30, useColorFilter: false*/),
+            child: futureBuildSvg(option.toLowerCase().replaceAll(' ', '-'), selectedColor)
           ),
           SizedBox(height: 5),
           Text(option,
@@ -412,25 +406,5 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
       return false;
     }
     return true;
-  }
-
-  FutureBuilder<SvgPicture> _futureBuildSvg(String text) {
-    return FutureBuilder<SvgPicture>(
-        future: appSvgDynamicImage(
-            fileName: text.toLowerCase(),
-            size: 30,
-            color: colorMap[selectedColor],
-            useColorFilter: false
-        ),
-        builder: (context, snapshot) {
-          return snapshot.data ??
-              appVectorImage(
-                  fileName: text.toLowerCase(),
-                  size: 30,
-                  color: colorMap[selectedColor],
-                  useColorFilter: false
-              );
-        }
-    );
   }
 }

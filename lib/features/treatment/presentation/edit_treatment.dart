@@ -414,49 +414,61 @@ class EditTreatmentScreenState extends ConsumerState<EditTreatmentScreen> {
                 treatmentPlan: updatedTreatmentPlan,
                 notes: commentController.text,
               );
-              
+
               // Debug info
               devPrint("Updating treatment - ID: ${widget.treatment.id}, Name: ${widget.treatment.medicine.name} → ${updatedTreatment.medicine.name}");
               devPrint("Treatment ID being used: ${updatedTreatment.id}");
               devPrint("Original dose: ${widget.treatment.medicine.specs.dosage} → New dose: ${updatedTreatment.medicine.specs.dosage}");
               // Update treatment in database
               await treatmentManager.updateTreatment(widget.treatment, updatedTreatment);
-              
+
               // Directly clear ALL medication data caches to ensure refresh
               if (mounted) {
                 try {
                   // Get the JournalLog instance from the pillIntakeProvider
                   final journalLog = ref.read(pillIntakeProvider.notifier).journalLog;
-                  
+
                   // Directly clear all cached medication logs
                   journalLog.clearAllCachedMedicationLogs();
-                  
+
                   // Force reload of today's data
                   final today = DateTime.now().normalize();
                   await journalLog.forceReloadMedicationLogs(today);
-                  
+
+                  // Get the currently selected date from the provider
+                  final selectedDate = ref.read(selectedDateProvider);
+
+                  // If the selected date is different from today, reload that data too
+                  if (selectedDate.day != today.day || 
+                      selectedDate.month != today.month || 
+                      selectedDate.year != today.year) {
+                    devPrint("Also reloading data for selected date: ${selectedDate.toString()}");
+                    await journalLog.forceReloadMedicationLogs(selectedDate);
+                    await journalLog.saveMedicationLogs(selectedDate);
+                  }
+
                   // Save the updated medication logs to ensure they're persisted
                   await journalLog.saveMedicationLogs(today);
-                  
+
                   devPrint("All medication caches cleared!");
-                  
+
                   // Force rebuild of UI state with the refreshed data
-                  await ref.read(pillIntakeProvider.notifier).forceReloadMedicationData(today);
-                  
+                  await ref.read(pillIntakeProvider.notifier).forceReloadMedicationData(selectedDate);
+
                   // Force UI rebuild through provider invalidation
                   ref.invalidate(pillIntakeProvider);
                   ref.invalidate(selectedDateProvider);
-                  
+
                   devPrint("All providers invalidated for complete UI refresh");
                 } catch (e) {
                   devPrint("Error during complete refresh: $e");
                 }
-                
+
                 // Show success message and pop
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Treatment updated successfully')),
                 );
-                
+
                 // Return to previous screen
                 Navigator.of(context).pop(true);
               }

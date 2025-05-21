@@ -170,6 +170,7 @@ class Treatment {
 
   static List<Treatment> getSample() {
     List<Treatment> treatments = [];
+/*
 
     Medicine medicine;
     TreatmentPlan treatmentPlan;
@@ -209,6 +210,7 @@ class Treatment {
     newTreatment = Treatment(medicine: medicine, treatmentPlan: treatmentPlan);
 
     treatments.add(newTreatment);
+*/
 
     return treatments;
   }
