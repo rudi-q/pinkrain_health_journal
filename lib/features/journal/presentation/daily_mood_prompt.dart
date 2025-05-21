@@ -72,6 +72,11 @@ class DailyMoodPromptState extends ConsumerState<DailyMoodPrompt> {
 
         final box = Hive.box(HiveService.moodBoxName);
 
+        // Log what we're saving
+        devPrint('Saving mood data for date: $dateKey');
+        devPrint('Mood: $selectedMood, Description: ${_feelingsController.text}');
+        devPrint('Is editing mode: ${widget.isEditing}');
+
         // Save the mood data
         await box.put('mood_$dateKey', {
           'mood': selectedMood,
@@ -88,6 +93,14 @@ class DailyMoodPromptState extends ConsumerState<DailyMoodPrompt> {
         if (isToday) {
           await HiveService.saveUserMood(
               selectedMood, _feelingsController.text);
+        }
+
+        // Verify the data was saved correctly
+        final savedData = await HiveService.getMoodForDate(date);
+        if (savedData != null) {
+          devPrint('Mood data saved successfully: ${savedData['mood']}, ${savedData['description']}');
+        } else {
+          devPrint('Warning: Could not verify saved mood data');
         }
 
         // Call the onComplete callback

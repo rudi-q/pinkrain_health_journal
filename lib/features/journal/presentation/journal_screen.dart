@@ -688,14 +688,14 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
   }
 
 
-  Column _buildMorningSection() {
+  Widget _buildMorningSection() {
     final date = selectedDate;
     final List<IntakeLog> medications = medList.forMorning();
 
-    return Column(
+    return medications.isEmpty ? SizedBox() : Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Morning - ${date.day}/${date.month}', Icons.wb_sunny_outlined),
+        _buildSectionHeader('Morning - ${date.day.ordinal()} ${getMonthName(date.month)}', Icons.wb_sunny_outlined),
         ListView.builder(
           shrinkWrap: true,
           physics: NeverScrollableScrollPhysics(),
@@ -710,11 +710,11 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
     );
   }
 
-  Column _buildEveningSection() {
+  Widget _buildEveningSection() {
     final date = selectedDate;
     final List<IntakeLog> medications = medList.forEvening();
 
-    return Column(
+    return medications.isEmpty ? SizedBox() : Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionHeader('Evening - ${date.day}/${date.month}', Icons.nights_stay_outlined),
@@ -770,6 +770,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
     String type = medication.medicine.type.toLowerCase();
     final String dosage = '${medication.medicine.specs.dosage} ${medication.medicine.specs.unit}';
     final String time = medication.timeOfDay();
+    final String color = medication.medicine.color;
 
     if (type.endsWith('s')) {
       type = type.substring(0, type.length - 1);
@@ -787,7 +788,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                 SizedBox(
                   width: 40,
                   height: 40,
-                  child: appVectorImage(fileName: type, useColorFilter: false),
+                  child: futureBuildSvg(type, color)
                 ),
                 if (isTaken)
                   Positioned(
@@ -831,12 +832,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
               time,
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
-            Icon(Icons.chevron_right, color: Colors.grey),
-            SizedBox(width: 8),
-            IconButton(
-              icon: Icon(Icons.edit, color: Colors.grey),
-              onPressed: () => context.push('/edit_treatment', extra: medicineLog.treatment),
-            ),
+            /*Icon(Icons.chevron_right, color: Colors.grey),*/
           ],
         ),
       ),
@@ -1139,10 +1135,16 @@ class EditMoodDialog extends StatefulWidget {
 class EditMoodDialogState extends State<EditMoodDialog> {
   @override
   Widget build(BuildContext context) {
+    // Debug log to verify the edit dialog is being called with correct values
+    devPrint('EditMoodDialog: Editing mood with initialMood=${widget.initialMood}, initialDescription="${widget.initialDescription}"');
+
     // Instead of using a custom edit dialog, we reuse DailyMoodPrompt
     // but pass in the initial values and date
     return DailyMoodPrompt(
-      onComplete: widget.onComplete,
+      onComplete: () {
+        devPrint('EditMoodDialog: Edit completed successfully');
+        widget.onComplete();
+      },
       date: widget.date,
       initialMood: widget.initialMood,
       initialDescription: widget.initialDescription,

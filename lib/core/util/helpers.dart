@@ -1,8 +1,11 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:pillow/core/util/dateFormatConverters.dart';
 
 import '../../features/journal/data/journal_log.dart';
+import '../theme/icons.dart';
 
 extension StringExtensions on String {
   void logType(){
@@ -78,4 +81,41 @@ extension StringExtension on String {
     if (isEmpty) return '';
     return "${this[0].toUpperCase()}${substring(1)}";
   }
+}
+
+extension IntExtension on int {
+  String ordinal() {
+    final dateInt = this % 10;
+    return "$this${
+        dateInt == 1 ? 'st' : dateInt == 2 ? 'nd' : dateInt == 3 ? 'rd' : 'th'
+    }";
+  }
+}
+
+final Map<String, Color> colorMap = {
+  'White': Colors.white,
+  'Yellow': Color(0xFFFFF3C4), // Soft pastel yellow
+  'Pink': Color(0xFFFFE4E8),   // Soft pastel pink
+  'Blue': Color(0xFFE3F2FD),   // Soft pastel blue
+  'Red': Color(0xFFFFE5E5),    // Soft pastel red
+};
+
+FutureBuilder<SvgPicture> futureBuildSvg(String text, selectedColor) {
+  return FutureBuilder<SvgPicture>(
+      future: appSvgDynamicImage(
+          fileName: text.toLowerCase(),
+          size: 30,
+          color: colorMap[selectedColor],
+          useColorFilter: false
+      ),
+      builder: (context, snapshot) {
+        return snapshot.data ??
+            appVectorImage(
+                fileName: text.toLowerCase(),
+                size: 30,
+                color: colorMap[selectedColor],
+                useColorFilter: false
+            );
+      }
+  );
 }

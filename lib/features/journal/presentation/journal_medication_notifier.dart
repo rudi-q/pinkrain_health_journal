@@ -37,11 +37,11 @@ class JournalMedicationNotifier extends StateNotifier<JournalMedicationState> {
   final Ref _ref;
   final _medicationNotificationService = MedicationNotificationService();
   bool _isInitialized = false;
-  
+
   JournalMedicationNotifier(this._ref) : super(const JournalMedicationState()) {
     initialize();
   }
-  
+
   /// Initialize the medication notification service
   Future<void> initialize() async {
     if (!_isInitialized) {
@@ -49,37 +49,43 @@ class JournalMedicationNotifier extends StateNotifier<JournalMedicationState> {
       _isInitialized = true;
     }
   }
-  
+
   /// Check for untaken medications and show notifications
   /// This should be called when the JournalScreen is opened
   Future<void> checkUntakenMedications() async {
     await initialize();
-    
+
     // Set loading state
     state = state.copyWith(isLoading: true);
-    
+
     try {
       // Get today's medications from the provider
       final pillIntakeNotifier = _ref.read(pillIntakeProvider.notifier);
       final today = DateTime.now();
       final medications = await pillIntakeNotifier.journalLog.getMedicationsForTheDay(today);
-      
+
       // Filter for untaken medications
       final untakenMeds = medications.where((med) => !med.isTaken).toList();
-      
-      devPrint(' Found ${untakenMeds.length} untaken medications');
-      
+
+      devPrint('🔍 Found ${untakenMeds.length} untaken medications');
+
       // Update state with untaken medications
       state = state.copyWith(
         untakenMedications: untakenMeds,
         isLoading: false,
       );
+
+      // Directly show notifications for untaken medications
+      if (untakenMeds.isNotEmpty) {
+        devPrint('🔔 Showing notifications for ${untakenMeds.length} untaken medications');
+        await _medicationNotificationService.showUntakenMedicationNotifications(untakenMeds);
+      }
     } catch (e) {
-      devPrint(' Error checking untaken medications: $e');
+      devPrint('❌ Error checking untaken medications: $e');
       state = state.copyWith(isLoading: false);
     }
   }
-  
+
   /// Reset the medication check flag
   void resetMedicationCheck() {
     state = state.copyWith(untakenMedications: []);
@@ -93,7 +99,7 @@ extension MedicationNotifierExtension on ConsumerState {
   Future<void> checkUntakenMedications() async {
     await ref.read(journalMedicationNotifierProvider.notifier).checkUntakenMedications();
   }
-  
+
   /// Reset the medication check flag
   void resetMedicationCheck() {
     ref.read(journalMedicationNotifierProvider.notifier).resetMedicationCheck();
