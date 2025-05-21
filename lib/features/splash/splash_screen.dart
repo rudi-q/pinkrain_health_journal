@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pretty_animated_text/pretty_animated_text.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -95,7 +96,7 @@ class _SplashScreenState extends State<SplashScreen>
                   children: [
                     // Logo
                     Image.asset(
-                      'assets/icons/launcher.png',
+                      'assets/icons/splash-icon.png',
                       width: 120,
                       height: 120,
                     ),
@@ -110,7 +111,7 @@ class _SplashScreenState extends State<SplashScreen>
                         color: Colors.black87,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 20),
                     // Tagline with enhanced animation
                     AnimatedBuilder(
                       animation: _controller,
@@ -120,30 +121,18 @@ class _SplashScreenState extends State<SplashScreen>
                           child: Opacity(
                             opacity: _taglineOpacityAnimation.value,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).primaryColor.withAlpha(40),
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withAlpha(15),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: const Text(
-                                "It's time to feel better 🙂",
-                                style: TextStyle(
-                                  fontFamily: 'Outfit',
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              child: ChimeBellText(
+                                text: "It's time to feel better",
+                                duration: Duration(milliseconds: 700),
+                                type: AnimationType.word,
+                                textStyle: TextStyle(
                                   fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF4A4A4A),
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
+                                  color: Color(0xFF4A4A4A)
+                                )
                             ),
                           ),
+                        )
                         );
                       },
                     ),
