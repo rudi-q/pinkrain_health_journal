@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/util/helpers.dart';  // Import helpers for logging
 import '../data/symptom_prediction.dart';
-import '../domain/tf_lite_symptom_pred.dart'; // Import the TFLite predictor
+
+import 'package:pillow/features/journal/domain/tf_lite_symptom_pred.dart'
+if (dart.library.html) 'package:pillow/features/journal/domain/mock_symptom_pred.dart'; // Import the TFLite predictor or mock predictor on web
 
 final symptomPredictionProvider =
     StateNotifierProvider<SymptomPredictionNotifier, List<SymptomPrediction>>(
@@ -24,6 +27,9 @@ class SymptomPredictionNotifier extends StateNotifier<List<SymptomPrediction>> {
   Future<void> predict(String text,
       {DateTime? startDate, DateTime? endDate}) async {
     try {
+      if(kIsWeb){
+        return;
+      }
       if (predictionInProgress) {
         "Skipping prediction - already in progress".log();
         return;
