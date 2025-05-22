@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pillow/core/widgets/bottom_navigation.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -230,7 +231,7 @@ class ProfileScreenState extends State<ProfileScreen> {
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text('Get in touch', style: TextStyle(fontSize: 16)),
-                trailing: Icon(Icons.chevron_right),
+                trailing: Icon(Icons.help_outline_rounded),
                 onTap: () async {
                   final Uri emailUri = Uri(
                     scheme: 'mailto',
@@ -256,6 +257,27 @@ class ProfileScreenState extends State<ProfileScreen> {
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 onTap: () async {
+                  const inviteUri = 'https://tally.so/r/3EYA6l';
+                  try {
+                    await SharePlus.instance.share(ShareParams(
+                        previewThumbnail: XFile('assets/images/splash-icon.png', name: 'Pillow'),
+                        text: "I've been using Pillow to track my wellness and journaling."
+                            "\nIt's actually really helpful! Check it out! \n$inviteUri\n"
+                            "\nBtw no worries, it's privacy first so all data is stored locally on your device and never leaves your phone.",
+                        subject: 'You gotta check out Pillow',
+                    ));
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error sending invite: $e')),
+                    );
+                  }
+                },
+                title: Text('Invite a Friend or Family Member', style: TextStyle(fontSize: 16)),
+                trailing: Icon(Icons.share_outlined),
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                onTap: () async {
                   final Uri privacyUri = Uri.parse('https://doubl.one/pillow/privacy.html');
                   try {
                     if (await canLaunchUrl(privacyUri)) {
@@ -272,7 +294,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                   }
                 },
                 title: Text('Privacy Policy', style: TextStyle(fontSize: 16)),
-                trailing: Icon(Icons.chevron_right),
+                trailing: Icon(Icons.privacy_tip_outlined),
               ),
               _buildHelpTile('Delete Account and All Data'),
               Spacer(),
