@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/medicine_model.dart';
+import '../../../core/services/hive_service.dart';
 import '../../../core/util/helpers.dart';
 import '../data/pillbox_model.dart';
-import '../../../core/services/hive_service.dart';
 
 class PillBoxNotifier extends StateNotifier<IPillBox> {
   PillBoxNotifier() : super(PillBox()) {

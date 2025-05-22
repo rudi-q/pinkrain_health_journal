@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pillow/features/pillbox/presentation/pillbox_notifier.dart';
-import 'package:pillow/core/services/hive_service.dart';
+
 import '../../../core/models/medicine_model.dart';
 
 abstract class IPillBox {

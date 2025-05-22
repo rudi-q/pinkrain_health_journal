@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:go_router/go_router.dart';
+import 'package:just_audio/just_audio.dart';
 
-import '../../core/widgets/appbar.dart';
 import '../../core/widgets/bottom_navigation.dart';
 
 class MeditationTrack {

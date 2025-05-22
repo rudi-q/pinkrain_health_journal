@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:pillow/core/util/helpers.dart';
+
 import '../../../core/models/medicine_model.dart';
 import '../../../core/theme/icons.dart';
-import '../domain/treatment_manager.dart';
-import '../data/treatment.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../features/journal/presentation/journal_notifier.dart';
+import '../data/treatment.dart';
+import '../domain/treatment_manager.dart';
 
 class EditTreatmentScreen extends ConsumerStatefulWidget {
   final Treatment treatment;

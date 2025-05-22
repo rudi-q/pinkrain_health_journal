@@ -1,13 +1,13 @@
-import 'dart:ui';
 import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math';
-import 'package:flutter/services.dart';
-import 'package:pretty_animated_text/pretty_animated_text.dart';
-import 'package:go_router/go_router.dart';
+import 'dart:ui';
 
-import '../../../core/widgets/appbar.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pretty_animated_text/pretty_animated_text.dart';
+
 import '../../../core/widgets/bottom_navigation.dart';
 
 final breathingExerciseProvider = StateNotifierProvider<BreathingExerciseNotifier, BreathingState>(
