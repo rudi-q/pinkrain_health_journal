@@ -139,7 +139,7 @@ class PillboxScreen extends ConsumerWidget {
     String initialMedicationType = 'Tablet';
     String initialColor = 'White';
 
-    IconData getMedicationTypeIcon(String type) {
+   /* IconData getMedicationTypeIcon(String type) {
       switch (type.toLowerCase()) {
         case 'tablet':
           return Icons.local_pharmacy;
@@ -156,7 +156,7 @@ class PillboxScreen extends ConsumerWidget {
         default:
           return Icons.medication;
       }
-    }
+    }*/
 
     final Map<String, Color> colorMap = {
       'White': Colors.white,
@@ -288,13 +288,7 @@ class PillboxScreen extends ConsumerWidget {
                                               ]
                                             : null,
                                       ),
-                                      child: Icon(
-                                        getMedicationTypeIcon(type),
-                                        color: isSelected
-                                            ? Colors.pink[400]
-                                            : Colors.grey[600],
-                                        size: 30,
-                                      ),
+                                      child: futureBuildSvg(type, selectedColor, 40),
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
