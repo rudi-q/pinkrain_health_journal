@@ -120,3 +120,25 @@ FutureBuilder<SvgPicture> futureBuildSvg(String text, selectedColor, [double siz
       }
   );
 }
+
+DateTime getStartDate(String selectedDateOption, DateTime selectedDate) {
+  DateTime startDate;
+  switch (selectedDateOption) {
+    case 'day':
+    // For a day, just use the selected date
+      startDate = selectedDate;
+      break;
+    case 'month':
+    // For a month, use the first day of the month to the selected date
+      startDate = DateTime(selectedDate.year, selectedDate.month, 1);
+      break;
+    case 'year':
+    // For a year, use the first day of the year to the selected date
+      startDate = DateTime(selectedDate.year, 1, 1);
+      break;
+    default:
+    // Default to last 30 days
+      startDate = selectedDate.subtract(const Duration(days: 30));
+  }
+  return startDate;
+}

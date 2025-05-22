@@ -1073,10 +1073,10 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
     final journalLog = pillIntakeNotifier.journalLog;
 
     // Calculate date range based on selected date option
-    DateTime startDate;
-    DateTime endDate = _selectedDate;
+    final DateTime startDate = getStartDate(_selectedDateOption, _selectedDate);
+    final DateTime endDate = _selectedDate;
 
-    switch (_selectedDateOption) {
+   /* switch (_selectedDateOption) {
       case 'day':
         // For a day, just use the selected date
         startDate = _selectedDate;
@@ -1092,7 +1092,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
       default:
         // Default to last 30 days
         startDate = _selectedDate.subtract(const Duration(days: 30));
-    }
+    }*/
 
     return ListView.builder(
       shrinkWrap: true,
@@ -1126,7 +1126,12 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
     final String previousTimeFrame = currentTimeFrame == 'today'
         ? 'yesterday'
         : 'the previous $_selectedDateOption';
-    const double currentAdherence = 0.85;
+
+    // Calculate date range based on selected date option
+    final DateTime startDate = getStartDate(_selectedDateOption, _selectedDate);
+    final DateTime endDate = _selectedDate;
+    final journalLog = ref.read(pillIntakeProvider.notifier).journalLog;
+    final double currentAdherence = journalLog.getAdherenceRateAll(startDate, endDate);;
     final currentText =
         "You've taken ${currentAdherence * 100}% of your meds $currentTimeFrame";
     final progressText =

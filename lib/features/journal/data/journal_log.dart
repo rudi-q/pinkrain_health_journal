@@ -292,6 +292,47 @@ class JournalLog {
     return medicationLogs[date] ?? [];
   }
 
+  /// Mean adherence for *all* active treatments between the two dates.
+  /// Counts every day in the interval for every treatment, even if no
+  /// log entry exists (missed doses stay missed).
+  ///
+  /// Returns 0.0 if no treatments are present at all.
+  double getAdherenceRateAll(DateTime startDate, DateTime endDate) {
+    // Normalise the bounds to midnight so we step cleanly day-by-day.
+    final DateTime start = DateTime(startDate.year, startDate.month, startDate.day);
+    final DateTime end   = DateTime(endDate.year,   endDate.month,   endDate.day);
+
+    if (end.isBefore(start)) return 0.0;
+
+    // 1️⃣  Figure out which treatments are *active* in this window.
+    final Set<String> treatmentIds = <String>{};
+
+    int takenDoseCount = 0;
+
+    DateTime current = start;
+    while (!current.isAfter(end)) {
+      final logs = medicationLogs[current];
+      if (logs != null && logs.isNotEmpty) {
+        for (final log in logs) {
+          treatmentIds.add(log.treatment.id);
+          if (log.isTaken) takenDoseCount++;
+        }
+      }
+      current = current.add(const Duration(days: 1));
+    }
+
+    if (treatmentIds.isEmpty) return 0.0;
+
+    // 2️⃣  Expected doses  =  (# days) × (# distinct treatments)
+    final int daysInclusive      = end.difference(start).inDays + 1;
+    final int expectedDoseCount  = treatmentIds.length * daysInclusive;
+
+    final rawRate = takenDoseCount / expectedDoseCount;
+
+    // Round to 4 decimals and turn back into a double:
+    return (rawRate * 10000).round() / 10000;
+  }
+
   /// Calculate adherence rate based on in-memory data
   /// Note: This method doesn't load data from storage - call getMedicationsForTheDay
   /// for all relevant dates before using this method for accurate results
