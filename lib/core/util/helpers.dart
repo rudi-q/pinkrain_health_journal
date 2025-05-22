@@ -100,11 +100,12 @@ final Map<String, Color> colorMap = {
   'Red': Color(0xFFFFE5E5),    // Soft pastel red
 };
 
-FutureBuilder<SvgPicture> futureBuildSvg(String text, selectedColor) {
+
+FutureBuilder<SvgPicture> futureBuildSvg(String text, selectedColor, [double size = 30]) {
   return FutureBuilder<SvgPicture>(
       future: appSvgDynamicImage(
           fileName: text.toLowerCase(),
-          size: 30,
+          size: size,
           color: colorMap[selectedColor],
           useColorFilter: false
       ),
@@ -112,7 +113,7 @@ FutureBuilder<SvgPicture> futureBuildSvg(String text, selectedColor) {
         return snapshot.data ??
             appVectorImage(
                 fileName: text.toLowerCase(),
-                size: 30,
+                size: size,
                 color: colorMap[selectedColor],
                 useColorFilter: false
             );

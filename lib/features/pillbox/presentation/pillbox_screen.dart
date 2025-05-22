@@ -102,13 +102,12 @@ class PillboxScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /*appImage('medicine', size: 40),*/
-                futureBuildSvg(med.type, med.color),
+                futureBuildSvg(med.type, med.color, 60),
                 const SizedBox(height: 10),
                 Text(
                   med.name,
                   style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
+                      fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   med.type,
@@ -118,7 +117,7 @@ class PillboxScreen extends ConsumerWidget {
                 Text(
                   '${medicineInventory.quantity} pills left',
                   style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 16,
                       color: Colors.black87,
                       fontWeight: FontWeight.bold),
                 ),

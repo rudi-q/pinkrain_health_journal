@@ -8,6 +8,7 @@ import 'package:html/parser.dart' as parser;
 
 import '../../../core/theme/icons.dart';
 // import '../data/pillbox_model.dart'; // removed unused import
+import '../../../core/util/helpers.dart';
 import 'pillbox_notifier.dart';
 
 class MedicineDetailScreen extends ConsumerStatefulWidget {
@@ -185,11 +186,11 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                   ),
                 ],
               ),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
               Row(
                 children: [
-                  appImage('medicine', size: 40),
-                  SizedBox(width: 15),
+                  futureBuildSvg(medicine.type, medicine.color, 50),
+                  const SizedBox(width: 15),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
