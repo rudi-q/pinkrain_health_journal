@@ -717,7 +717,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
     return medications.isEmpty ? SizedBox() : Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Evening - ${date.day}/${date.month}', Icons.nights_stay_outlined),
+        _buildSectionHeader('Evening - ${date.day.ordinal()} ${getMonthName(date.month)}', Icons.nights_stay_outlined),
         ListView.builder(
           shrinkWrap: true,
           physics: NeverScrollableScrollPhysics(),
