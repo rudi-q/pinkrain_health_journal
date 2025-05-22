@@ -6,41 +6,29 @@
     <title>Pillow - Medication & Wellness</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://unpkg.com/scrollreveal@4.0.9/dist/scrollreveal.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js"></script>
     <style>
         :root {
             --primary: #e91e63;
             --primary-dark: #c2185b;
-            --primary-light: rgba(233, 30, 99, 0.1);
-            --primary-gradient: linear-gradient(135deg, #e91e63 0%, #d81b60 100%);
-            --accent: #00bcd4;
-            --accent-light: rgba(0, 188, 212, 0.1);
-            --text: #212121;
+            --primary-light: #f8bbd0;
+            --icon-pink: #ffb6c1;
+            --secondary: #ff80ab;
+            --secondary-dark: #c51162;
+            --secondary-light: #ff4081;
+            --text: #333333;
             --text-light: #757575;
             --background: #ffffff;
-            --surface: #f8f8f8;
-            --surface-light: #ffffff;
-            --surface-dark: #f0f0f0;
-            --font-light: 300;
-            --font-regular: 400;
-            --font-medium: 500;
-            --font-semibold: 600;
-            --spacing-xs: 8px;
+            --background-dark: #fafafa;
+            --background-alt: #f5f5f5;
             --spacing-sm: 16px;
             --spacing-md: 32px;
             --spacing-lg: 64px;
-            --spacing-xl: 128px;
-            --border-radius: 12px;
-            --border-radius-pill: 50px;
-            --shadow-sm: 0 4px 6px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.08);
-            --shadow-md: 0 10px 20px rgba(0,0,0,0.05), 0 6px 6px rgba(0,0,0,0.06);
-            --shadow-lg: 0 20px 25px rgba(0,0,0,0.06), 0 10px 10px rgba(0,0,0,0.04);
-            --transition-fast: 0.2s ease;
-            --transition-medium: 0.3s ease;
-            --transition-slow: 0.5s ease;
+            --border-radius: 8px;
+            --transition: all 0.3s ease;
         }
 
         * {
@@ -49,28 +37,238 @@
             box-sizing: border-box;
         }
 
-        html {
-            scroll-behavior: smooth;
-        }
-
         body {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Inter', sans-serif;
             color: var(--text);
-            background-color: var(--background);
             line-height: 1.6;
-            font-weight: var(--font-light);
             overflow-x: hidden;
-            position: relative;
         }
 
         .container {
+            width: 100%;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 24px;
-            position: relative;
-            z-index: 2;
+            padding: 0 var(--spacing-md);
         }
 
+        /* Navbar */
+        .navbar {
+            background-color: var(--background);
+            padding: 16px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .navbar__container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar__logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            border-bottom: none;
+        }
+
+        .navbar__logo img {
+            height: 32px;
+        }
+
+        .navbar__logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-left: 10px;
+        }
+
+        .navbar__links {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar__links li {
+            margin-left: 24px;
+        }
+
+        .navbar__link {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .navbar__link:hover {
+            color: var(--primary);
+        }
+
+        .navbar__cta {
+            padding: 10px 20px;
+            background-color: var(--primary);
+            color: white !important;
+            border-radius: 24px;
+            font-weight: 600;
+            box-shadow: 0 4px 8px rgba(233, 30, 99, 0.3);
+        }
+
+        .navbar__cta:hover {
+            background-color: var(--primary-dark);
+            box-shadow: 0 6px 12px rgba(233, 30, 99, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* Hero Section */
+        .section--hero {
+            height: 100vh;
+            min-height: 700px;
+            display: flex;
+            align-items: center;
+            padding: 0;
+            background-color: #fff9fa;
+            background: linear-gradient(135deg, rgba(233, 30, 99, 0.12) 0%, rgba(233, 30, 99, 0.05) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero__content {
+            max-width: 600px;
+            z-index: 5;
+            position: relative;
+        }
+
+        .hero__title {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text);
+            line-height: 1.2;
+        }
+
+        .hero__title span {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 4px;
+        }
+
+        .hero__text {
+            font-size: 18px;
+            margin-bottom: var(--spacing-md);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .hero__cta-group {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-top: 32px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn--primary {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 8px rgba(233, 30, 99, 0.4);
+        }
+
+        .btn--primary:hover {
+            background-color: var(--primary-dark);
+            box-shadow: 0 6px 12px rgba(233, 30, 99, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn--outline {
+            background-color: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            box-shadow: 0 2px 4px rgba(233, 30, 99, 0.1);
+        }
+
+        .btn--outline:hover {
+            background-color: rgba(233, 30, 99, 0.05);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(233, 30, 99, 0.2);
+        }
+
+        /* Particles */
+        .particles-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Features Section */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin: 48px auto;
+            max-width: 1200px;
+        }
+
+        .feature {
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 32px 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 0;
+        }
+
+        .feature:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature__icon {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 20px;
+            stroke: var(--primary);
+            fill: none;
+        }
+
+        .feature__title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--primary);
+        }
+
+        .feature__text {
+            color: var(--text-light);
+            font-size: 16px;
+            line-height: 1.5;
+            margin: 0;
+            max-width: 300px;
+        }
+
+        /* Section Styles */
         .section {
             padding: var(--spacing-lg) 0;
             position: relative;
@@ -82,205 +280,31 @@
             display: flex;
             align-items: center;
             padding: 0;
-            background: linear-gradient(180deg, rgba(233, 30, 99, 0.03) 0%, rgba(0, 0, 0, 0) 100%);
+            background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%);
+            position: relative;
         }
 
         .section--light {
-            background-color: var(--background);
+            background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%);
+            position: relative;
         }
 
         .section--gray {
-            background-color: var(--surface);
-        }
-
-        .hero__content {
-            width: 100%;
+            background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
             position: relative;
-            z-index: 2;
-        }
-
-        .navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 20px 0;
-            transition: all var(--transition-medium);
-            z-index: 100;
-        }
-
-        .navbar-scrolled {
-            background-color: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: var(--shadow-sm);
-            padding: 12px 0;
-        }
-
-        .navbar__logo {
-            display: flex;
-            align-items: center;
-        }
-
-        .navbar__logo img {
-            height: 40px;
-            margin-right: 10px;
-        }
-
-        .navbar__logo-text {
-            font-size: 1.5rem;
-            font-weight: var(--font-medium);
-            color: var(--primary);
-        }
-
-        .navbar__links {
-            display: flex;
-            gap: var(--spacing-md);
-        }
-
-        .navbar__link {
-            color: var(--text);
-            text-decoration: none;
-            font-weight: var(--font-medium);
-            transition: color var(--transition-fast);
-            position: relative;
-        }
-
-        .navbar__link:hover {
-            color: var(--primary);
-        }
-
-        .navbar__link::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background-color: var(--primary);
-            transition: width var(--transition-medium);
-        }
-
-        .navbar__link:hover::after {
-            width: 100%;
-        }
-
-        .hero__title {
-            font-size: clamp(2.5rem, 5vw, 4.5rem);
-            font-weight: var(--font-light);
-            margin-bottom: var(--spacing-md);
-            line-height: 1.1;
-        }
-
-        .hero__title span {
-            color: var(--primary);
-            font-weight: var(--font-regular);
-            position: relative;
-        }
-
-        .hero__title span::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 8px;
-            background-color: var(--primary-light);
-            z-index: -1;
-        }
-
-        .hero__subtitle {
-            font-size: clamp(1.25rem, 2vw, 1.75rem);
-            color: var(--text-light);
-            margin-bottom: var(--spacing-lg);
-            max-width: 550px;
-            font-weight: var(--font-light);
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 16px 32px;
-            background: none;
-            border: none;
-            border-radius: var(--border-radius-pill);
-            font-family: inherit;
-            font-size: 1rem;
-            font-weight: var(--font-medium);
-            text-decoration: none;
-            cursor: pointer;
-            transition: all var(--transition-medium);
-            position: relative;
-            overflow: hidden;
-            z-index: 1;
-        }
-
-        .btn--primary {
-            background: var(--primary-gradient);
-            color: white;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .btn--outline {
-            border: 1px solid var(--primary);
-            color: var(--primary);
-        }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #d81b60 0%, #e91e63 100%);
-            z-index: -1;
-            transition: opacity var(--transition-medium);
-            opacity: 0;
-        }
-
-        .btn--primary::before {
-            opacity: 0;
-        }
-
-        .btn--primary:hover::before {
-            opacity: 1;
-        }
-
-        .btn--outline::before {
-            background: var(--primary-light);
-        }
-
-        .btn--outline:hover::before {
-            opacity: 1;
-        }
-
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .btn--primary:hover {
-            box-shadow: 0 6px 12px rgba(233, 30, 99, 0.3);
-        }
-
-        .btn--outline:hover {
-            color: var(--primary);
-            border-color: var(--primary);
-        }
-
-        .btn i {
-            margin-right: 8px;
         }
 
         .section__title {
             font-size: clamp(1.75rem, 3vw, 2.5rem);
-            font-weight: var(--font-regular);
-            margin-bottom: var(--spacing-lg);
+            font-weight: 500;
+            margin-bottom: var(--spacing-md);
             text-align: center;
             position: relative;
             padding-bottom: 20px;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .section__title::after {
@@ -291,90 +315,216 @@
             transform: translateX(-50%);
             width: 60px;
             height: 3px;
-            background-color: var(--primary);
+            background: linear-gradient(45deg, var(--primary), var(--accent));
         }
 
         .section__subtitle {
             font-size: 1.25rem;
             color: var(--text-light);
             text-align: center;
-            margin: -32px auto 64px;
-            max-width: 600px;
+            margin: 0 auto 64px;
+            max-width: 700px;
         }
 
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: var(--spacing-md);
+        /* Shape decorations */
+        .shape {
+            position: absolute;
+            z-index: 0;
+            opacity: 0.5;
         }
 
-        .feature {
-            padding: var(--spacing-md);
-            border-radius: var(--border-radius);
-            background-color: var(--background);
-            transition: transform var(--transition-medium), box-shadow var(--transition-medium);
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            box-shadow: var(--shadow-sm);
-            position: relative;
-            overflow: hidden;
+        .shape-1 {
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--primary-light) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            transform: translate(30%, -30%);
+        }
+
+        .shape-2 {
+            bottom: 0;
+            left: 0;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255, 197, 197, 0.1) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            transform: translate(-30%, 30%);
+        }
+
+        .shape-3 {
+            top: 50%;
+            right: 0;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255, 197, 197, 0.1) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            transform: translate(30%, -50%);
+        }
+
+        /* Particles background */
+        .particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
             z-index: 1;
         }
 
-        .section--gray .feature {
-            background-color: white;
+        /* Feature highlight style */
+        .feature-highlight {
+            border-left: 4px solid var(--primary);
+            padding-left: 16px;
+            margin: 32px 0;
         }
 
-        .feature:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .feature::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 0;
-            background: var(--primary-gradient);
-            transition: height var(--transition-medium);
-            z-index: -1;
-        }
-
-        .feature:hover::before {
-            height: 100%;
-        }
-
-        .feature__icon {
-            width: 60px;
-            height: 60px;
-            margin-bottom: var(--spacing-sm);
-            color: var(--primary);
-            transition: transform var(--transition-medium);
-        }
-
-        .feature:hover .feature__icon {
-            transform: scale(1.1);
-        }
-
-        .feature__title {
-            font-size: 1.5rem;
-            font-weight: var(--font-medium);
-            margin-bottom: var(--spacing-sm);
-            transition: color var(--transition-medium);
-        }
-
-        .feature:hover .feature__title {
+        .feature-highlight__title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
             color: var(--primary);
         }
 
-        .feature__text {
+        .feature-highlight__description {
             color: var(--text-light);
-            font-size: 1rem;
+            margin-bottom: 16px;
         }
 
+        /* Floating animation */
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+
+        @keyframes floating {
+            0% {
+                transform: translateY(0px) rotate3d(0,0,0,0deg);
+            }
+            50% {
+                transform: translateY(-15px) rotate3d(1,1,0,2deg);
+            }
+            100% {
+                transform: translateY(0px) rotate3d(0,0,0,0deg);
+            }
+        }
+
+        /* Breathe animation for meditation feature */
+        .breathe-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            margin: 0 auto;
+            animation: breathe 8s ease-in-out infinite;
+            box-shadow: 0 0 30px rgba(255, 197, 197, 0.3);
+        }
+
+        @keyframes breathe {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 rgba(255, 197, 197, 0.3);
+            }
+            50% {
+                transform: scale(1.3);
+                box-shadow: 0 0 30px rgba(255, 197, 197, 0.5);
+            }
+        }
+
+        /* How It Works Section */
+        .section--light {
+            background-color: var(--background);
+        }
+
+        .how-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            margin: 48px 0 0 0;
+            padding: 0;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .how-step {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.07);
+            padding: 0 0 0 0;
+            position: relative;
+            min-height: 110px;
+        }
+        .how-step__circle {
+            min-width: 56px;
+            min-height: 56px;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            position: absolute;
+            left: -32px;
+            box-shadow: 0 2px 8px rgba(233,30,99,0.13);
+            z-index: 2;
+        }
+        .how-step__icon {
+            position: absolute;
+            right: -32px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--primary);
+            color: #fff;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 2px 8px rgba(233,30,99,0.13);
+        }
+        .how-step__content {
+            flex: 1;
+            padding: 32px 64px 32px 64px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .how-step__title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+        .how-step__desc {
+            color: var(--text-light);
+            font-size: 16px;
+            margin: 0;
+        }
+        @media (max-width: 600px) {
+            .how-step__content {
+                padding: 24px 36px 24px 56px;
+            }
+            .how-step__circle, .how-step__icon {
+                left: -20px;
+                right: -20px;
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+            }
+        }
+
+        /* App Showcase Section */
         .app-showcase {
             display: flex;
             justify-content: center;
@@ -386,7 +536,7 @@
             max-width: 300px;
             height: auto;
             border-radius: 30px;
-            box-shadow: var(--shadow-lg);
+            box-shadow: var(--shadow);
             transition: transform var(--transition-slow);
             transform-style: preserve-3d;
             perspective: 1000px;
@@ -397,6 +547,7 @@
             transform: rotateY(5deg) rotateX(5deg);
         }
 
+        /* Testimonials Section */
         .testimonial-container {
             position: relative;
             max-width: 800px;
@@ -406,16 +557,16 @@
 
         .testimonials {
             display: flex;
-            transition: transform var(--transition-medium);
+            transition: transform var(--transition);
         }
 
         .testimonial {
             flex: 0 0 100%;
             background-color: white;
-            border-radius: var(--border-radius);
+            border-radius: var(--radius);
             padding: var(--spacing-md);
-            box-shadow: var(--shadow-sm);
-            transition: all var(--transition-medium);
+            box-shadow: var(--shadow);
+            transition: all var(--transition);
             transform: scale(0.9);
             opacity: 0.7;
         }
@@ -483,45 +634,116 @@
             transform: scale(1.3);
         }
 
+        /* FAQ Section */
+        .faq-list {
+            max-width: 700px;
+            margin: 48px auto 0 auto;
+            padding: 0;
+            list-style: none;
+        }
+        .faq-item {
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(233,30,99,0.07);
+            background: #fff;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+        .faq-question {
+            cursor: pointer;
+            padding: 20px 28px;
+            font-weight: 600;
+            color: var(--primary);
+            background: #fff;
+            border: none;
+            width: 100%;
+            text-align: left;
+            font-size: 18px;
+            outline: none;
+            transition: background 0.2s;
+        }
+        .faq-question:hover {
+            background: #f8bbd0;
+        }
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            background: #fafafa;
+            color: var(--text);
+            font-size: 16px;
+            padding: 0 28px;
+            transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1), padding 0.2s;
+        }
+        .faq-item.active .faq-answer {
+            max-height: 200px;
+            padding: 20px 28px;
+        }
+
+        /* CTA Section */
         .cta {
             text-align: center;
-            padding: var(--spacing-xl) 0;
-            background: linear-gradient(180deg, var(--background) 0%, var(--surface-light) 100%);
+            background: var(--background-alt);
             position: relative;
             overflow: hidden;
+            padding: var(--spacing-lg) 0;
+        }
+
+        .cta:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: var(--primary);
         }
 
         .cta__title {
-            font-size: clamp(1.75rem, 3vw, 2.5rem);
-            margin-bottom: var(--spacing-md);
-            font-weight: var(--font-regular);
+            font-size: 36px;
+            margin-bottom: var(--spacing-sm);
+            color: var(--primary);
         }
 
         .cta__text {
-            font-size: 1.25rem;
+            font-size: 18px;
             color: var(--text-light);
+            max-width: 700px;
+            margin: 0 auto var(--spacing-md);
+        }
+
+        .cta__stats {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-lg);
             margin-bottom: var(--spacing-lg);
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
+            flex-wrap: wrap;
+        }
+
+        .cta__stat {
+            text-align: center;
+        }
+
+        .cta__stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .cta__stat-label {
+            color: var(--text-light);
+            font-size: 14px;
+            margin-top: 4px;
         }
 
         .app-store-badges {
-            display: flex;
-            justify-content: center;
-            gap: var(--spacing-sm);
             margin-top: var(--spacing-md);
         }
 
         .app-store-badge {
-            height: 50px;
-            transition: transform var(--transition-fast);
+            height: 60px;
         }
 
-        .app-store-badge:hover {
-            transform: translateY(-3px);
-        }
-
+        /* Footer */
         .footer {
             background-color: var(--surface);
             padding: var(--spacing-lg) 0;
@@ -595,13 +817,13 @@
             justify-content: center;
             border-radius: 50%;
             background-color: var(--surface-light);
-            box-shadow: var(--shadow-sm);
+            box-shadow: var(--shadow);
         }
 
         .footer__social-link:hover {
             color: var(--primary);
             transform: translateY(-3px);
-            box-shadow: var(--shadow-md);
+            box-shadow: var(--shadow);
         }
 
         .footer__copyright {
@@ -637,10 +859,8 @@
             height: 550px;
             background: linear-gradient(140deg, #f5f5f5 0%, #ffffff 100%);
             border-radius: 36px;
-            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.15);
-            overflow: hidden;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            padding: 14px;
+            box-shadow: var(--shadow);
+            transition: transform var(--transition-slow);
             transform-style: preserve-3d;
             perspective: 1000px;
             transition: transform var(--transition-slow);
@@ -682,7 +902,7 @@
             background-color: white;
             border-radius: 12px;
             padding: 16px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            box-shadow: var(--shadow);
             transition: transform var(--transition-fast);
         }
 
@@ -719,7 +939,7 @@
         .shape-1 {
             width: 500px;
             height: 500px;
-            background-color: rgba(233, 30, 99, 0.15);
+            background-color: rgba(255, 197, 197, 0.15);
             top: -200px;
             right: -200px;
         }
@@ -727,115 +947,9 @@
         .shape-2 {
             width: 600px;
             height: 600px;
-            background-color: rgba(33, 150, 243, 0.1);
+            background-color: rgba(255, 197, 197, 0.1);
             bottom: -300px;
             left: -200px;
-        }
-
-        /* How it works section */
-        .how-it-works {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .step {
-            display: flex;
-            align-items: center;
-            margin-bottom: var(--spacing-lg);
-            width: 100%;
-        }
-
-        .step:nth-child(even) {
-            flex-direction: row-reverse;
-        }
-
-        .step:nth-child(even) .step__content {
-            text-align: right;
-            padding-left: 0;
-            padding-right: var(--spacing-md);
-        }
-
-        .step__number {
-            flex: 0 0 80px;
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: var(--primary-gradient);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            font-weight: var(--font-semibold);
-            box-shadow: var(--shadow-md);
-        }
-
-        .step__content {
-            flex: 1;
-            padding-left: var(--spacing-md);
-        }
-
-        .step__title {
-            font-size: 1.5rem;
-            margin-bottom: var(--spacing-xs);
-            font-weight: var(--font-medium);
-            color: var(--primary);
-        }
-
-        .step__text {
-            color: var(--text-light);
-        }
-
-        /* FAQ Section */
-        .faq {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .faq-item {
-            margin-bottom: var(--spacing-sm);
-            border-radius: var(--border-radius);
-            background-color: white;
-            overflow: hidden;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .faq-question {
-            padding: var(--spacing-sm) var(--spacing-md);
-            font-weight: var(--font-medium);
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all var(--transition-fast);
-        }
-
-        .faq-question:hover {
-            color: var(--primary);
-        }
-
-        .faq-question i {
-            transition: transform var(--transition-fast);
-        }
-
-        .faq-item.active .faq-question i {
-            transform: rotate(180deg);
-        }
-
-        .faq-answer {
-            padding: 0 var(--spacing-md);
-            max-height: 0;
-            overflow: hidden;
-            transition: all var(--transition-medium);
-            color: var(--text-light);
-        }
-
-        .faq-item.active .faq-answer {
-            padding: 0 var(--spacing-md) var(--spacing-sm);
-            max-height: 300px;
         }
 
         /* Animations */
@@ -947,77 +1061,408 @@
                 margin-left: 0 !important;
             }
         }
+
+        /* How It Works */
+        .how-it-works {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .step__number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(255, 197, 197, 0.3);
+            flex-shrink: 0;
+        }
+
+        .step__content {
+            background-color: var(--background);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            flex-grow: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .step:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .step__title {
+            margin: 0;
+            font-size: 20px;
+            color: var(--primary);
+        }
+
+        .step__text {
+            margin: 0;
+            color: var(--text-light);
+        }
+
+        .step__icon-container {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 8px rgba(255, 197, 197, 0.3);
+        }
+
+        /* App Showcase */
+        .app-showcase {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-lg);
+            align-items: center;
+            justify-content: center;
+            margin-top: var(--spacing-lg);
+        }
+
+        .mockup-phone {
+            position: relative;
+            width: 300px;
+            height: 600px;
+            background-color: #111;
+            border-radius: 36px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            padding: 12px;
+            border: 8px solid #333;
+            overflow: hidden;
+        }
+
+        .mockup-screen {
+            background-color: var(--background);
+            border-radius: 24px;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mockup-navbar {
+            background: var(--primary);
+            color: white;
+            padding: 16px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .mockup-content {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            flex-grow: 1;
+        }
+
+        .mockup-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .mockup-card-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .mockup-pill {
+            display: inline-block;
+            background-color: var(--background-alt);
+            border-radius: 16px;
+            padding: 4px 12px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .app-features {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+            max-width: 400px;
+        }
+
+        .app-feature {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .app-feature__icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--border-radius);
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .app-feature__content h3 {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            color: var(--primary);
+        }
+
+        .app-feature__content p {
+            margin: 0;
+            color: var(--text-light);
+        }
+
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-15px);
+            }
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        /* CTA Section */
+        .cta {
+            text-align: center;
+            background: var(--background-alt);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: var(--primary);
+        }
+
+        .cta__title {
+            font-size: 36px;
+            margin-bottom: var(--spacing-sm);
+            color: var(--primary);
+        }
+
+        .cta__text {
+            font-size: 18px;
+            color: var(--text-light);
+            max-width: 700px;
+            margin: 0 auto var(--spacing-md);
+        }
+
+        .cta__stats {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            flex-wrap: wrap;
+        }
+
+        .cta__stat {
+            text-align: center;
+        }
+
+        .cta__stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .cta__stat-label {
+            color: var(--text-light);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .app-store-badges {
+            margin-top: var(--spacing-md);
+        }
+
+        .app-store-badge {
+            height: 60px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .step, .step:nth-child(even) {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .step__number {
+                margin-bottom: -30px;
+                z-index: 1;
+            }
+
+            .step__content {
+                width: 100%;
+                margin-top: 15px;
+                padding-top: var(--spacing-md);
+            }
+
+            .app-showcase {
+                flex-direction: column;
+            }
+
+            .cta__stats {
+                gap: var(--spacing-md);
+            }
+        }
     </style>
 </head>
 <body>
     <!-- Navbar -->
-    <div class="navbar">
-        <div class="container">
-            <div class="navbar__logo">
+    <header class="navbar">
+        <div class="container navbar__container">
+            <a href="#" class="navbar__logo">
                 <img src="../assets/icons/splash-icon.png" alt="Pillow Logo">
-                <div class="navbar__logo-text">Pillow</div>
-            </div>
-            <div class="navbar__links">
-                <a href="#features" class="navbar__link">Features</a>
-                <a href="#how-it-works" class="navbar__link">How It Works</a>
-                <a href="#testimonials" class="navbar__link">Testimonials</a>
-                <a href="#faq" class="navbar__link">FAQ</a>
-                <a href="#download" class="navbar__link">Download</a>
-            </div>
+                <span class="navbar__logo-text">Pillow</span>
+            </a>
+            
+            <nav>
+                <ul class="navbar__links">
+                    <li><a href="#features" class="navbar__link">Features</a></li>
+                    <li><a href="#how-it-works" class="navbar__link">How It Works</a></li>
+                   <!-- <li><a href="#testimonials" class="navbar__link">Testimonials</a></li>-->
+                    <li><a href="#faq" class="navbar__link">FAQ</a></li>
+                    <li><a href="#download" class="navbar__link navbar__cta">Request Access</a></li>
+                </ul>
+            </nav>
         </div>
-    </div>
+    </header>
 
     <!-- Hero Section -->
     <section class="section section--hero">
-        <div id="particles-js" class="particles-js"></div>
-        <div class="shape shape-1"></div>
         <div class="container">
             <div class="hero__content">
-                <h1 class="hero__title animate fade-in">Simplify your <span>medication routine</span></h1>
-                <p class="hero__subtitle animate fade-in delay-1">Pillow is a sophisticated tool that helps you manage medications, track wellness, and journal your health journey.</p>
-                <a href="#download" class="btn btn--primary animate fade-in delay-2"><i class="fas fa-download"></i>Download Now</a>
-                <a href="#features" class="btn btn--outline animate fade-in delay-2" style="margin-left: 16px;"><i class="fas fa-info-circle"></i>Learn More</a>
+                <h1 class="hero__title animate fade-in">It's Time to feel <span>Better</span></h1>
+                <p class="hero__text animate fade-in delay-1">
+                    Pillow is a sophisticated tool that helps you manage medications, track wellness, and journal your health journey.
+                </p>
+                <div class="hero__cta-group animate fade-in delay-2">
+                    <a href="#download" class="btn btn--primary">Request Access</a>
+                    <a href="#features" class="btn btn--outline">Learn More</a>
+                </div>
             </div>
         </div>
+
+        <div id="particles-js" class="particles-container"></div>
     </section>
 
     <!-- Features Section -->
-    <section id="features" class="section section--gray">
+    <section id="features" class="section section--light">
         <div class="container">
-            <h2 class="section__title animate fade-in">Thoughtfully Designed</h2>
-            <p class="section__subtitle animate fade-in delay-1">Pillow brings clarity and simplicity to your health management with these powerful features</p>
-
+            <h2 class="section__title animate fade-in">Pillow brings clarity and simplicity to your health management with these powerful features</h2>
+            
             <div class="features">
                 <div class="feature animate fade-in">
-                    <svg class="feature__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M19.5 5.5L18.5 4.5M19.5 5.5L18.5 6.5M19.5 5.5H5.5M4.5 19.5L5.5 18.5M4.5 19.5L5.5 20.5M4.5 19.5H18.5M9 14L12 17L22 7M7 10H2M12 10H22M2 15H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <svg class="feature__icon" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path d="M5 10H19M5 14H19M5 18H19M5 6H19" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 10L3 11L5 9M2 14L3 15L5 13M2 18L3 19L5 17" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                     <h3 class="feature__title">Smart Reminders</h3>
                     <p class="feature__text">Never miss a dose with intelligent medication tracking and timely notifications</p>
                 </div>
 
                 <div class="feature animate fade-in delay-1">
-                    <svg class="feature__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15M9 5C9 6.10457 9.89543 7 11 7H13C14.1046 7 15 6.10457 15 5M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5M9 14L11 16L15 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <svg class="feature__icon" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M9 14l2 2 4-4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                     <h3 class="feature__title">Health Journal</h3>
                     <p class="feature__text">Document your daily experiences and health insights in one elegant place</p>
                 </div>
 
                 <div class="feature animate fade-in delay-2">
-                    <svg class="feature__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M3.34888 17C4.29694 19.989 7.27812 22 10.75 22C15.3063 22 19 18.3063 19 13.75C19 9.19365 15.3063 5.5 10.75 5.5H6.25C3.35051 5.5 1 7.85051 1 10.75C1 13.6495 3.35051 16 6.25 16H16.75C18.5449 16 20 14.5449 20 12.75C20 10.9551 18.5449 9.5 16.75 9.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <svg class="feature__icon" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M7.5 12a4.5 4.5 0 109 0 4.5 4.5 0 00-9 0z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                     <h3 class="feature__title">Wellness Tracking</h3>
                     <p class="feature__text">Monitor your overall well-being with comprehensive wellness metrics</p>
                 </div>
 
                 <div class="feature animate fade-in delay-3">
-                    <svg class="feature__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 12H12M15 12H12M12 12V9M12 12V15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <svg class="feature__icon" viewBox="0 0 24 24" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                     <h3 class="feature__title">Treatment Plans</h3>
                     <p class="feature__text">Organize all your treatments in one place with advanced scheduling</p>
+                </div>
+
+                <div class="feature animate fade-in delay-4">
+                    <svg class="feature__icon" viewBox="0 0 24 24" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <h3 class="feature__title">Guided Meditation</h3>
+                    <p class="feature__text">Access calming guided meditations to reduce stress and improve sleep quality</p>
+                </div>
+
+                <div class="feature animate fade-in delay-5">
+                    <svg class="feature__icon" viewBox="0 0 24 24" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 6v6l4 2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <h3 class="feature__title">Breathing Exercises</h3>
+                    <p class="feature__text">Follow structured breathing exercises to reduce anxiety and improve focus</p>
+                </div>
+
+                <div class="feature animate fade-in delay-6">
+                    <svg class="feature__icon" viewBox="0 0 24 24" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <h3 class="feature__title">Progress Tracking</h3>
+                    <p class="feature__text">Visualize your wellness journey with beautiful charts and insights</p>
+                </div>
+
+                <div class="feature animate fade-in delay-7">
+                    <svg class="feature__icon" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path d="M17 8l4 4m0 0l-4 4m4-4H3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <h3 class="feature__title">Social Support</h3>
+                    <p class="feature__text">Optionally connect with a community for motivation and accountability</p>
                 </div>
             </div>
         </div>
@@ -1025,42 +1470,48 @@
 
     <!-- How It Works Section -->
     <section id="how-it-works" class="section section--light">
-        <div class="shape shape-2"></div>
         <div class="container">
-            <h2 class="section__title animate fade-in">How Pillow Works</h2>
-            <p class="section__subtitle animate fade-in delay-1">Simple steps to take control of your health routine</p>
-
-            <div class="how-it-works">
-                <div class="step">
-                    <div class="step__number animate zoom-in">1</div>
-                    <div class="step__content animate slide-right">
-                        <h3 class="step__title">Set Up Your Medications</h3>
-                        <p class="step__text">Add your prescriptions, supplements, and treatments with a few taps</p>
+            <h2 class="section__title animate fade-in">Simple steps to take control of your health routine</h2>
+            <div class="how-steps">
+                <div class="how-step">
+                    <div class="how-step__circle">1</div>
+                    <div class="how-step__content">
+                        <div class="how-step__title">Set Up Your Medications</div>
+                        <div class="how-step__desc">Add your prescriptions, supplements, and treatments with a few taps</div>
                     </div>
+                    <div class="how-step__icon"><i class="fas fa-pills"></i></div>
                 </div>
-
-                <div class="step">
-                    <div class="step__number animate zoom-in">2</div>
-                    <div class="step__content animate slide-left">
-                        <h3 class="step__title">Receive Smart Reminders</h3>
-                        <p class="step__text">Get notifications exactly when you need to take your medications</p>
+                <div class="how-step">
+                    <div class="how-step__circle">2</div>
+                    <div class="how-step__content">
+                        <div class="how-step__title">Receive Smart Reminders</div>
+                        <div class="how-step__desc">Get notifications exactly when you need to take your medications</div>
                     </div>
+                    <div class="how-step__icon"><i class="fas fa-bell"></i></div>
                 </div>
-
-                <div class="step">
-                    <div class="step__number animate zoom-in">3</div>
-                    <div class="step__content animate slide-right">
-                        <h3 class="step__title">Track Your Wellness</h3>
-                        <p class="step__text">Monitor symptoms, mood, and overall health metrics</p>
+                <div class="how-step">
+                    <div class="how-step__circle">3</div>
+                    <div class="how-step__content">
+                        <div class="how-step__title">Track Your Wellness</div>
+                        <div class="how-step__desc">Monitor symptoms, mood, and overall health metrics</div>
                     </div>
+                    <div class="how-step__icon"><i class="fas fa-chart-line"></i></div>
                 </div>
-
-                <div class="step">
-                    <div class="step__number animate zoom-in">4</div>
-                    <div class="step__content animate slide-left">
-                        <h3 class="step__title">Journal Your Journey</h3>
-                        <p class="step__text">Document your health experiences in the built-in journal</p>
+                <div class="how-step">
+                    <div class="how-step__circle">4</div>
+                    <div class="how-step__content">
+                        <div class="how-step__title">Journal Your Journey</div>
+                        <div class="how-step__desc">Document your health experiences in the built-in journal</div>
                     </div>
+                    <div class="how-step__icon"><i class="fas fa-book"></i></div>
+                </div>
+                <div class="how-step">
+                    <div class="how-step__circle">5</div>
+                    <div class="how-step__content">
+                        <div class="how-step__title">Practice Mindfulness</div>
+                        <div class="how-step__desc">Use our guided meditations and breathing exercises to reduce stress</div>
+                    </div>
+                    <div class="how-step__icon"><i class="fas fa-spa"></i></div>
                 </div>
             </div>
         </div>
@@ -1095,12 +1546,44 @@
                         </div>
                     </div>
                 </div>
+                
+                <div class="app-features">
+                    <div class="app-feature animate fade-in delay-1">
+                        <div class="app-feature__icon">
+                            <i class="fas fa-magic"></i>
+                        </div>
+                        <div class="app-feature__content">
+                            <h3>Beautiful UI</h3>
+                            <p>Stunning interface that makes health management enjoyable</p>
+                        </div>
+                    </div>
+                    
+                    <div class="app-feature animate fade-in delay-2">
+                        <div class="app-feature__icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <div class="app-feature__content">
+                            <h3>Lightning Fast</h3>
+                            <p>Optimized performance for a seamless experience</p>
+                        </div>
+                    </div>
+                    
+                    <div class="app-feature animate fade-in delay-3">
+                        <div class="app-feature__icon">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <div class="app-feature__content">
+                            <h3>Privacy First</h3>
+                            <p>Your health data stays private and secure</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
-
-    <!-- Testimonials Section -->
-    <section id="testimonials" class="section section--light">
+<!--
+    &lt;!&ndash; Testimonials Section &ndash;&gt;
+    <section id="testimonials" class="section section&#45;&#45;light">
         <div class="container">
             <h2 class="section__title animate fade-in">What Users Say</h2>
 
@@ -1147,65 +1630,58 @@
                 </div>
             </div>
         </div>
-    </section>
+    </section>-->
 
     <!-- FAQ Section -->
-    <section id="faq" class="section section--gray">
+    <section id="faq" class="section section--light">
         <div class="container">
             <h2 class="section__title animate fade-in">Frequently Asked Questions</h2>
             
-            <div class="faq animate fade-in">
-                <div class="faq-item">
-                    <div class="faq-question">
-                        Is Pillow free to use?
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="faq-answer">
-                        Yes, Pillow is completely free to download and use with all core features included. We're committed to making health management accessible to everyone.
-                    </div>
-                </div>
-                
-                <div class="faq-item">
-                    <div class="faq-question">
-                        How does Pillow handle my health data?
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="faq-answer">
-                        Your privacy is our priority. All health data is stored locally on your device and is never shared without your explicit permission. We use industry-standard encryption to protect any data that's backed up.
-                    </div>
-                </div>
-                
-                <div class="faq-item">
-                    <div class="faq-question">
-                        Can I use Pillow for my family members?
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="faq-answer">
-                        Currently, Pillow is designed for individual use. We're working on a family management feature that will be available in a future update.
-                    </div>
-                </div>
-                
-                <div class="faq-item">
-                    <div class="faq-question">
-                        Does Pillow work offline?
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="faq-answer">
-                        Yes, Pillow works fully offline. Your reminders and tracking features will continue to function without an internet connection.
-                    </div>
-                </div>
-            </div>
+            <ul class="faq-list">
+                <li class="faq-item">
+                    <button class="faq-question">Is my data secure with Pillow?</button>
+                    <div class="faq-answer">Yes, all your data is encrypted and stored securely. We value your privacy and never share your information.</div>
+                </li>
+                <li class="faq-item">
+                    <button class="faq-question">Can I use Pillow offline?</button>
+                    <div class="faq-answer">Absolutely! Most features work offline, and your data will sync automatically when you reconnect.</div>
+                </li>
+                <li class="faq-item">
+                    <button class="faq-question">How do reminders work?</button>
+                    <div class="faq-answer">Reminders are scheduled based on your medication plan and will notify you at the right times.</div>
+                </li>
+                <li class="faq-item">
+                    <button class="faq-question">Can I track my mood and wellness?</button>
+                    <div class="faq-answer">Yes! Pillow lets you log your mood, symptoms, and other wellness metrics daily.</div>
+                </li>
+            </ul>
         </div>
     </section>
 
     <!-- CTA Section -->
     <section id="download" class="section section--light cta">
         <div class="container">
-            <h2 class="cta__title animate fade-in">Ready to simplify your health routine?</h2>
-            <p class="cta__text animate fade-in delay-1">Download Pillow today and experience a more organized approach to medication management.</p>
-            <a href="#" class="btn btn--primary animate fade-in delay-2"><i class="fab fa-google-play"></i>Download on Google Play</a>
+            <h2 class="cta__title animate fade-in">Time to feel better</h2>
+            <!--<p class="cta__text animate fade-in delay-1">Join thousands of users who have simplified their medication management and improved their wellness with Pillow.</p>
+            -->
+          <!--  <div class="cta__stats animate fade-in delay-2">
+                <div class="cta__stat">
+                    <div class="cta__stat-number">10K+</div>
+                    <div class="cta__stat-label">Active Users</div>
+                </div>
+                <div class="cta__stat">
+                    <div class="cta__stat-number">4.8</div>
+                    <div class="cta__stat-label">App Store Rating</div>
+                </div>
+                <div class="cta__stat">
+                    <div class="cta__stat-number">95%</div>
+                    <div class="cta__stat-label">Medication Adherence</div>
+                </div>
+            </div>-->
             
-            <div class="app-store-badges animate fade-in delay-3">
+            <a href="https://tally.so/r/3EYA6l" target="_blank" class="btn btn--primary animate fade-in delay-3"><i class="fab fa-google-play"></i>&nbsp;&nbsp;&nbsp;Request Early Access</a>
+            
+            <div class="app-store-badges animate fade-in delay-4">
                 <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" class="app-store-badge">
             </div>
         </div>
@@ -1220,13 +1696,13 @@
             </div>
 
             <div class="footer__links">
-                <a href="#" class="footer__link">Privacy Policy</a>
-                <a href="#" class="footer__link">Terms of Service</a>
-                <a href="#" class="footer__link">Support</a>
-                <a href="#" class="footer__link">Contact</a>
+                <a href="privacy.html" target="_blank" class="footer__link">Privacy Policy</a>
+               <!-- <a href="#" class="footer__link">Terms of Service</a>
+                <a href="#" class="footer__link">Support</a>-->
+                <a href="mailto:hello@doubl.one" class="footer__link">Contact</a>
             </div>
 
-            <div class="footer__social">
+        <!--    <div class="footer__social">
                 <a href="#" class="footer__social-link" aria-label="Twitter">
                     <i class="fab fa-twitter"></i>
                 </a>
@@ -1236,9 +1712,9 @@
                 <a href="#" class="footer__social-link" aria-label="Facebook">
                     <i class="fab fa-facebook-f"></i>
                 </a>
-            </div>
+            </div>-->
 
-            <p class="footer__copyright"> 2025 Pillow Health Technologies. All rights reserved.</p>
+            <p class="footer__copyright"> 2025 DoublOne Studios Limited. All rights reserved.</p>
         </div>
     </footer>
 
@@ -1246,8 +1722,8 @@
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
 
     <script>
-        // Initialize particle background
-        if (typeof particlesJS !== 'undefined') {
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize particles.js
             particlesJS("particles-js", {
                 particles: {
                     number: { value: 80, density: { enable: true, value_area: 800 } },
@@ -1259,17 +1735,18 @@
                         enable: true,
                         distance: 150,
                         color: "#e91e63",
-                        opacity: 0.2,
+                        opacity: 0.4,
                         width: 1
                     },
                     move: {
                         enable: true,
                         speed: 2,
                         direction: "none",
-                        random: true,
+                        random: false,
                         straight: false,
                         out_mode: "out",
-                        bounce: false
+                        bounce: false,
+                        attract: { enable: false, rotateX: 600, rotateY: 1200 }
                     }
                 },
                 interactivity: {
@@ -1281,95 +1758,43 @@
                     },
                     modes: {
                         grab: { distance: 140, line_linked: { opacity: 1 } },
-                        push: { particles_nb: 4 }
+                        bubble: { distance: 400, size: 40, duration: 2, opacity: 8, speed: 3 },
+                        repulse: { distance: 200, duration: 0.4 },
+                        push: { particles_nb: 4 },
+                        remove: { particles_nb: 2 }
                     }
                 },
                 retina_detect: true
             });
-        }
-
-        // Scroll reveal initialization
-        const sr = ScrollReveal();
-        sr.reveal('.animate', {
-            duration: 1000,
-            distance: '20px',
-            easing: 'ease-out',
-            origin: 'bottom',
-            reset: false,
-            viewFactor: 0.2,
-        });
-
-        // Navbar scroll effect
-        window.addEventListener('scroll', function() {
-            const navbar = document.querySelector('.navbar');
-            if (window.scrollY > 50) {
-                navbar.classList.add('navbar-scrolled');
-            } else {
-                navbar.classList.remove('navbar-scrolled');
-            }
-        });
-
-        // Testimonial carousel
-        const testimonials = document.querySelectorAll('.testimonial');
-        const dots = document.querySelectorAll('.testimonial-dot');
-        let currentIndex = 0;
-
-        function showTestimonial(index) {
-            testimonials.forEach(testimonial => {
-                testimonial.classList.remove('active');
+            
+            // Initialize ScrollReveal
+            const sr = ScrollReveal({
+                origin: 'bottom',
+                distance: '20px',
+                duration: 1000,
+                delay: 200,
+                easing: 'ease-in-out'
             });
             
-            dots.forEach(dot => {
-                dot.classList.remove('active');
-            });
-            
-            testimonials[index].classList.add('active');
-            dots[index].classList.add('active');
-            
-            document.querySelector('.testimonials').style.transform = `translateX(-${index * 100}%)`;
-        }
-
-        dots.forEach(dot => {
-            dot.addEventListener('click', function() {
-                const index = parseInt(this.getAttribute('data-index'));
-                currentIndex = index;
-                showTestimonial(currentIndex);
-            });
+            sr.reveal('.animate');
         });
+    </script>
 
-        // Auto rotate testimonials
-        setInterval(() => {
-            currentIndex = (currentIndex + 1) % testimonials.length;
-            showTestimonial(currentIndex);
-        }, 5000);
-
-        // FAQ accordion
-        const faqQuestions = document.querySelectorAll('.faq-question');
-
-        faqQuestions.forEach(question => {
-            question.addEventListener('click', function() {
-                const faqItem = this.parentNode;
-                
-                faqQuestions.forEach(q => {
-                    if (q !== this) {
-                        q.parentNode.classList.remove('active');
-                    }
+    <script>
+        // FAQ Accordion
+        document.addEventListener('DOMContentLoaded', function() {
+            var faqQuestions = document.querySelectorAll('.faq-question');
+            faqQuestions.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var item = btn.closest('.faq-item');
+                    var wasActive = item.classList.contains('active');
+                    document.querySelectorAll('.faq-item').forEach(function(i) {
+                        i.classList.remove('active');
+                    });
+                    if (!wasActive) item.classList.add('active');
                 });
-                
-                faqItem.classList.toggle('active');
             });
         });
-
-        // 3D effect for mockup
-        const mockupPhone = document.querySelector('.mockup-phone');
-        
-        if (mockupPhone) {
-            document.addEventListener('mousemove', function(e) {
-                const xAxis = (window.innerWidth / 2 - e.pageX) / 25;
-                const yAxis = (window.innerHeight / 2 - e.pageY) / 25;
-                mockupPhone.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
-            });
-        }
     </script>
 </body>
 </html>
