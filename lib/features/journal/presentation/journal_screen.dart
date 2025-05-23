@@ -969,9 +969,13 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                 ],
               ),
               SizedBox(height: 20),
-              _buildInfoItem('Blue pill'),
-              _buildInfoItem('Take at least 30 minutes before breakfast.'),
-              _buildInfoItem('Try to take it at the same time each day.'),
+              _buildInfoItem('${medication.medicine.color.capitalize()} ${medication.medicine.type}'),
+              _buildInfoItem(medication.treatmentPlan.mealOption.isNotEmpty 
+                ? medication.treatmentPlan.mealOption 
+                : 'Take as directed'),
+              _buildInfoItem(medication.treatmentPlan.instructions.isNotEmpty 
+                ? medication.treatmentPlan.instructions 
+                : 'Try to take it at the same time each day'),
               SizedBox(height: 20),
               Row(
                 children: [
