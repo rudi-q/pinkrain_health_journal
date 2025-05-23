@@ -233,7 +233,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                 onTap: () async {
                   final Uri emailUri = Uri(
                     scheme: 'mailto',
-                    path: 'hello@doubl.one',
+                    path: 'pillow@doubl.one',
                     query: 'subject=Pillow%20App%20Support',
                   );
 

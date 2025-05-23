@@ -109,8 +109,8 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
         children: [
           Container(
             key: ValueKey(selectedColor),
-            width: 60,
-            height: 60,
+            width: MediaQuery.of(context).size.width * 0.2,
+            height: MediaQuery.of(context).size.height * 0.05,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isSelected ? Colors.pink[50] : Colors.transparent,
@@ -138,13 +138,15 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
       children: [
         Text('Color',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        SizedBox(height: 10),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: ['White', 'Yellow', 'Pink', 'Blue', 'Red']
-                .map((color) => _buildColorOption(color))
-                .toList(),
+        Container(
+          margin: EdgeInsets.only(top: 10),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: ['White', 'Yellow', 'Pink', 'Blue', 'Red']
+                  .map((color) => _buildColorOption(color))
+                  .toList(),
+            ),
           ),
         ),
       ],
@@ -177,7 +179,7 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
         child: Text(color,
             style: TextStyle(
               color: Colors.grey[800],
-              fontSize: 16,
+              fontSize: MediaQuery.of(context).size.width * 0.03,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
             )),
       ),
@@ -300,8 +302,8 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
         children: [
           Container(
             key: ValueKey(selectedColor),
-            width: 60,
-            height: 60,
+            width: MediaQuery.of(context).size.width * 0.2,
+            height: MediaQuery.of(context).size.height * 0.05,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isSelected ? Colors.pink[50] : Colors.transparent,
@@ -354,7 +356,7 @@ class NewTreatmentScreenState extends State<NewTreatmentScreen> {
             // Generate a unique ID for this new treatment
             final uniqueId = generateUniqueId();
             devPrint("Creating new treatment with generated ID: $uniqueId");
-            
+
             final treatment = Treatment.newTreatment(
               id: uniqueId, // Explicitly pass the generated ID
               name: nameController.text,

@@ -379,7 +379,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                   // Active symptoms and triggers
                   buildSymptomsAndTriggers(),
 
-                  const SizedBox(height: 30),
+                /*  const SizedBox(height: 30),
 
                   // Medication impact
                   BlurText(
@@ -486,10 +486,51 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                       selectedDate: _selectedDate,
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  // Debug button to verify mood data
+                  Center(
+                    child: TextButton(
+                      onPressed: () async {
+                        // Check if the mood data exists for today
+                        final today = DateTime.now();
+                        final normalizedToday = DateTime(today.year, today.month, today.day);
+                        
+                        // Debug log
+                        devPrint('DEBUG: Checking mood data for today: $normalizedToday');
+                        
+                        // First check if it exists
+                        final hasMood = await HiveService.hasMoodForDate(normalizedToday);
+                        devPrint('DEBUG: Has mood for today: $hasMood');
+                        
+                        // Get the actual data
+                        final moodData = await HiveService.getMoodForDate(normalizedToday);
+                        devPrint('DEBUG: Today\'s mood data: $moodData');
+                        
+                        // Test saving a mood value
+                        if (!hasMood) {
+                          devPrint('DEBUG: Saving test mood data for today');
+                          await HiveService.saveMoodForDate(
+                            normalizedToday,
+                            2, // Bad mood (matches your screenshot)
+                            'Test mood data'
+                          );
+                          devPrint('DEBUG: Test mood data saved');
+                          
+                          // Verify it was saved
+                          final newMoodData = await HiveService.getMoodForDate(normalizedToday);
+                          devPrint('DEBUG: Newly saved mood data: $newMoodData');
+                          
+                          // Force refresh the chart
+                          setState(() {});
+                        }
+                      },
+                      child: Text('Debug Mood Data', style: TextStyle(color: Colors.grey)),
+                    ),
+                  ),
                   const SizedBox(height: 30),
-
-                  // NEW SECTION: Correlation Analysis
-                  BlurText(
+*/
+                  // SECTION: Correlation Analysis
+              /*    BlurText(
                     text: 'Wellness Factor Analysis',
                     duration: const Duration(milliseconds: 800),
                     type: AnimationType.word,
@@ -513,9 +554,9 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                     width: double.infinity,
                     child: CorrelationAnalysis(),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 30),*/
+/*
 
-                  // NEW SECTION: Wellness Prediction
                   BlurText(
                     text: 'Mood Forecast',
                     duration: const Duration(milliseconds: 800),
@@ -527,7 +568,8 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                   ),
                   const SizedBox(height: 4),
                   ChimeBellText(
-                    text: 'AI-powered prediction of your mood trends',
+                    text:
+                        'AI-powered prediction of your mood trends (Coming soon, for illustration purposes only)',
                     duration: const Duration(milliseconds: 50),
                     textStyle: TextStyle(
                       color: Color(0xFF9E9E9E),
@@ -538,8 +580,9 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                   const SizedBox(
                     width: double.infinity,
                     child: WellnessPrediction(),
-                  ),
-                  const SizedBox(height: 30),
+                  ),*/
+                  const SizedBox(height: 50),
+
 
                   // NEW SECTION: Personalized Insights
                   BlurText(

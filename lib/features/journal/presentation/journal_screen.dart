@@ -1158,9 +1158,9 @@ class EditMoodDialogState extends State<EditMoodDialog> {
 String getMoodEmoji(int mood) {
   switch (mood) {
     case 0:
-      return '😢'; // Very Sad
+      return '😭'; // Very Sad (crying face with tears)
     case 1:
-      return '😔'; // Sad
+      return '🙁'; // Sad (slightly frowning face)
     case 2:
       return '😐'; // Neutral
     case 3:

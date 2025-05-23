@@ -25,8 +25,9 @@ class NotificationService {
 
   // Get the selected notification sound path from SharedPreferences
   Future<String?> getSelectedSoundPath() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_selectedSoundKey);
+    /*final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_selectedSoundKey);*/
+    return 'pill_alarm';
   }
 
   Future<void> initialize() async {
@@ -76,7 +77,8 @@ class NotificationService {
         playSound: true,
         enableVibration: true,
         enableLights: true,
-        sound: null, // We'll set the sound in the notification details instead
+        sound: RawResourceAndroidNotificationSound(
+            'pill_alarm'), // Use custom sound
       );
     } else {
       // Use default sound
@@ -148,27 +150,30 @@ class NotificationService {
 
     if (selectedSoundPath != null && selectedSoundPath.isNotEmpty) {
       // Use custom sound
-      devPrint('Using custom notification sound for reminder: $selectedSoundPath');
+      devPrint(
+          'Using custom notification sound for reminder: $selectedSoundPath');
 
       // For custom sounds from assets, we would need to copy the asset to the raw resource folder
       // This is a limitation of the flutter_local_notifications package
       // For now, we'll use the default sound if a custom sound is selected
       androidDetails = AndroidNotificationDetails(
-        'pill_channel_id', // Channel ID
-        'Pill Reminders', // Channel name
-        channelDescription: 'Reminders for taking your pills',
-        importance: Importance.max,
-        priority: Priority.high,
-        playSound: true,
-        enableVibration: true,
-        vibrationPattern: vibrationPattern,
-        fullScreenIntent: true, // Make notification appear as full screen alert
-        category: AndroidNotificationCategory.alarm, // Treat as alarm
-        ticker: 'Pill Reminder', // For accessibility and also appears in status bar
-        // In a production app, you would use something like:
-        // sound: RawResourceAndroidNotificationSound(soundFileName)
-      );
+          'pill_channel_id', // Channel ID
+          'Pill Reminders', // Channel name
+          channelDescription: 'Reminders for taking your pills',
+          importance: Importance.max,
+          priority: Priority.high,
+          playSound: true,
+          enableVibration: true,
+          vibrationPattern: vibrationPattern,
+          fullScreenIntent:
+              true, // Make notification appear as full screen alert
+          category: AndroidNotificationCategory.alarm, // Treat as alarm
+          ticker:
+              'Pill Reminder', // For accessibility and also appears in status bar
+          // In a production app, you would use something like:
+          sound: RawResourceAndroidNotificationSound('pill_alarm'));
     } else {
+      devPrint('Using default notification sound');
       // Use default sound
       androidDetails = AndroidNotificationDetails(
         'pill_channel_id', // Channel ID
@@ -181,7 +186,8 @@ class NotificationService {
         vibrationPattern: vibrationPattern,
         fullScreenIntent: true, // Make notification appear as full screen alert
         category: AndroidNotificationCategory.alarm, // Treat as alarm
-        ticker: 'Pill Reminder', // For accessibility and also appears in status bar
+        ticker:
+            'Pill Reminder', // For accessibility and also appears in status bar
       );
     }
 
