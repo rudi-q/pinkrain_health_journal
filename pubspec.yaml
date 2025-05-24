@@ -2,7 +2,7 @@ name: pillow
 description: "Health Tracking App"
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 2.1.0+5
+version: 2.1.1+6
 
 environment:
   sdk: '>=3.3.4 <4.0.0'
