@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pillow/core/theme/colors.dart';
 import 'package:pillow/features/pillbox/data/pillbox_model.dart';
 import 'package:pillow/features/pillbox/presentation/pillbox_notifier.dart';
 import 'package:pillow/features/treatment/data/treatment.dart';
@@ -36,7 +37,7 @@ class PillboxScreen extends ConsumerWidget {
             // Search Bar
             // todo: Implement search functionality
             TextField(
-              cursorColor: Colors.grey,
+              cursorColor: AppTokens.cursor,
               decoration: InputDecoration(
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(
@@ -211,10 +212,10 @@ class PillboxScreen extends ConsumerWidget {
 
     final Map<String, Color> colorMap = {
       'White': Colors.white,
-      'Yellow': const Color(0xFFFFF3C4),
-      'Pink': const Color(0xFFFFE4E8),
-      'Blue': const Color(0xFFE3F2FD),
-      'Red': const Color(0xFFFFE5E5),
+      'Yellow': AppColors.pastelYellow,
+      'Pink': AppColors.pink100,
+      'Blue': AppColors.pastelBlue,
+      'Red': AppColors.pastelRed,
     };
 
     showDialog(
@@ -262,13 +263,26 @@ class PillboxScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 20),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Medication Name',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppTokens.textPrimary,
+                            fontFamily: 'Outfit',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
 
                       // Medication Name
                       TextField(
                         controller: nameController,
                         cursorColor: AppTokens.cursor,
                         decoration: InputDecoration(
-                          hintText: 'Medication Name',
+                          hintText: 'Paracetamol',
                           hintStyle: TextStyle(
                               color: AppTokens.textPlaceholder
                           ),
@@ -290,7 +304,7 @@ class PillboxScreen extends ConsumerWidget {
                           'Medication Type',
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.bold,
                             color: AppTokens.textPrimary,
                             fontFamily: 'Outfit',
                           ),
@@ -388,31 +402,27 @@ class PillboxScreen extends ConsumerWidget {
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 18, vertical: 8),
+                                      horizontal: 16, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: colorMap[color],
                                     borderRadius: BorderRadius.circular(30),
                                     border: Border.all(
                                       color: isSelected
-                                          ? Colors.pink[300]!
-                                          : Colors.grey[300]!,
-                                      width: isSelected ? 1.5 : 0.5,
+                                          ? AppTokens.borderStrong!
+                                          : AppTokens.borderLight!,
                                     ),
                                   ),
+                                child: Center(
                                   child: Text(
                                     color,
                                     style: TextStyle(
                                       fontSize: 14,
+                                      fontWeight: FontWeight.bold,
                                       fontFamily: 'Outfit',
-                                      fontWeight: isSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                      color: isSelected
-                                          ? Colors.pink[400]
-                                          : Colors.grey[700],
                                     ),
                                   ),
                                 ),
+                              ),
                               ),
                             );
                           }).toList(),
@@ -480,81 +490,83 @@ class PillboxScreen extends ConsumerWidget {
                           TextButton(
                             onPressed: () => Navigator.of(dialogContext).pop(),
                             style: TextButton.styleFrom(
-                              foregroundColor: Colors.grey[600],
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                             ),
                             child: Text(
                               'Cancel',
                               style: TextStyle(
+                                color: AppTokens.textSecondary,
                                 fontFamily: 'Outfit',
+                                fontWeight: FontWeight.bold,
                                 fontSize: 16,
                               ),
                             ),
                           ),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.pink[100],
-                              foregroundColor: Colors.pink[700],
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
+                          Expanded(
+                            child: TextButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTokens.buttonPrimaryBg,
+                                foregroundColor: AppTokens.textPrimary,
+                                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
                               ),
-                            ),
-                            onPressed: () {
-                              if (nameController.text.isNotEmpty &&
-                                  quantityController.text.isNotEmpty) {
-                                final newMedicine = Medicine(
-                                  name: nameController.text,
-                                  type: selectedMedicationType,
-                                  color: selectedColor,
-                                );
-                                final quantity = int.tryParse(quantityController.text) ?? 0;
-
-                                final specification = Specification(
-                                  unit: unitController.text.isNotEmpty
-                                      ? unitController.text
-                                      : 'mg',
-                                  useCase: useCaseController.text,
-                                );
-                                newMedicine.addSpecification(specification);
-
-                                try {
-                                  final notifier = ref.read(pillBoxProvider.notifier);
-                                  notifier.addMedicine(newMedicine, quantity);
-                                  Navigator.of(dialogContext).pop();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('${newMedicine.name} added to pillbox'),
-                                      duration: const Duration(seconds: 2),
-                                      backgroundColor: Colors.pink[300],
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(15),
-                                      ),
-                                    ),
+                              onPressed: () {
+                                if (nameController.text.isNotEmpty &&
+                                    quantityController.text.isNotEmpty) {
+                                  final newMedicine = Medicine(
+                                    name: nameController.text,
+                                    type: selectedMedicationType,
+                                    color: selectedColor,
                                   );
-                                } catch (e) {
-                                  ScaffoldMessenger.of(dialogContext).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Error adding medication: ${e.toString()}'),
-                                      duration: const Duration(seconds: 3),
-                                      backgroundColor: Colors.red[300],
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(15),
-                                      ),
-                                    ),
+                                  final quantity = int.tryParse(quantityController.text) ?? 0;
+
+                                  final specification = Specification(
+                                    unit: unitController.text.isNotEmpty
+                                        ? unitController.text
+                                        : 'mg',
+                                    useCase: useCaseController.text,
                                   );
+                                  newMedicine.addSpecification(specification);
+
+                                  try {
+                                    final notifier = ref.read(pillBoxProvider.notifier);
+                                    notifier.addMedicine(newMedicine, quantity);
+                                    Navigator.of(dialogContext).pop();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('${newMedicine.name} added to pillbox'),
+                                        duration: const Duration(seconds: 2),
+                                        backgroundColor: Colors.pink[300],
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(15),
+                                        ),
+                                      ),
+                                    );
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Error adding medication: ${e.toString()}'),
+                                        duration: const Duration(seconds: 3),
+                                        backgroundColor: Colors.red[300],
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(15),
+                                        ),
+                                      ),
+                                    );
+                                  }
                                 }
-                              }
-                            },
-                            child: Text(
-                              'Add Medication',
-                              style: TextStyle(
-                                fontFamily: 'Outfit',
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
+                              },
+                              child: Text(
+                                'Add Medication',
+                                style: TextStyle(
+                                  fontFamily: 'Outfit',
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
                           ),

@@ -12,7 +12,7 @@ class AppTokens {
 
   // BACKGROUND
   static const bgPrimary = AppColors.white100;
-  static const bgMuted = AppColors.white200;
+  static const bgMuted = AppColors.black5;
   static const bgElevated = AppColors.white100;
   static final bgCard = AppColors.pink40;
 
@@ -21,7 +21,8 @@ class AppTokens {
   static const borderStrong = AppColors.black40;
 
   // BUTTON PRIMARY
-  static final buttonPrimaryBg = AppColors.pink40;
+  static const buttonPrimaryBg = AppColors.pink100;
+  static const buttonElevatedBg = AppColors.pink40;
   static const buttonPrimaryText = AppColors.black100;
 
   // BUTTON SECONDARY

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static final pink5 = Colors.pink[50];
-  static const pink6 = Color(0x0DFFD1FF);
-  static final pink10 = Colors.pink[100];
+  static const pink5 = Color(0x0DFFD1FF);
+  static const pink10 = Color(0x1AFFD1FF);
   static const pink40 = Color(0x66FFD1FF);
   static const pink100 = Color(0xFFFFD1FF);
 

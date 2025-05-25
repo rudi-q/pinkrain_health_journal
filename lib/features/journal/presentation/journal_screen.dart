@@ -28,7 +28,7 @@ class JournalScreen extends ConsumerStatefulWidget {
 }
 
 class JournalScreenState extends ConsumerState<JournalScreen> {
-  late final ScrollController _dateScrollController;
+  late final PageController _dateScrollController;
   late final PageController _pageController;
   late DateTime selectedDate;
   late List<IntakeLog> medList = [];
@@ -36,7 +36,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
   @override
   void initState() {
     super.initState();
-    _dateScrollController = ScrollController();
+    _dateScrollController = PageController(initialPage: 0);
     _pageController = PageController(initialPage: 1000);
 
     // Check for daily mood prompt with a delay
@@ -64,23 +64,16 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
   }
 
   void _onPageChanged(int page) {
+    final today = normalizeDate(DateTime.now());
+    final newDate = today.add(Duration(days: page - 1000));
+
     final selectedDateNotifier = ref.read(selectedDateProvider.notifier);
-    selectedDateNotifier.setDate(DateTime.now().add(Duration(days: page - 1000)), ref);
-    setState(() {
+    selectedDateNotifier.setDate(newDate, ref);
 
-      // Scroll the date selector if necessary
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        double itemWidth = MediaQuery.of(context).size.width / 5;
-        double targetScroll = (page - 1000) * itemWidth;
-
-        _dateScrollController.animateTo(
-          targetScroll,
-          duration: Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-      });
-    });
+    final weekIndex = getWeekIndex(newDate);
+    _dateScrollController.jumpToPage(weekIndex);
   }
+
 
 
   // Check if it's the first launch of the day and show mood prompt
@@ -150,7 +143,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
               padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.pink[50],
+                color: AppTokens.buttonElevatedBg,
               ),
               child: appVectorImage(fileName: 'profile'),
             ),
@@ -189,72 +182,102 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
     );
   }
 
+  DateTime normalizeDate(DateTime dt) {
+    return DateTime(dt.year, dt.month, dt.day);
+  }
+
+  int getWeekIndex(DateTime date) {
+    final mondayToday = normalizeDate(DateTime.now()).subtract(Duration(days: DateTime.now().weekday - 1));
+    final mondayTarget = normalizeDate(date).subtract(Duration(days: date.weekday - 1));
+    return mondayTarget.difference(mondayToday).inDays ~/ 7;
+  }
+
+
   Widget _buildDateSelector() {
     return SizedBox(
       height: 90,
-      width: MediaQuery.of(context).size.width,
-      child: ListView.builder(
+      child: PageView.builder(
         controller: _dateScrollController,
-        scrollDirection: Axis.horizontal,
-        itemCount: 14,
-        itemBuilder: (context, index) {
-          DateTime date = DateTime.now().add(Duration(days: index - 2));
-          bool isSelected = date.day == selectedDate.day &&
-                            date.month == selectedDate.month &&
-                            date.year == selectedDate.year;
-          bool isToday = date.day == DateTime.now().day &&
-                         date.month == DateTime.now().month &&
-                         date.year == DateTime.now().year;
-          return SizedBox(
-            width: MediaQuery.of(context).size.width / 5,
-            child: GestureDetector(
-              onTap: () {
-                if (isToday) {
-                  _showDatePicker(context);
-                } else {
-                  int difference = date.difference(DateTime.now()).inDays;
+        itemBuilder: (context, weekIndex) {
+          // Get Monday of the current week, then shift by weekIndex
+          DateTime today = DateTime.now();
+          int daysToSubtract = today.weekday - DateTime.monday; // weekday: 1 (Mon) to 7 (Sun)
+          DateTime monday = DateTime(today.year, today.month, today.day).subtract(Duration(days: daysToSubtract));
+          DateTime startOfWeek = monday.add(Duration(days: weekIndex * 7));
+
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: List.generate(7, (dayOffset) {
+              final date = startOfWeek.add(Duration(days: dayOffset));
+              final isSelected = selectedDate.day == date.day &&
+                  selectedDate.month == date.month &&
+                  selectedDate.year == date.year;
+              final isToday = date.day == today.day &&
+                  date.month == today.month &&
+                  date.year == today.year;
+
+              return GestureDetector(
+                onTap: () {
+                  int difference = normalizeDate(date).difference(normalizeDate(DateTime.now())).inDays;
+                  final normalizedNow = normalizeDate(DateTime.now());
+                  final normalizedTarget = normalizeDate(date);
+
+                  final weekIndex = getWeekIndex(date);
+                  _dateScrollController.jumpToPage(weekIndex);
+
+
                   _pageController.animateToPage(
                     1000 + difference,
-                    duration: Duration(milliseconds: 300),
+                    duration: const Duration(milliseconds: 300),
                     curve: Curves.easeInOut,
                   );
-                }
-              },
-              child: Container(
-                margin: EdgeInsets.symmetric(horizontal: 4, vertical: 16),
-                decoration: BoxDecoration(
-                  color: isSelected ? Colors.grey[800] : Colors.grey[200],
-                  shape: BoxShape.circle,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      getWeekdayAbbreviation(date.weekday),
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+
+                },
+                child: Container(
+                  width: 45,
+                  height: 65,
+                  decoration: BoxDecoration(
+                    color: isSelected ? Colors.grey[800]
+                        : AppTokens.bgMuted,
+                    shape: BoxShape.circle,
+                    border: isToday && !isSelected
+                        ? Border.all(color: Colors.grey[600]!, width: 1.5)
+                        : null,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        getWeekdayAbbreviation(date.weekday),
+                        style: TextStyle(
+                          color: isSelected
+                              ? AppTokens.textInvert
+                              : AppTokens.textSecondary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      date.day.toString(),
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
+                      Text(
+                        date.day.toString(),
+                        style: TextStyle(
+                          color: isSelected
+                              ? AppTokens.textInvert
+                              : AppTokens.textPrimary,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            }),
           );
         },
       ),
     );
   }
+
 
   void _showDatePicker(BuildContext context) {
     showCupertinoModalPopup(
@@ -270,7 +293,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    AppButtons.secondary(onPressed: Navigator.of(context).pop, text: ''),
+                    Button.secondary(onPressed: Navigator.of(context).pop, text: ''),
                     CupertinoButton(
                       padding: EdgeInsets.zero,
                       child: Text(
@@ -385,7 +408,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
           } else if (mood == 2) {
             cardColor = Colors.grey[100]!; // Neutral mood
           } else {
-            cardColor = Colors.pink[50]!; // Happy mood
+            cardColor = AppTokens.buttonPrimaryBg!; // Happy mood
           }
         }
 
@@ -581,7 +604,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                     onPressed: () {
                       Navigator.pop(context);
                     },
-                    style: ElevatedButton.styleFrom(
+                    style: TextButton.styleFrom(
                       backgroundColor: AppTokens.buttonSecondaryBg,
                       foregroundColor: AppTokens.textPrimary,
                       shape: RoundedRectangleBorder(
@@ -597,7 +620,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                       Navigator.pop(context);
                       _showEditMoodDialog(date, moodData);
                     },
-                    style: ElevatedButton.styleFrom(
+                    style: TextButton.styleFrom(
                       backgroundColor: AppTokens.buttonPrimaryBg,
                       foregroundColor: AppTokens.textPrimary,
                       shape: RoundedRectangleBorder(
@@ -832,7 +855,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
   Widget _buildFloatingActionButton(BuildContext context) {
     return FloatingActionButton(
       onPressed: () => _showAddPopup(context),
-      backgroundColor: AppTokens.buttonPrimaryBg,
+      backgroundColor: AppTokens.buttonElevatedBg,
       elevation: 0,
       highlightElevation: 0,
       hoverElevation: 0, // removes shadow on hover
@@ -868,7 +891,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey[700],
+                    color: AppTokens.textPrimary,
                   ),
                 ),
                 SizedBox(height: 20),
@@ -984,7 +1007,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                         // Handle skip action
                         Navigator.pop(context);
                       },
-                      style: ElevatedButton.styleFrom(
+                      style: TextButton.styleFrom(
                         foregroundColor: AppTokens.stateError,
                         backgroundColor: AppTokens.buttonSecondaryBg,
                       ),
@@ -1007,7 +1030,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                           });
                         });
                       },
-                      style: ElevatedButton.styleFrom(
+                      style: TextButton.styleFrom(
                         foregroundColor: AppTokens.textPrimary,
                         backgroundColor: AppTokens.buttonPrimaryBg,
                       ),
@@ -1060,12 +1083,12 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                 ),
               ),
               SizedBox(height: 20),
-              ElevatedButton(
+              TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTokens.bgCard,
+                style: TextButton.styleFrom(
+                  backgroundColor: AppTokens.buttonPrimaryBg,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
@@ -1074,7 +1097,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                 child: Text(
                   'Close',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppTokens.textPrimary,
                     fontSize: 18,
                   ),
                 ),
