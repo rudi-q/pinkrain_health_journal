@@ -31,6 +31,7 @@ class AppTokens {
 
   // ICONS
   static const iconPrimary = AppColors.black100;
+  static const iconBold = AppColors.pink100;
   static const iconMuted = AppColors.black40;
 
   // FEEDBACK STATES

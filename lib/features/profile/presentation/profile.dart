@@ -129,7 +129,7 @@ class ProfileScreenState extends State<ProfileScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => context.go('/journal'),
+          onPressed: () => context.go('/wellness'),
         ),
       ),
       body: Container(
