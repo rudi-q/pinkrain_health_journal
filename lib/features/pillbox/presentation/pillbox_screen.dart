@@ -7,6 +7,7 @@ import 'package:pillow/features/treatment/data/treatment.dart';
 import 'package:pillow/features/treatment/domain/treatment_manager.dart';
 
 import '../../../core/models/medicine_model.dart';
+import '../../../core/theme/tokens.dart';
 import '../../../core/util/helpers.dart';
 import '../../../core/widgets/appbar.dart';
 import '../../../core/widgets/bottom_navigation.dart';
@@ -17,17 +18,17 @@ class PillboxScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     PillBoxManager.init(ref);
-    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      //backgroundColor: AppTokens.bgMuted,
+      backgroundColor: Colors.white,
       appBar: buildAppBar('Pill Box'),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddMedicineDialog(context, ref),
-        backgroundColor: Colors.pink[300],
-        tooltip: 'Add medication',
-        child: const Icon(Icons.add, color: Colors.white),
+        backgroundColor: AppTokens.bgPrimary,
+        child: const Icon(Icons.add, color: Colors.black),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -37,10 +38,24 @@ class PillboxScreen extends ConsumerWidget {
             TextField(
               cursorColor: Colors.grey,
               decoration: InputDecoration(
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: AppTokens.borderLight, // stroke color
+                    width: 1, // stroke width
+                  ),
+                  borderRadius: BorderRadius.circular(12), // rounded corners
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: AppTokens.borderLight, // stroke when focused
+                    width: 1,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 hintText: 'Find medication',
                 prefixIcon: const Icon(Icons.search, color: Colors.grey),
                 filled: true,
-                fillColor: Colors.pink.withAlpha(13),
+                fillColor: AppTokens.bgMuted,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
@@ -48,12 +63,13 @@ class PillboxScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 20),
-            // Medication Cards
+            // Medication Cards - Using GridView with custom aspect ratio
             Expanded(
               child: GridView.count(
                 crossAxisCount: 2,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
+                childAspectRatio: _calculateCardAspectRatio(context),
                 children: _buildMedicationCards(ref, context),
               ),
             ),
@@ -63,6 +79,28 @@ class PillboxScreen extends ConsumerWidget {
       bottomNavigationBar:
       buildBottomNavigationBar(context: context, currentRoute: 'pillbox'),
     );
+  }
+
+  // Calculate aspect ratio based on content requirements
+  double _calculateCardAspectRatio(BuildContext context) {
+    // Base this on your content requirements:
+    // - SVG icon: 60px
+    // - Spacing: 10px
+    // - Medicine name: ~24px (font size 18 + line height)
+    // - Medicine type: ~20px (font size 16 + line height)
+    // - Spacing from Spacer: variable
+    // - Quantity: ~25px (font size 20 + line height)
+    // - "pills left": ~20px (font size 16 + line height)
+    // - Padding: 32px (16px top + 16px bottom)
+
+    // Estimated content height: 60 + 10 + 24 + 20 + 25 + 20 + 32 = ~191px
+    // Add some buffer for spacing: ~210px
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cardWidth = (screenWidth - 50) / 2; // Account for padding and spacing
+    final desiredCardHeight = 230.0;
+
+    return cardWidth / desiredCardHeight;
   }
 
   // Build Medication Cards
@@ -92,12 +130,16 @@ class PillboxScreen extends ConsumerWidget {
           context.push('/medicine_detail/${medicineInventory.quantity}', extra: medicineInventory);
         },
         child: Card(
+          color: AppTokens.bgCard,
+          elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
+            side: BorderSide(
+              color: AppTokens.borderLight, // stroke color
+              width: 1,),
           ),
-          elevation: 2,
           child: Padding(
-            padding: const EdgeInsets.all(10.0),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -106,19 +148,28 @@ class PillboxScreen extends ConsumerWidget {
                 Text(
                   med.name,
                   style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTokens.textPrimary),
                 ),
                 Text(
                   med.type,
-                  style: const TextStyle(fontSize: 14, color: Colors.black54),
-                ),
-                const Spacer(),
-                Text(
-                  '${medicineInventory.quantity} pills left',
                   style: const TextStyle(
                       fontSize: 16,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.bold),
+                      color: AppTokens.textSecondary),
+                ),
+                const Spacer(), // Back to spacer to push content to bottom
+                Text(
+                  '${medicineInventory.quantity}',
+                  style: const TextStyle(
+                      fontSize: 20,
+                      color: AppTokens.textPrimary),
+                ),
+                Text(
+                  'pills left',
+                  style: const TextStyle(
+                      fontSize: 16,
+                      color: AppTokens.textSecondary),
                 ),
               ],
             ),
@@ -139,7 +190,7 @@ class PillboxScreen extends ConsumerWidget {
     String initialMedicationType = 'Tablet';
     String initialColor = 'White';
 
-   /* IconData getMedicationTypeIcon(String type) {
+    /* IconData getMedicationTypeIcon(String type) {
       switch (type.toLowerCase()) {
         case 'tablet':
           return Icons.local_pharmacy;
@@ -173,7 +224,7 @@ class PillboxScreen extends ConsumerWidget {
         // These variables will be properly tracked in the StatefulBuilder
         String selectedMedicationType = initialMedicationType;
         String selectedColor = initialColor;
-        
+
         return StatefulBuilder(
           builder: (dialogContext, setState) {
             return Dialog(
@@ -205,20 +256,22 @@ class PillboxScreen extends ConsumerWidget {
                         'Add New Medication',
                         style: TextStyle(
                           fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.pink[400],
+                          fontWeight: FontWeight.w800,
+                          color: AppTokens.textPrimary,
                           fontFamily: 'Outfit',
                         ),
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // Medication Name
                       TextField(
                         controller: nameController,
-                        cursorColor: Colors.pink[400],
+                        cursorColor: AppTokens.cursor,
                         decoration: InputDecoration(
                           hintText: 'Medication Name',
-                          hintStyle: TextStyle(color: Colors.grey[400]),
+                          hintStyle: TextStyle(
+                              color: AppTokens.textPlaceholder
+                          ),
                           filled: true,
                           fillColor: Colors.grey[50],
                           border: OutlineInputBorder(
@@ -238,13 +291,13 @@ class PillboxScreen extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
-                            color: Colors.pink[400],
+                            color: AppTokens.textPrimary,
                             fontFamily: 'Outfit',
                           ),
                         ),
                       ),
                       const SizedBox(height: 12),
-                      
+
                       // Medication Type Selection
                       SizedBox(
                         height: 100,
@@ -275,18 +328,8 @@ class PillboxScreen extends ConsumerWidget {
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
                                         color: isSelected
-                                            ? Colors.pink[100]
-                                            : Colors.grey[100],
-                                        boxShadow: isSelected
-                                            ? [
-                                                BoxShadow(
-                                                  color: Colors.pink.withValues(alpha: 77),
-                                                  spreadRadius: 1,
-                                                  blurRadius: 3,
-                                                  offset: const Offset(0, 1),
-                                                )
-                                              ]
-                                            : null,
+                                            ? AppTokens.buttonPrimaryBg
+                                            : AppTokens.buttonSecondaryBg,
                                       ),
                                       child: futureBuildSvg(type, selectedColor, 40),
                                     ),
@@ -300,8 +343,8 @@ class PillboxScreen extends ConsumerWidget {
                                             ? FontWeight.bold
                                             : FontWeight.normal,
                                         color: isSelected
-                                            ? Colors.pink[400]
-                                            : Colors.grey[600],
+                                            ? AppTokens.textPrimary
+                                            : AppTokens.textSecondary,
                                       ),
                                     ),
                                   ],
@@ -320,14 +363,14 @@ class PillboxScreen extends ConsumerWidget {
                           'Color',
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.pink[400],
+                            fontWeight: FontWeight.bold,
+                            color: AppTokens.textPrimary,
                             fontFamily: 'Outfit',
                           ),
                         ),
                       ),
                       const SizedBox(height: 12),
-                      
+
                       // Color Selection
                       SizedBox(
                         height: 42,
@@ -349,16 +392,6 @@ class PillboxScreen extends ConsumerWidget {
                                   decoration: BoxDecoration(
                                     color: colorMap[color],
                                     borderRadius: BorderRadius.circular(30),
-                                    boxShadow: isSelected
-                                        ? [
-                                            BoxShadow(
-                                              color: Colors.pink.withValues(alpha: 51),
-                                              spreadRadius: 1,
-                                              blurRadius: 3,
-                                              offset: const Offset(0, 1),
-                                            )
-                                          ]
-                                        : null,
                                     border: Border.all(
                                       color: isSelected
                                           ? Colors.pink[300]!
@@ -386,7 +419,7 @@ class PillboxScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // Quantity, Unit, Use Case fields
                       TextField(
                         controller: quantityController,
@@ -405,7 +438,7 @@ class PillboxScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
+
                       TextField(
                         controller: unitController,
                         cursorColor: Colors.pink[400],
@@ -422,7 +455,7 @@ class PillboxScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
+
                       TextField(
                         controller: useCaseController,
                         cursorColor: Colors.pink[400],
@@ -439,7 +472,7 @@ class PillboxScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 30),
-                      
+
                       // Action Buttons
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,

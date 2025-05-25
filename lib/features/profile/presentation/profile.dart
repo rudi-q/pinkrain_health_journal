@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:pillow/core/widgets/bottom_navigation.dart';
+import 'package:pillow/core/widgets/components.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -143,19 +144,11 @@ class ProfileScreenState extends State<ProfileScreen> {
                 'Name',
                 style: TextStyle(fontSize: 18, color: Colors.grey),
               ),
-              SizedBox(height: 10),
-              TextField(
-                decoration: InputDecoration(
-                  hintText: 'Anonymous',
-                  filled: true,
-                  fillColor: Colors.white.withValues(alpha: 0.9),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-              SizedBox(height: 30),
+             /* SizedBox(height: 10),*/
+
+              nameField(),
+
+             /* SizedBox(height: 30),*/
               // Notifications Section
               Text(
                 'Notifications',

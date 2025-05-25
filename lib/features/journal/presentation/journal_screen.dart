@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:pillow/core/services/hive_service.dart';
 import 'package:pillow/core/util/helpers.dart';
+import 'package:pillow/core/widgets/buttons.dart';
 import 'package:pillow/features/journal/presentation/daily_mood_prompt.dart';
 import 'package:pretty_animated_text/pretty_animated_text.dart';
 
@@ -15,6 +16,8 @@ import '../../../core/util/dateFormatConverters.dart';
 import '../../../core/widgets/bottom_navigation.dart';
 import '../data/journal_log.dart';
 import 'journal_notifier.dart';
+import '../../../core/theme/tokens.dart';
+
 
 
 class JournalScreen extends ConsumerStatefulWidget {
@@ -123,14 +126,13 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
     selectedDate = ref.watch(selectedDateProvider);
     //medList = JournalLog().getMedicationsForTheDay(selectedDate);
     medList = ref.watch(pillIntakeProvider);
-    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppTokens.bgMuted,
       appBar: AppBar(
         title: Text(
           'Journal',
           style: TextStyle(
-            color: Colors.black,
+            color: AppTokens.textPrimary,
             fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
@@ -268,17 +270,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      child: Text(
-                        'Cancel',
-                        style: TextStyle(
-                          color: Colors.pink[100],
-                          fontSize: 16,
-                        ),
-                      ),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
+                    AppButtons.secondary(onPressed: Navigator.of(context).pop, text: ''),
                     CupertinoButton(
                       padding: EdgeInsets.zero,
                       child: Text(
@@ -433,7 +425,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                             textStyle: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Colors.grey[800],
+                              color: AppTokens.textPrimary,
                             ),
                           ),
                           if (hasMood && moodData != null) SizedBox(height: 8),
@@ -561,7 +553,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
+                  color: AppTokens.textPrimary,
                 ),
               ),
               SizedBox(height: 8),
@@ -569,7 +561,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                 'Recorded at $timeString',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey[600],
+                  color: AppTokens.textSecondary,
                 ),
               ),
               SizedBox(height: 16),
@@ -577,7 +569,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                 description,
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.grey[700],
+                  color: AppTokens.textSecondary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -585,13 +577,13 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  ElevatedButton(
+                  TextButton(
                     onPressed: () {
                       Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey[300],
-                      foregroundColor: Colors.black87,
+                      backgroundColor: AppTokens.buttonSecondaryBg,
+                      foregroundColor: AppTokens.textPrimary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
@@ -600,14 +592,14 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                     child: Text('Close'),
                   ),
                   SizedBox(width: 16),
-                  ElevatedButton(
+                  TextButton(
                     onPressed: () {
                       Navigator.pop(context);
                       _showEditMoodDialog(date, moodData);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.pink[100],
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppTokens.buttonPrimaryBg,
+                      foregroundColor: AppTokens.textPrimary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
@@ -840,9 +832,20 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
   Widget _buildFloatingActionButton(BuildContext context) {
     return FloatingActionButton(
       onPressed: () => _showAddPopup(context),
-      backgroundColor: Colors.pink[100],
-      shape: const CircleBorder(),
-      child: const Icon(Icons.add, color: Colors.white), // This makes the button circular
+      backgroundColor: AppTokens.buttonPrimaryBg,
+      elevation: 0,
+      highlightElevation: 0,
+      hoverElevation: 0, // removes shadow on hover
+      focusElevation: 0, // removes shadow when focused
+      disabledElevation: 0,
+      shape: const CircleBorder(
+        side: BorderSide(
+          color: AppTokens.borderLight, // your desired border color
+          width: 1, // border thickness
+        ),
+      ),
+      child: const Icon(Icons.add,
+          color: AppTokens.textPrimary), // This makes the button circular
     );
   }
 
@@ -976,20 +979,21 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: ElevatedButton(
+                    child: TextButton(
                       onPressed: () {
                         // Handle skip action
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.red, backgroundColor: Colors.grey[200],
+                        foregroundColor: AppTokens.stateError,
+                        backgroundColor: AppTokens.buttonSecondaryBg,
                       ),
                       child: const Text('Skip for today'),
                     ),
                   ),
                   SizedBox(width: 10),
                   Expanded(
-                    child: ElevatedButton(
+                    child: TextButton(
                       onPressed: () {
                         Navigator.pop(context);
 
@@ -1004,7 +1008,8 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                         });
                       },
                       style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white, backgroundColor: Colors.pink[100],
+                        foregroundColor: AppTokens.textPrimary,
+                        backgroundColor: AppTokens.buttonPrimaryBg,
                       ),
                       child: const Text('Take pill'),
                     ),
@@ -1060,7 +1065,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                   Navigator.of(context).pop();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.pink[100],
+                  backgroundColor: AppTokens.bgCard,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),

@@ -1,23 +1,27 @@
-import 'package:flutter/material.dart';
 import 'colors.dart';
 
 class AppTokens {
-  // TEXT
+  /// TEXT COLORS for Pillow
   static const textPrimary = AppColors.black100;
   static const textSecondary = AppColors.black40;
+  static const textPlaceholder = AppColors.black40;
   static const textDisabled = AppColors.black40;
+
+  static const textInvert = AppColors.white100;
+
 
   // BACKGROUND
   static const bgPrimary = AppColors.white100;
   static const bgMuted = AppColors.white200;
   static const bgElevated = AppColors.white100;
+  static final bgCard = AppColors.pink40;
 
   // BORDER
   static const borderLight = AppColors.black10;
-  static const borderStrong = AppColors.black60;
+  static const borderStrong = AppColors.black40;
 
   // BUTTON PRIMARY
-  static const buttonPrimaryBg = AppColors.pink100;
+  static final buttonPrimaryBg = AppColors.pink40;
   static const buttonPrimaryText = AppColors.black100;
 
   // BUTTON SECONDARY
@@ -32,4 +36,7 @@ class AppTokens {
   static const stateSuccess = AppColors.strongGreen;
   static const stateError = AppColors.strongRed;
   static const stateInfo = AppColors.strongBlue;
+
+  // CURSOR
+  static const cursor = AppColors.pink100;
 }
