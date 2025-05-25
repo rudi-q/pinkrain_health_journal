@@ -121,35 +121,6 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
     medList = ref.watch(pillIntakeProvider);
     return Scaffold(
       backgroundColor: AppTokens.bgMuted,
-      appBar: AppBar(
-        title: Text(
-          'Journal',
-          style: TextStyle(
-            color: AppTokens.textPrimary,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        actions: [
-          GestureDetector(
-            onTap: () {
-              context.go('/profile');
-            },
-            child: Container(
-              margin: EdgeInsets.only(right: 16),
-              padding: EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTokens.buttonElevatedBg,
-              ),
-              child: appVectorImage(fileName: 'profile'),
-            ),
-          ),
-        ],
-      ),
       body: RefreshIndicator(
             color: Colors.pink[100],
             backgroundColor: Colors.white,

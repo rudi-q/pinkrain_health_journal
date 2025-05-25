@@ -14,9 +14,9 @@ Widget buildBottomNavigationBar({required BuildContext context, required String 
       children: [
         buildNavItem(context, 'Journal', 'journal', currentRoute == 'journal'),
         buildNavItem(context, 'Pillbox', 'pillbox', currentRoute == 'pillbox'),
-        buildNavItem(context, 'Wellness', 'wellness', currentRoute == 'wellness'),
-        buildNavItem(context, 'Mindfulness', 'mindfulness', 
+        buildNavItem(context, 'Mindfulness', 'mindfulness',
             currentRoute == 'mindfulness' || currentRoute == 'breath' || currentRoute == 'meditation'),
+        buildNavItem(context, 'Wellness', 'wellness', currentRoute == 'wellness'),
       ],
     ),
   );
