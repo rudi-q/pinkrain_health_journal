@@ -27,9 +27,20 @@ class SymptomPredictionNotifier extends StateNotifier<List<SymptomPrediction>> {
   Future<void> predict(String text,
       {DateTime? startDate, DateTime? endDate}) async {
     try {
+      bool experimentalMode = const bool.fromEnvironment('EXPERIMENTAL', defaultValue: false);
+
+      if (experimentalMode) {
+        print('Experimental Features Enabled');
+      }
+      else{
+        print('Experimental Features Disabled');
+      }
+
       if(kIsWeb){
         return;
       }
+
+
       if (predictionInProgress) {
         "Skipping prediction - already in progress".log();
         return;

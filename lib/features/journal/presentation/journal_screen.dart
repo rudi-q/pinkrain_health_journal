@@ -767,7 +767,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
     final String name = medication.medicine.name;
     String type = medication.medicine.type.toLowerCase();
     final String dosage = '${medication.medicine.specs.dosage} ${medication.medicine.specs.unit}';
-    final String time = medication.timeOfDay();
+    final String time = medication.formattedTimeOfDay();
     final String color = medication.medicine.color;
 
     if (type.endsWith('s')) {

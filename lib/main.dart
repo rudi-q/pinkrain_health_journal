@@ -3,12 +3,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/navigation/router.dart';
 import 'core/services/hive_service.dart';
+import 'features/treatment/services/daily_reset_service.dart';
+import 'features/treatment/services/medication_notification_service.dart';
 
 Future<void> main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
 
   await HiveService.init();
+  
+  // Initialize notification service at app startup
+  final notificationService = MedicationNotificationService();
+  await notificationService.initialize();
+  
+  // Initialize daily reset service
+  final dailyResetService = DailyResetService();
+  dailyResetService.initialize();
 
   runApp(ProviderScope(child: const MyApp()));
 }
