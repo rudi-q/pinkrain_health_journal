@@ -31,6 +31,7 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+.metadata
 
 # Symbolication related
 app.*.symbols
@@ -54,4 +55,27 @@ app.*.map.json
 **/android/**/GeneratedPluginRegistrant.java
 **/android/key.properties
 **/android/**/*.keystore
-/android/app/.cxx/
+**/android/**/*.jks
+
+# Android NDK/CMake build artifacts (should not be tracked)
+**/android/app/.cxx/
+**/android/app/.externalNativeBuild/
+**/android/**/CMakeCache.txt
+**/android/**/CMakeFiles/
+**/android/**/build.ninja
+**/android/**/cmake_install.cmake
+**/android/**/android_gradle_build.json
+**/android/**/prefab_config.json
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+**/.env
+**/secrets.json
+**/config.json
+
+# Development tool files
+CLAUDE.md
+.*rules
+*CLEANUP.md
