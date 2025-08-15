@@ -28,17 +28,20 @@ class SymptomPredictionNotifier extends StateNotifier<List<SymptomPrediction>> {
     try {
       bool experimentalMode = const bool.fromEnvironment('EXPERIMENTAL', defaultValue: false);
 
-      if (experimentalMode) {
-        devPrint('Experimental Features Enabled');
-      }
-      else{
-        devPrint('Experimental Features Disabled');
-      }
-
-      if(kIsWeb){
+      if (!experimentalMode) {
+        devPrint('Experimental Features Disabled - Symptom prediction skipped');
+        // Ensure state is empty when experimental mode is disabled
+        reset();
         return;
       }
 
+      devPrint('Experimental Features Enabled');
+
+      if(kIsWeb){
+        "Web platform detected - Symptom prediction not supported".log();
+        reset();
+        return;
+      }
 
       if (predictionInProgress) {
         "Skipping prediction - already in progress".log();

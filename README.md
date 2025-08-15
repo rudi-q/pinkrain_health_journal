@@ -105,18 +105,55 @@ Pillow is a comprehensive mental health and wellness tracking application design
    flutter run
    ```
 
+### 🧪 Experimental Features
+
+Pillow includes experimental AI-powered symptom prediction using TensorFlow Lite. This feature is **disabled by default** but can be enabled for testing and research purposes.
+
+**Enable Experimental Symptom Prediction:**
+```bash
+# Development
+flutter run --dart-define=EXPERIMENTAL=true
+
+# Release builds
+flutter build apk --release --dart-define=EXPERIMENTAL=true
+flutter build appbundle --release --dart-define=EXPERIMENTAL=true
+flutter build ios --release --dart-define=EXPERIMENTAL=true
+```
+
+**Default Mode (Symptom Prediction Disabled):**
+```bash
+# These commands run without experimental features
+flutter run
+flutter build apk --release
+flutter build appbundle --release
+flutter build ios --release
+```
+
+> **Note**: When experimental mode is disabled, the app functions normally but the AI symptom prediction feature is not available. The TensorFlow Lite model files (~12MB) are still included in the app bundle but are not loaded into memory.
+>
+> **Web Platform**: Experimental features like symptom prediction are automatically disabled on web platforms regardless of the `EXPERIMENTAL` flag setting, as TensorFlow Lite is not supported in web browsers. The app will use mock implementations for web compatibility.
+
 ### Building for Release
 
-**Android:**
+**Standard Release (No Experimental Features):**
 ```bash
 flutter build apk --release
 # or
 flutter build appbundle --release
 ```
 
+**Experimental Release (With AI Symptom Prediction):**
+```bash
+flutter build apk --release --dart-define=EXPERIMENTAL=true
+# or
+flutter build appbundle --release --dart-define=EXPERIMENTAL=true
+```
+
 **iOS:**
 ```bash
 flutter build ios --release
+# or with experimental features
+flutter build ios --release --dart-define=EXPERIMENTAL=true
 ```
 
 ---

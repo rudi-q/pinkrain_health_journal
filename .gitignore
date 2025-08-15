@@ -67,6 +67,10 @@ app.*.map.json
 **/android/**/android_gradle_build.json
 **/android/**/prefab_config.json
 
+# Kotlin build artifacts and cache (should not be tracked)
+**/android/.kotlin/
+**/android/**/.kotlin/
+
 # Environment and secrets
 .env
 .env.local
