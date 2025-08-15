@@ -6,6 +6,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/util/helpers.dart';
+
 // Model class for notification sounds
 class NotificationSound {
   final String name;
@@ -96,7 +98,7 @@ class ProfileScreenState extends State<ProfileScreen> {
       await _audioPlayer.setAsset(sound.assetPath);
       await _audioPlayer.play();
     } catch (e) {
-      print('Error playing notification sound: $e');
+      devPrint('Error playing notification sound: $e');
     }
   }
 
@@ -183,7 +185,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                 SizedBox(height: 10),
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Column(

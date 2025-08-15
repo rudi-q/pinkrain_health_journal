@@ -13,16 +13,16 @@ class MoodPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = isSelected
-          ? Colors.pink[300]!.withOpacity(0.8)
-          : Colors.grey[400]!.withOpacity(0.8)
+          ? Colors.pink[300]!.withValues(alpha: 0.8)
+          : Colors.grey[400]!.withValues(alpha: 0.8)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0
       ..strokeCap = StrokeCap.round;
 
     final fillPaint = Paint()
       ..color = isSelected
-          ? Colors.pink[300]!.withOpacity(0.8)
-          : Colors.grey[400]!.withOpacity(0.8)
+          ? Colors.pink[300]!.withValues(alpha: 0.8)
+          : Colors.grey[400]!.withValues(alpha: 0.8)
       ..style = PaintingStyle.fill;
 
     switch (mood) {
@@ -120,7 +120,7 @@ class MoodPainter extends CustomPainter {
         // Add rosy cheeks
         if (isSelected) {
           final cheekPaint = Paint()
-            ..color = Colors.pink[100]!.withOpacity(0.6)
+            ..color = Colors.pink[100]!.withValues(alpha: 0.6)
             ..style = PaintingStyle.fill;
           canvas.drawCircle(
               Offset(size.width / 2 - 8, size.height / 2), 2, cheekPaint);

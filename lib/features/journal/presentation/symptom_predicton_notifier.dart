@@ -29,10 +29,10 @@ class SymptomPredictionNotifier extends StateNotifier<List<SymptomPrediction>> {
       bool experimentalMode = const bool.fromEnvironment('EXPERIMENTAL', defaultValue: false);
 
       if (experimentalMode) {
-        print('Experimental Features Enabled');
+        devPrint('Experimental Features Enabled');
       }
       else{
-        print('Experimental Features Disabled');
+        devPrint('Experimental Features Disabled');
       }
 
       if(kIsWeb){

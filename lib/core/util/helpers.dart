@@ -28,7 +28,7 @@ extension StringExtensions on String {
 
 void devPrint(var message) {
   if (kDebugMode) {
-    print(message);
+    devPrint(message);
   }
 }
 

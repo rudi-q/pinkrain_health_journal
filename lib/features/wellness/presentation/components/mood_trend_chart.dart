@@ -346,7 +346,7 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
                       isCurved: true,
                       gradient: LinearGradient(
                         colors: [
-                          Theme.of(context).primaryColor.withOpacity(0.5),
+                          Theme.of(context).primaryColor.withValues(alpha: 0.5),
                           Theme.of(context).primaryColor,
                         ],
                       ),
@@ -367,8 +367,8 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
                         show: true,
                         gradient: LinearGradient(
                           colors: [
-                            Theme.of(context).primaryColor.withOpacity(0.3),
-                            Theme.of(context).primaryColor.withOpacity(0.0),
+                            Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                            Theme.of(context).primaryColor.withValues(alpha: 0.0),
                           ],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
