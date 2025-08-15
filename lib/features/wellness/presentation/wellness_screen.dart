@@ -8,12 +8,8 @@ import 'package:pillow/core/widgets/bottom_navigation.dart';
 import 'package:pillow/features/journal/presentation/journal_notifier.dart';
 import 'package:pillow/features/wellness/domain/share_as_pdf.dart';
 import 'package:pillow/features/wellness/domain/wellness_tracker.dart';
-import 'package:pillow/features/wellness/presentation/components/correlation_analysis.dart';
 import 'package:pillow/features/wellness/presentation/components/mood_painter.dart';
-import 'package:pillow/features/wellness/presentation/components/mood_trend_chart.dart';
 import 'package:pillow/features/wellness/presentation/components/personalized_insights.dart';
-import 'package:pillow/features/wellness/presentation/components/scatter_plot_painter.dart';
-import 'package:pillow/features/wellness/presentation/components/wellness_prediction.dart';
 import 'package:pillow/features/wellness/presentation/wellness_notifier.dart';
 import 'package:pretty_animated_text/pretty_animated_text.dart';
 

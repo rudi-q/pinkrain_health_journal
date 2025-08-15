@@ -59,13 +59,15 @@ void main() {
       expect(categories.length, equals(Set<String>.from(categories).length));
     });
 
-    test('getTracksByCategory should return tracks for a specific category', () {
+    test('getTracksByCategory should return tracks for a specific category',
+        () {
       // Act
       final selfAcceptanceTracks = state.getTracksByCategory("Self-Acceptance");
       final restTracks = state.getTracksByCategory("Rest & Stillness");
 
       // Assert
-      expect(selfAcceptanceTracks.length, equals(3)); // Based on the predefined tracks
+      expect(selfAcceptanceTracks.length,
+          equals(3)); // Based on the predefined tracks
       expect(restTracks.length, equals(2)); // Based on the predefined tracks
 
       // Verify all tracks in the category have the correct category
@@ -94,7 +96,8 @@ void main() {
       final sanitizedPath = sanitizeAssetPath(trackWithApostrophe.assetPath);
 
       // Assert
-      expect(sanitizedPath, equals("assets/audio-tracks/Youre_Not_a_Burden.m4a"));
+      expect(
+          sanitizedPath, equals("assets/audio-tracks/Youre_Not_a_Burden.m4a"));
       expect(sanitizedPath, isNot(contains("'")));
     });
 
@@ -112,7 +115,8 @@ void main() {
       final sanitizedPath = sanitizeAssetPath(trackWithoutApostrophe.assetPath);
 
       // Assert
-      expect(sanitizedPath, equals("assets/audio-tracks/The_Voice_You_Needed.m4a"));
+      expect(sanitizedPath,
+          equals("assets/audio-tracks/The_Voice_You_Needed.m4a"));
       expect(sanitizedPath, equals(trackWithoutApostrophe.assetPath));
     });
 
@@ -122,17 +126,19 @@ void main() {
         title: "Track with multiple apostrophes",
         subtitle: "5 min test",
         description: "Test description",
-        assetPath: "assets/audio-tracks/Track's_with_multiple's_apostrophes.m4a",
+        assetPath:
+            "assets/audio-tracks/Track's_with_multiple's_apostrophes.m4a",
         category: "Test",
       );
 
       // Act
-      final sanitizedPath = sanitizeAssetPath(trackWithMultipleApostrophes.assetPath);
+      final sanitizedPath =
+          sanitizeAssetPath(trackWithMultipleApostrophes.assetPath);
 
       // Assert
-      expect(sanitizedPath, equals("assets/audio-tracks/Tracks_with_multiples_apostrophes.m4a"));
+      expect(sanitizedPath,
+          equals("assets/audio-tracks/Tracks_with_multiples_apostrophes.m4a"));
       expect(sanitizedPath, isNot(contains("'")));
     });
   });
-
 }

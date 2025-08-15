@@ -8,18 +8,18 @@ import 'package:integration_test/integration_test.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pillow/core/services/hive_service.dart';
 import 'package:pillow/core/util/helpers.dart';
-
+import 'package:pillow/features/breathing/presentation/breathing_screen.dart';
+import 'package:pillow/features/guided-meditation/guided_audio.dart';
 // Import screen widgets
 import 'package:pillow/features/journal/presentation/journal_screen.dart';
 import 'package:pillow/features/journal/presentation/journal_screen_wrapper.dart';
-import 'package:pillow/features/pillbox/presentation/pillbox_screen.dart';
-import 'package:pillow/features/pillbox/presentation/medicine_detail_screen.dart';
-import 'package:pillow/features/splash/splash_screen.dart';
-import 'package:pillow/features/wellness/presentation/wellness_screen.dart' show WellnessTrackerScreen;
 import 'package:pillow/features/mindfulness/presentation/mindfulness_screen.dart';
-import 'package:pillow/features/breathing/presentation/breathing_screen.dart';
-import 'package:pillow/features/guided-meditation/guided_audio.dart';
+import 'package:pillow/features/pillbox/presentation/medicine_detail_screen.dart';
+import 'package:pillow/features/pillbox/presentation/pillbox_screen.dart';
 import 'package:pillow/features/profile/presentation/profile.dart';
+import 'package:pillow/features/splash/splash_screen.dart';
+import 'package:pillow/features/wellness/presentation/wellness_screen.dart'
+    show WellnessTrackerScreen;
 import 'package:pillow/main.dart';
 
 void main() async {
@@ -98,8 +98,9 @@ void main() async {
           devPrint('Verifying Journal Screen...');
 
           // Check if we're on the journal screen by looking for either JournalScreen or JournalScreenWrapper
-          final isOnJournalScreen = find.byType(JournalScreen).evaluate().isNotEmpty || 
-                                  find.byType(JournalScreenWrapper).evaluate().isNotEmpty;
+          final isOnJournalScreen =
+              find.byType(JournalScreen).evaluate().isNotEmpty ||
+                  find.byType(JournalScreenWrapper).evaluate().isNotEmpty;
 
           expect(isOnJournalScreen, isTrue, reason: 'Not on Journal Screen');
           await tester.pumpAndSettle();
@@ -130,7 +131,8 @@ void main() async {
             // Enter mood description (safely)
             final textFields = find.byType(TextField);
             if (textFields.evaluate().isNotEmpty) {
-              await tester.enterText(textFields.first, 'Feeling good today for the test');
+              await tester.enterText(
+                  textFields.first, 'Feeling good today for the test');
               await tester.pumpAndSettle(const Duration(milliseconds: 500));
             }
 
@@ -159,7 +161,8 @@ void main() async {
           // Try to interact with medication items if they exist
           final medicationItem = find.byIcon(Icons.check_circle);
           if (medicationItem.evaluate().isNotEmpty) {
-            devPrint('Found medication item with check circle, interacting with it...');
+            devPrint(
+                'Found medication item with check circle, interacting with it...');
             await tester.tap(medicationItem.first);
             await tester.pumpAndSettle();
 
@@ -167,7 +170,8 @@ void main() async {
             for (final buttonText in ['Close', 'OK', 'Done', 'Take pill']) {
               final button = find.text(buttonText);
               if (button.evaluate().isNotEmpty) {
-                devPrint('Found $buttonText button in medication dialog, tapping it...');
+                devPrint(
+                    'Found $buttonText button in medication dialog, tapping it...');
                 await tester.tap(button.first);
                 await tester.pumpAndSettle();
                 break;
@@ -175,7 +179,8 @@ void main() async {
             }
           } else {
             // Try alternative approaches to find medication items
-            devPrint('No medication items found with check circle, looking for alternatives...');
+            devPrint(
+                'No medication items found with check circle, looking for alternatives...');
 
             // Try looking for medicine item by more specific matching
             final medicationTitles = find.descendant(
@@ -184,7 +189,8 @@ void main() async {
             );
 
             if (medicationTitles.evaluate().isNotEmpty) {
-              devPrint('Found potential medication title, tapping its parent...');
+              devPrint(
+                  'Found potential medication title, tapping its parent...');
               // Find the parent InkWell and tap that instead of the Row
               final inkWell = find.ancestor(
                 of: medicationTitles.first,
@@ -197,7 +203,13 @@ void main() async {
               }
 
               // Try interacting with any dialog that appears
-              for (final buttonText in ['Close', 'OK', 'Done', 'Take pill', 'Skip for today']) {
+              for (final buttonText in [
+                'Close',
+                'OK',
+                'Done',
+                'Take pill',
+                'Skip for today'
+              ]) {
                 final button = find.text(buttonText);
                 if (button.evaluate().isNotEmpty) {
                   devPrint('Found $buttonText button in dialog, tapping it...');
@@ -224,7 +236,8 @@ void main() async {
           if (bottomNav.evaluate().isNotEmpty) {
             devPrint('Found bottom navigation bar');
           } else {
-            devPrint('Bottom navigation bar not found, looking for alternatives...');
+            devPrint(
+                'Bottom navigation bar not found, looking for alternatives...');
           }
           await tester.pumpAndSettle();
 
@@ -239,12 +252,15 @@ void main() async {
             await tester.tap(pillboxNav.first);
             await tester.pumpAndSettle(const Duration(seconds: 2));
           } else {
-            devPrint('Pillbox navigation item not found, looking for alternative...');
+            devPrint(
+                'Pillbox navigation item not found, looking for alternative...');
             // Try to find it by icon or other means
             final allNavItems = find.byType(GestureDetector).evaluate();
             if (allNavItems.length >= 2) {
               devPrint('Tapping second navigation item as fallback...');
-              await tester.tap(find.byType(GestureDetector).at(1)); // Tap the second navigation item
+              await tester.tap(find
+                  .byType(GestureDetector)
+                  .at(1)); // Tap the second navigation item
               await tester.pumpAndSettle(const Duration(seconds: 2));
             } else if (allNavItems.isNotEmpty) {
               // Try each navigation item
@@ -256,18 +272,20 @@ void main() async {
                 await tester.pumpAndSettle(const Duration(seconds: 1));
 
                 // Check if we're on Pillbox screen
-                if (find.byType(PillboxScreen).evaluate().isNotEmpty || 
+                if (find.byType(PillboxScreen).evaluate().isNotEmpty ||
                     find.text('Pillbox').evaluate().isNotEmpty) {
                   foundPillbox = true;
-                  devPrint('Found Pillbox screen after tapping navigation item $i');
+                  devPrint(
+                      'Found Pillbox screen after tapping navigation item $i');
                 }
               }
             }
           }
 
           // Verify we're on the Pillbox screen
-          final isPillboxScreenVisible = find.byType(PillboxScreen).evaluate().isNotEmpty || 
-                                        find.text('Pillbox').evaluate().isNotEmpty;
+          final isPillboxScreenVisible =
+              find.byType(PillboxScreen).evaluate().isNotEmpty ||
+                  find.text('Pillbox').evaluate().isNotEmpty;
 
           if (isPillboxScreenVisible) {
             devPrint('Successfully navigated to Pillbox screen');
@@ -284,7 +302,8 @@ void main() async {
               final nameFields = find.byType(TextFormField);
               if (nameFields.evaluate().isNotEmpty) {
                 devPrint('Entering medication name...');
-                await tester.enterText(nameFields.first, 'Test Integration Medication');
+                await tester.enterText(
+                    nameFields.first, 'Test Integration Medication');
                 await tester.pumpAndSettle();
               } else {
                 devPrint('No TextFormField found for medication name');
@@ -311,7 +330,8 @@ void main() async {
                 // Try to find any selectable items as alternatives
                 final listTiles = find.byType(ListTile);
                 if (listTiles.evaluate().isNotEmpty) {
-                  devPrint('Found list tile, tapping first one as alternative...');
+                  devPrint(
+                      'Found list tile, tapping first one as alternative...');
                   await tester.tap(listTiles.first);
                   await tester.pumpAndSettle();
                 }
@@ -337,7 +357,8 @@ void main() async {
               await tester.pumpAndSettle(const Duration(seconds: 2));
 
               // Verify we're on the medicine detail screen
-              final isMedicineDetailScreenVisible = find.byType(MedicineDetailScreen).evaluate().isNotEmpty;
+              final isMedicineDetailScreenVisible =
+                  find.byType(MedicineDetailScreen).evaluate().isNotEmpty;
               if (isMedicineDetailScreenVisible) {
                 devPrint('Successfully navigated to Medicine Detail screen');
 
@@ -376,7 +397,8 @@ void main() async {
                 // Navigate back to pillbox screen
                 final backButton = find.byIcon(Icons.arrow_back);
                 if (backButton.evaluate().isNotEmpty) {
-                  devPrint('Found back button, tapping it to return to Pillbox screen...');
+                  devPrint(
+                      'Found back button, tapping it to return to Pillbox screen...');
                   await tester.tap(backButton);
                   await tester.pumpAndSettle();
                 }
@@ -406,7 +428,8 @@ void main() async {
             await tester.tap(wellnessNav.first);
             await tester.pumpAndSettle(const Duration(seconds: 2));
           } else {
-            devPrint('Wellness navigation item not found, looking for alternative...');
+            devPrint(
+                'Wellness navigation item not found, looking for alternative...');
 
             // Second attempt - try using the insights icon
             final insightsIcon = find.byIcon(Icons.insights);
@@ -431,24 +454,30 @@ void main() async {
                   await tester.pumpAndSettle(const Duration(seconds: 1));
 
                   // Check if we're on Wellness screen
-                  if (find.byType(WellnessTrackerScreen).evaluate().isNotEmpty || 
+                  if (find
+                          .byType(WellnessTrackerScreen)
+                          .evaluate()
+                          .isNotEmpty ||
                       find.text('Wellness').evaluate().isNotEmpty) {
                     foundWellness = true;
-                    devPrint('Found Wellness screen after tapping navigation item $i');
+                    devPrint(
+                        'Found Wellness screen after tapping navigation item $i');
                   }
                 }
 
                 if (!foundWellness) {
-                  devPrint('Could not navigate to Wellness screen after trying all navigation items');
+                  devPrint(
+                      'Could not navigate to Wellness screen after trying all navigation items');
                 }
               }
             }
           }
 
           // Verify we're on the Wellness screen
-          final isWellnessScreenVisible = find.byType(WellnessTrackerScreen).evaluate().isNotEmpty || 
-                                        find.text('Wellness Tracker').evaluate().isNotEmpty ||
-                                        find.text('Wellness').evaluate().isNotEmpty;
+          final isWellnessScreenVisible =
+              find.byType(WellnessTrackerScreen).evaluate().isNotEmpty ||
+                  find.text('Wellness Tracker').evaluate().isNotEmpty ||
+                  find.text('Wellness').evaluate().isNotEmpty;
 
           if (isWellnessScreenVisible) {
             devPrint('Successfully navigated to Wellness screen');
@@ -467,7 +496,8 @@ void main() async {
             devPrint('Could not navigate to Wellness screen');
           }
         } catch (e) {
-          devPrint('Error during Wellness screen navigation or interaction: $e');
+          devPrint(
+              'Error during Wellness screen navigation or interaction: $e');
           // Continue with the test even if there's an error in this section
         }
 
@@ -485,7 +515,8 @@ void main() async {
             await tester.tap(mindfulnessNav.first);
             await tester.pumpAndSettle(const Duration(seconds: 2));
           } else {
-            devPrint('Mindfulness navigation item not found, looking for alternative...');
+            devPrint(
+                'Mindfulness navigation item not found, looking for alternative...');
 
             // Try each navigation item until we find Mindfulness
             final allNavItems = find.byType(GestureDetector).evaluate();
@@ -496,21 +527,24 @@ void main() async {
               await tester.pumpAndSettle(const Duration(seconds: 1));
 
               // Check if we're on Mindfulness screen
-              if (find.byType(MindfulnessScreen).evaluate().isNotEmpty || 
+              if (find.byType(MindfulnessScreen).evaluate().isNotEmpty ||
                   find.text('Mindfulness').evaluate().isNotEmpty) {
                 foundMindfulness = true;
-                devPrint('Found Mindfulness screen after tapping navigation item $i');
+                devPrint(
+                    'Found Mindfulness screen after tapping navigation item $i');
               }
             }
 
             if (!foundMindfulness) {
-              devPrint('Could not navigate to Mindfulness screen after trying all navigation items');
+              devPrint(
+                  'Could not navigate to Mindfulness screen after trying all navigation items');
             }
           }
 
           // Verify we're on the Mindfulness screen
-          final isMindfulnessScreenVisible = find.byType(MindfulnessScreen).evaluate().isNotEmpty || 
-                                           find.text('Mindfulness').evaluate().isNotEmpty;
+          final isMindfulnessScreenVisible =
+              find.byType(MindfulnessScreen).evaluate().isNotEmpty ||
+                  find.text('Mindfulness').evaluate().isNotEmpty;
 
           if (isMindfulnessScreenVisible) {
             devPrint('Successfully navigated to Mindfulness screen');
@@ -524,8 +558,9 @@ void main() async {
               await tester.pumpAndSettle(const Duration(seconds: 2));
 
               // Verify we're on the Breathing screen
-              final isBreathingScreenVisible = find.byType(BreathBreakScreen).evaluate().isNotEmpty || 
-                                             find.text('Breath Break').evaluate().isNotEmpty;
+              final isBreathingScreenVisible =
+                  find.byType(BreathBreakScreen).evaluate().isNotEmpty ||
+                      find.text('Breath Break').evaluate().isNotEmpty;
 
               if (isBreathingScreenVisible) {
                 devPrint('Successfully navigated to Breathing screen');
@@ -561,7 +596,8 @@ void main() async {
                 // Navigate back to Mindfulness screen
                 final backButton = find.byIcon(Icons.arrow_back);
                 if (backButton.evaluate().isNotEmpty) {
-                  devPrint('Found back button, tapping it to return to Mindfulness screen...');
+                  devPrint(
+                      'Found back button, tapping it to return to Mindfulness screen...');
                   await tester.tap(backButton);
                   await tester.pumpAndSettle();
                 }
@@ -578,8 +614,9 @@ void main() async {
               await tester.pumpAndSettle(const Duration(seconds: 2));
 
               // Verify we're on the Guided Meditation screen
-              final isMeditationScreenVisible = find.byType(GuidedMeditationScreen).evaluate().isNotEmpty || 
-                                              find.text('Guided Meditation').evaluate().isNotEmpty;
+              final isMeditationScreenVisible =
+                  find.byType(GuidedMeditationScreen).evaluate().isNotEmpty ||
+                      find.text('Guided Meditation').evaluate().isNotEmpty;
 
               if (isMeditationScreenVisible) {
                 devPrint('Successfully navigated to Guided Meditation screen');
@@ -592,10 +629,13 @@ void main() async {
                   for (int i = 0; i < trackCards.evaluate().length; i++) {
                     final card = trackCards.at(i);
                     // Check if this card contains a track title
-                    final hasTrackTitle = find.descendant(
-                      of: card,
-                      matching: find.text('The Voice You Needed'),
-                    ).evaluate().isNotEmpty;
+                    final hasTrackTitle = find
+                        .descendant(
+                          of: card,
+                          matching: find.text('The Voice You Needed'),
+                        )
+                        .evaluate()
+                        .isNotEmpty;
 
                     if (hasTrackTitle) {
                       devPrint('Found meditation track, tapping it...');
@@ -612,7 +652,8 @@ void main() async {
                 // Navigate back to Mindfulness screen
                 final backButton = find.byIcon(Icons.arrow_back);
                 if (backButton.evaluate().isNotEmpty) {
-                  devPrint('Found back button, tapping it to return to Mindfulness screen...');
+                  devPrint(
+                      'Found back button, tapping it to return to Mindfulness screen...');
                   await tester.tap(backButton);
                   await tester.pumpAndSettle();
                 }
@@ -624,7 +665,8 @@ void main() async {
             devPrint('Could not navigate to Mindfulness screen');
           }
         } catch (e) {
-          devPrint('Error during Mindfulness screen navigation or interaction: $e');
+          devPrint(
+              'Error during Mindfulness screen navigation or interaction: $e');
           // Continue with the test even if there's an error in this section
         }
 
@@ -642,7 +684,8 @@ void main() async {
             await tester.tap(profileNav.first);
             await tester.pumpAndSettle(const Duration(seconds: 2));
           } else {
-            devPrint('Profile navigation item not found, looking for alternative...');
+            devPrint(
+                'Profile navigation item not found, looking for alternative...');
 
             // Try each navigation item until we find Profile
             final allNavItems = find.byType(GestureDetector).evaluate();
@@ -653,21 +696,24 @@ void main() async {
               await tester.pumpAndSettle(const Duration(seconds: 1));
 
               // Check if we're on Profile screen
-              if (find.byType(ProfileScreen).evaluate().isNotEmpty || 
+              if (find.byType(ProfileScreen).evaluate().isNotEmpty ||
                   find.text('Profile').evaluate().isNotEmpty) {
                 foundProfile = true;
-                devPrint('Found Profile screen after tapping navigation item $i');
+                devPrint(
+                    'Found Profile screen after tapping navigation item $i');
               }
             }
 
             if (!foundProfile) {
-              devPrint('Could not navigate to Profile screen after trying all navigation items');
+              devPrint(
+                  'Could not navigate to Profile screen after trying all navigation items');
             }
           }
 
           // Verify we're on the Profile screen
-          final isProfileScreenVisible = find.byType(ProfileScreen).evaluate().isNotEmpty || 
-                                       find.text('Profile').evaluate().isNotEmpty;
+          final isProfileScreenVisible =
+              find.byType(ProfileScreen).evaluate().isNotEmpty ||
+                  find.text('Profile').evaluate().isNotEmpty;
 
           if (isProfileScreenVisible) {
             devPrint('Successfully navigated to Profile screen');
@@ -727,7 +773,8 @@ void main() async {
             await tester.tap(journalNav.first);
             await tester.pumpAndSettle(const Duration(seconds: 2));
           } else {
-            devPrint('Journal navigation item not found, looking for alternative...');
+            devPrint(
+                'Journal navigation item not found, looking for alternative...');
 
             // Try each navigation item until we find Journal
             final allNavItems = find.byType(GestureDetector).evaluate();
@@ -738,25 +785,29 @@ void main() async {
               await tester.pumpAndSettle(const Duration(seconds: 1));
 
               // Check if we're on Journal screen
-              if (find.byType(JournalScreen).evaluate().isNotEmpty || 
+              if (find.byType(JournalScreen).evaluate().isNotEmpty ||
                   find.byType(JournalScreenWrapper).evaluate().isNotEmpty ||
                   find.text('Journal').evaluate().isNotEmpty) {
                 foundJournal = true;
-                devPrint('Found Journal screen after tapping navigation item $i');
+                devPrint(
+                    'Found Journal screen after tapping navigation item $i');
               }
             }
 
             if (!foundJournal) {
-              devPrint('Could not navigate to Journal screen after trying all navigation items');
+              devPrint(
+                  'Could not navigate to Journal screen after trying all navigation items');
             }
           }
 
           // Verify we're back on the Journal screen
-          final isBackOnJournalScreen = find.byType(JournalScreen).evaluate().isNotEmpty || 
-                                      find.byType(JournalScreenWrapper).evaluate().isNotEmpty ||
-                                      find.text('Journal').evaluate().isNotEmpty;
+          final isBackOnJournalScreen =
+              find.byType(JournalScreen).evaluate().isNotEmpty ||
+                  find.byType(JournalScreenWrapper).evaluate().isNotEmpty ||
+                  find.text('Journal').evaluate().isNotEmpty;
 
-          expect(isBackOnJournalScreen, isTrue, reason: 'Not back on Journal Screen');
+          expect(isBackOnJournalScreen, isTrue,
+              reason: 'Not back on Journal Screen');
         } catch (e) {
           devPrint('Error during return to Journal screen: $e');
           // Continue with the test even if there's an error in this section

@@ -6,7 +6,8 @@ import 'package:pillow/features/journal/domain/tf_lite_symptom_pred.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Test TFLite symptom predictions on Android platform', (WidgetTester tester) async {
+  testWidgets('Test TFLite symptom predictions on Android platform',
+      (WidgetTester tester) async {
     // Set up a basic app to provide platform context
     await tester.pumpWidget(
       const MaterialApp(
@@ -30,14 +31,16 @@ void main() {
       "My jaw hurts when chewing"
     ];
 
-    print('\n=== Testing Symptom Predictions for Natural Language Inputs ===\n');
-    
+    print(
+        '\n=== Testing Symptom Predictions for Natural Language Inputs ===\n');
+
     for (final input in inputs) {
       print('\nInput: "$input"');
       final predictions = await predictor.predictSymptoms(input);
       print('Predictions:');
       for (final pred in predictions) {
-        print('  - ${pred.name}: ${(pred.probability * 100).toStringAsFixed(1)}%');
+        print(
+            '  - ${pred.name}: ${(pred.probability * 100).toStringAsFixed(1)}%');
       }
       print('---');
     }
