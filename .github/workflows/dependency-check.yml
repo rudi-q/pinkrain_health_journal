@@ -1,0 +1,261 @@
+name: Flutter Dependency Safety Check
+
+on:
+  schedule:
+    # Run every Monday at 9:00 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch: # Allow manual triggering
+    inputs:
+      check_type:
+        description: 'Type of check to perform'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - 'all'
+          - 'outdated'
+          - 'security'
+          - 'breaking'
+
+jobs:
+  dependency-analysis:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Check for outdated dependencies
+        id: outdated
+        run: |
+          echo "## 📦 Dependency Update Report" > dependency_report.md
+          echo "" >> dependency_report.md
+          echo "Generated on: $(date)" >> dependency_report.md
+          echo "" >> dependency_report.md
+          
+          # Get outdated dependencies
+          echo "### 🔄 Outdated Dependencies" >> dependency_report.md
+          flutter pub outdated --json > outdated.json || true
+          
+          if [ -f outdated.json ] && [ -s outdated.json ]; then
+            echo "" >> dependency_report.md
+            echo "| Package | Current | Latest | Resolvable | Status |" >> dependency_report.md
+            echo "|---------|---------|---------|-------------|--------|" >> dependency_report.md
+            
+            # Process outdated.json and extract information
+            cat outdated.json | jq -r '.packages[] | select(.latest != .current) | "| \(.package) | \(.current) | \(.latest) | \(.resolvable) | \(if .latest == .resolvable then "✅ Safe" else "⚠️ Check" end) |"' >> dependency_report.md 2>/dev/null || echo "| No outdated dependencies found | - | - | - | ✅ All up to date |" >> dependency_report.md
+          else
+            echo "| No outdated dependencies found | - | - | - | ✅ All up to date |" >> dependency_report.md
+          fi
+          
+          echo "" >> dependency_report.md
+
+      - name: Analyze dependency tree
+        run: |
+          echo "### 🌳 Dependency Tree Analysis" >> dependency_report.md
+          echo "" >> dependency_report.md
+          echo "#### Direct Dependencies Count" >> dependency_report.md
+          
+          DIRECT_DEPS=$(grep -E '^  [a-z]' pubspec.yaml | grep -v 'flutter:' | grep -v 'sdk:' | wc -l)
+          DEV_DEPS=$(sed -n '/^dev_dependencies:/,/^[a-z]/p' pubspec.yaml | grep -E '^  [a-z]' | wc -l)
+          
+          echo "- Production: $DIRECT_DEPS packages" >> dependency_report.md
+          echo "- Development: $DEV_DEPS packages" >> dependency_report.md
+          echo "" >> dependency_report.md
+
+      - name: Check for major version updates
+        run: |
+          echo "### 🚨 Major Version Updates Available" >> dependency_report.md
+          echo "" >> dependency_report.md
+          
+          # This is a simplified check - you might want to enhance this
+          if [ -f outdated.json ]; then
+            MAJOR_UPDATES=$(cat outdated.json | jq -r '.packages[] | select(.latest != .current and (.latest | split(".")[0] | tonumber) > (.current | split(".")[0] | tonumber)) | .package' 2>/dev/null || echo "")
+            
+            if [ -z "$MAJOR_UPDATES" ]; then
+              echo "✅ No major version updates available" >> dependency_report.md
+            else
+              echo "⚠️ **The following packages have major version updates:**" >> dependency_report.md
+              echo "" >> dependency_report.md
+              for pkg in $MAJOR_UPDATES; do
+                echo "- $pkg (requires manual review)" >> dependency_report.md
+              done
+            fi
+          else
+            echo "✅ No major version updates available" >> dependency_report.md
+          fi
+          echo "" >> dependency_report.md
+
+      - name: Security analysis
+        run: |
+          echo "### 🔒 Security Analysis" >> dependency_report.md
+          echo "" >> dependency_report.md
+          
+          # Basic security check
+          echo "#### Package Source Verification" >> dependency_report.md
+          HOSTED_PACKAGES=$(flutter pub deps --json | jq -r '.packages[] | select(.source == "hosted") | .name' | wc -l)
+          GIT_PACKAGES=$(flutter pub deps --json | jq -r '.packages[] | select(.source == "git") | .name' | wc -l 2>/dev/null || echo "0")
+          PATH_PACKAGES=$(flutter pub deps --json | jq -r '.packages[] | select(.source == "path") | .name' | wc -l 2>/dev/null || echo "0")
+          
+          echo "- 📦 Hosted packages: $HOSTED_PACKAGES" >> dependency_report.md
+          echo "- 🔗 Git packages: $GIT_PACKAGES" >> dependency_report.md  
+          echo "- 📁 Path packages: $PATH_PACKAGES" >> dependency_report.md
+          echo "" >> dependency_report.md
+          
+          if [ "$GIT_PACKAGES" -gt 0 ]; then
+            echo "⚠️ **Git dependencies found** - ensure these are from trusted sources" >> dependency_report.md
+            flutter pub deps --json | jq -r '.packages[] | select(.source == "git") | "- \(.name): \(.source_url // "unknown")"' >> dependency_report.md 2>/dev/null || true
+          fi
+
+      - name: Generate recommendations
+        run: |
+          echo "### 💡 Recommendations" >> dependency_report.md
+          echo "" >> dependency_report.md
+          
+          # Generate recommendations based on the analysis
+          if [ -f outdated.json ]; then
+            OUTDATED_COUNT=$(cat outdated.json | jq '.packages | length' 2>/dev/null || echo "0")
+            
+            if [ "$OUTDATED_COUNT" -gt 0 ]; then
+              echo "#### 🔄 Update Strategy" >> dependency_report.md
+              echo "1. **Patch updates**: Safe to auto-merge (handled by Dependabot)" >> dependency_report.md
+              echo "2. **Minor updates**: Review breaking changes in changelogs" >> dependency_report.md
+              echo "3. **Major updates**: Requires thorough testing and manual review" >> dependency_report.md
+              echo "" >> dependency_report.md
+            fi
+          fi
+          
+          echo "#### 🛡️ Security Best Practices" >> dependency_report.md
+          echo "- ✅ Regular dependency updates (automated via Dependabot)" >> dependency_report.md
+          echo "- ✅ Prefer packages from pub.dev with high popularity scores" >> dependency_report.md
+          echo "- ✅ Monitor for security advisories" >> dependency_report.md
+          echo "- ✅ Use dependency overrides sparingly" >> dependency_report.md
+
+      - name: Create Issue with Report
+        if: github.event_name == 'schedule' || github.event.inputs.check_type == 'all'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('dependency_report.md', 'utf8');
+            
+            // Check if there's already an open dependency report issue
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['dependencies', 'automated-report'],
+              state: 'open'
+            });
+            
+            if (issues.length > 0) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues[0].number,
+                body: report
+              });
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues[0].number,
+                body: '🔄 Dependency report updated automatically'
+              });
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🔍 Weekly Dependency Safety Report - ${new Date().toISOString().split('T')[0]}`,
+                body: report,
+                labels: ['dependencies', 'automated-report', 'maintenance']
+              });
+            }
+
+      - name: Upload report as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-report
+          path: dependency_report.md
+          retention-days: 30
+
+  test-latest-dependencies:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.check_type == 'all' || github.event.inputs.check_type == 'breaking'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+          channel: 'stable'
+
+      - name: Backup current pubspec
+        run: cp pubspec.yaml pubspec.yaml.bak
+
+      - name: Update to latest compatible versions
+        run: |
+          flutter pub upgrade --dry-run > upgrade_preview.txt || true
+          echo "## Upgrade Preview:" >> test_report.md
+          echo '```' >> test_report.md
+          cat upgrade_preview.txt >> test_report.md
+          echo '```' >> test_report.md
+
+      - name: Test with upgraded dependencies
+        run: |
+          flutter pub upgrade || true
+          
+          echo "## Test Results with Latest Dependencies:" >> test_report.md
+          
+          # Test analysis
+          if flutter analyze --fatal-infos > analysis.log 2>&1; then
+            echo "✅ Static analysis: PASSED" >> test_report.md
+          else
+            echo "❌ Static analysis: FAILED" >> test_report.md
+            echo "<details><summary>Analysis errors</summary>" >> test_report.md
+            echo "" >> test_report.md
+            echo '```' >> test_report.md
+            cat analysis.log >> test_report.md
+            echo '```' >> test_report.md
+            echo "</details>" >> test_report.md
+          fi
+          
+          # Test build
+          if flutter build apk --debug > build.log 2>&1; then
+            echo "✅ Build: PASSED" >> test_report.md
+          else
+            echo "❌ Build: FAILED" >> test_report.md
+            echo "<details><summary>Build errors</summary>" >> test_report.md
+            echo "" >> test_report.md
+            echo '```' >> test_report.md
+            tail -50 build.log >> test_report.md
+            echo '```' >> test_report.md
+            echo "</details>" >> test_report.md
+          fi
+
+      - name: Restore original pubspec
+        if: always()
+        run: |
+          mv pubspec.yaml.bak pubspec.yaml
+          flutter pub get
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        with:
+          name: upgrade-test-report
+          path: test_report.md
+          retention-days: 7

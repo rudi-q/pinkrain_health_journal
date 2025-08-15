@@ -1,0 +1,72 @@
+version: 2
+updates:
+  # Enable version updates for pub dependencies
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    # Group updates to reduce PR spam
+    groups:
+      flutter-deps:
+        patterns:
+          - "flutter*"
+      ui-deps:
+        patterns:
+          - "fl_chart"
+          - "percent_indicator"
+          - "flutter_svg"
+          - "cupertino_icons"
+      backend-deps:
+        patterns:
+          - "supabase_flutter"
+          - "http"
+          - "shared_preferences"
+          - "hive*"
+      navigation-deps:
+        patterns:
+          - "go_router"
+      state-management:
+        patterns:
+          - "*riverpod"
+      media-deps:
+        patterns:
+          - "just_audio"
+          - "tflite_flutter"
+          - "pdf"
+          - "share_plus"
+      utilities:
+        patterns:
+          - "intl"
+          - "path_provider"
+          - "url_launcher"
+          - "html"
+          - "timezone"
+      notifications:
+        patterns:
+          - "flutter_local_notifications"
+          - "permission_handler"
+      dev-dependencies:
+        patterns:
+          - "flutter_test"
+          - "flutter_lints"
+          - "mockito"
+          - "build_runner"
+          - "flutter_launcher_icons"
+    # Automatically open PRs for security updates
+    open-pull-requests-limit: 10
+    # Add labels to PRs
+    labels:
+      - "dependencies"
+      - "flutter"
+    # Review only patch and minor updates automatically
+    # Major updates will need manual review
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    # Add custom commit messages
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
