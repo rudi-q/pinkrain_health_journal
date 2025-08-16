@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:pillow/core/services/hive_service.dart';
+import 'package:pillow/core/theme/tokens.dart';
 import 'package:pillow/core/util/helpers.dart';
 import 'package:pillow/features/journal/presentation/symptom_predicton_notifier.dart';
 import 'package:pillow/features/wellness/presentation/components/mood_painter.dart';
@@ -181,11 +182,11 @@ class DailyMoodPromptState extends ConsumerState<DailyMoodPrompt> {
             const SizedBox(height: 10),
 
             // Submit button
-            ElevatedButton(
+            TextButton(
               onPressed: _saveMoodData,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.pink[100],
-                foregroundColor: Colors.white,
+                backgroundColor: AppTokens.buttonPrimaryBg,
+                foregroundColor: AppTokens.textPrimary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),

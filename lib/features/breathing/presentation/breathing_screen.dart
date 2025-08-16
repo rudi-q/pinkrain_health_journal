@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pillow/core/theme/tokens.dart';
 import 'package:pretty_animated_text/pretty_animated_text.dart';
 
 import '../../../core/widgets/bottom_navigation.dart';
@@ -535,27 +536,8 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
                       ? Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                notifier.stopExercise();
-                                setState(() {
-                                  isExerciseStarted = false;
-                                });
-                                if (_enableHaptic) {
-                                  HapticFeedback.mediumImpact();
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey[300],
-                                foregroundColor: Colors.black87,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                              ),
-                              child: const Text('Stop'),
-                            ),
                             const SizedBox(width: 20),
-                            ElevatedButton(
+                            TextButton(
                               onPressed: () {
                                 if (_animationController.isAnimating) {
                                   _animationController.stop();
@@ -568,8 +550,8 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
                                 }
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.pink[100],
-                                foregroundColor: Colors.white,
+                                backgroundColor: AppTokens.buttonPrimaryBg,
+                                foregroundColor: AppTokens.textPrimary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
                                 ),
@@ -577,7 +559,7 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
                               child: Text(_animationController.isAnimating ? 'Pause' : 'Resume'),
                             ),
                             const SizedBox(width: 20),
-                            ElevatedButton(
+                            TextButton(
                               onPressed: () {
                                 notifier.stopExercise();
                                 setState(() {
@@ -585,32 +567,32 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
                                 });
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.pink[100],
-                                foregroundColor: Colors.white,
+                                backgroundColor: AppTokens.buttonSecondaryBg,
+                                foregroundColor: AppTokens.textPrimary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
                                 ),
                               ),
-                              child: const Text('Done'),
+                              child: const Text('End Session'),
                             ),
                           ],
                         )
-                      : ElevatedButton(
+                      : TextButton(
                           onPressed: () {
                             setState(() {
                               isExerciseStarted = false;
                             });
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.pink[100],
-                            foregroundColor: Colors.white,
+                            backgroundColor: AppTokens.buttonPrimaryBg,
+                            foregroundColor: AppTokens.textPrimary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
                           ),
                           child: const Text('Done'),
                         ))
-                  : ElevatedButton(
+                  : TextButton(
                       onPressed: () {
                         setState(() {
                           isExerciseStarted = true;
@@ -620,9 +602,9 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
                           HapticFeedback.lightImpact();
                         }
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.pink[100],
-                        foregroundColor: Colors.white,
+                      style: TextButton.styleFrom(
+                        backgroundColor: AppTokens.buttonPrimaryBg,
+                        foregroundColor: AppTokens.textPrimary,
                         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
@@ -634,10 +616,6 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
           ),
         ],
       ),
-      bottomNavigationBar: buildBottomNavigationBar(
-        context: context,
-        currentRoute: 'breath',
-      ),
       extendBody: true, // Extend content behind bottom navigation bar
     );
   }
@@ -645,6 +623,7 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
   @override
   void dispose() {
     _animationController.dispose();
+    super.dispose();
     super.dispose();
   }
 
@@ -678,7 +657,7 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
           'calm',
           Icons.favorite_border,
         ),
-        const SizedBox(height: 30),
+        const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -729,11 +708,11 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.pink[50] : Colors.white,
+          color: isSelected ? AppTokens.bgCard : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? Colors.pink[100]! : Colors.grey[300]!,
-            width: 2,
+            color: isSelected ? AppTokens.borderLight! : Colors.grey[300]!,
+            width: 1,
           ),
           boxShadow: isSelected
               ? [
@@ -769,7 +748,7 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
                     title,
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontWeight: FontWeight.bold,
                       color: isSelected ? Colors.pink[700] : Colors.black87,
                     ),
                   ),
@@ -778,17 +757,12 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
                     description,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: AppTokens.textPrimary,
                     ),
                   ),
                 ],
               ),
             ),
-            if (isSelected)
-              Icon(
-                Icons.check_circle,
-                color: Colors.pink[300],
-              ),
           ],
         ),
       ),
