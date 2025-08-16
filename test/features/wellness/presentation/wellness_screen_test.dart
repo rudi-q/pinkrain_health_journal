@@ -4,10 +4,11 @@ import 'package:pillow/core/util/helpers.dart';
 void main() {
   group('WellnessTrackerScreen', () {
     // This test is skipped until we can find a more reliable way to test the initial date display
-    testWidgets('should display the current date when first loaded', (WidgetTester tester) async {
+    testWidgets('should display the current date when first loaded',
+        (WidgetTester tester) async {
       // Skip this test for now
       return;
-      
+
       // The original test code is kept for reference
       /*
       // Arrange
@@ -26,10 +27,12 @@ void main() {
     });
 
     // This test is skipped until we can find a more reliable way to test the date range options
-    testWidgets('should change date range when day/month/year options are tapped', (WidgetTester tester) async {
+    testWidgets(
+        'should change date range when day/month/year options are tapped',
+        (WidgetTester tester) async {
       // Skip this test for now
       return;
-      
+
       // The original test code is kept for reference
       /*
       // Arrange
@@ -64,10 +67,11 @@ void main() {
     });
 
     // This test is skipped until we can find a more reliable way to test the navigation
-    testWidgets('should navigate to previous month when left arrow is tapped', (WidgetTester tester) async {
+    testWidgets('should navigate to previous month when left arrow is tapped',
+        (WidgetTester tester) async {
       // Skip this test for now
       return;
-      
+
       // The original test code is kept for reference
       /*
       // Arrange
@@ -95,10 +99,11 @@ void main() {
     });
 
     // This test is skipped until we can find a more reliable way to test the navigation
-    testWidgets('should navigate to next month when right arrow is tapped', (WidgetTester tester) async {
+    testWidgets('should navigate to next month when right arrow is tapped',
+        (WidgetTester tester) async {
       // Skip this test for now
       return;
-      
+
       // The original test code is kept for reference
       /*
       // Arrange - use a past date
@@ -127,10 +132,11 @@ void main() {
     });
 
     // This test is skipped until we can find a more reliable way to test the Today button
-    testWidgets('should navigate to today when Today button is tapped', (WidgetTester tester) async {
+    testWidgets('should navigate to today when Today button is tapped',
+        (WidgetTester tester) async {
       // Skip this test for now
       return;
-      
+
       // The original test code is kept for reference
       /*
       // Arrange - use a past date
@@ -159,10 +165,11 @@ void main() {
     });
 
     // This test is skipped until we can find a more reliable way to test the button state
-    testWidgets('should disable next navigation button when date is today', (WidgetTester tester) async {
+    testWidgets('should disable next navigation button when date is today',
+        (WidgetTester tester) async {
       // Skip this test for now
       return;
-      
+
       // The original test code is kept for reference
       /*
       // Arrange - use the current date
@@ -187,10 +194,11 @@ void main() {
     });
 
     // This test is skipped until we can find a more reliable way to test the date picker
-    testWidgets('should open date picker when date is tapped', (WidgetTester tester) async {
+    testWidgets('should open date picker when date is tapped',
+        (WidgetTester tester) async {
       // Skip this test for now
       return;
-      
+
       // The original test code is kept for reference
       /*
       // Arrange
@@ -211,10 +219,11 @@ void main() {
     });
 
     // This test is skipped until we can find a more reliable way to test the navigation behavior
-    testWidgets('should not navigate beyond today', (WidgetTester tester) async {
+    testWidgets('should not navigate beyond today',
+        (WidgetTester tester) async {
       // This test is skipped until we can find a more reliable way to test the navigation behavior
       return;
-      
+
       // The original test code is kept for reference
       /*
       // Arrange - use today's date
@@ -246,20 +255,21 @@ void main() {
   });
 
   group('DateTimeExtension', () {
-    test('isSameDate should return true for same dates with different times', () {
+    test('isSameDate should return true for same dates with different times',
+        () {
       // Arrange
       final date1 = DateTime(2023, 5, 15, 10, 30);
       final date2 = DateTime(2023, 5, 15, 15, 45);
-      
+
       // Act & Assert
       expect(date1.isSameDate(date2), true);
     });
-    
+
     test('isSameDate should return false for different dates', () {
       // Arrange
       final date1 = DateTime(2023, 5, 15);
       final date2 = DateTime(2023, 5, 16);
-      
+
       // Act & Assert
       expect(date1.isSameDate(date2), false);
     });
@@ -272,7 +282,7 @@ void main() {
       expect('month'.capitalize(), 'Month');
       expect('year'.capitalize(), 'Year');
     });
-    
+
     test('capitalize should handle empty strings', () {
       // Act & Assert
       // For empty strings, capitalize should return an empty string without throwing an error
@@ -283,7 +293,7 @@ void main() {
         expect(''.capitalize(), '');
       }
     });
-    
+
     test('capitalize should not change already capitalized strings', () {
       // Act & Assert
       expect('Day'.capitalize(), 'Day');

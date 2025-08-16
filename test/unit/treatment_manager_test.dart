@@ -18,7 +18,8 @@ void main() {
     String notes = 'Test notes',
   }) {
     final medicine = Medicine(name: name, type: type, color: color)
-      ..addSpecification(Specification(dosage: dosage, unit: unit, useCase: 'Test use case'));
+      ..addSpecification(
+          Specification(dosage: dosage, unit: unit, useCase: 'Test use case'));
 
     final treatmentPlan = TreatmentPlan(
       startDate: DateTime(2025, 4, 20),
@@ -41,7 +42,8 @@ void main() {
   });
 
   group('TreatmentManager - Edit Treatment Tests', () {
-    test('updateTreatment should update an existing treatment correctly', () async {
+    test('updateTreatment should update an existing treatment correctly',
+        () async {
       final originalTreatment = createTestTreatment();
       final updatedTreatment = createTestTreatment(
         name: 'Updated Medicine',
@@ -86,8 +88,10 @@ void main() {
       expect(reconstructedTreatment.medicine.specs.unit, 'mg');
       expect(reconstructedTreatment.treatmentPlan.mealOption, 'After meal');
       expect(reconstructedTreatment.notes, 'Test notes');
-      expect(reconstructedTreatment.treatmentPlan.startDate, originalTreatment.treatmentPlan.startDate);
-      expect(reconstructedTreatment.treatmentPlan.endDate, originalTreatment.treatmentPlan.endDate);
+      expect(reconstructedTreatment.treatmentPlan.startDate,
+          originalTreatment.treatmentPlan.startDate);
+      expect(reconstructedTreatment.treatmentPlan.endDate,
+          originalTreatment.treatmentPlan.endDate);
     });
   });
 }

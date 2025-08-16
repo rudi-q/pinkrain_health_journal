@@ -27,6 +27,17 @@ class Treatment {
     this.notes = '',
   }) : id = id ?? generateUniqueId();
 
+  /// Format the treatment's scheduled time in a readable format (e.g., "10:00 AM")
+  String formattedTimeOfDay() {
+    final time = treatmentPlan.timeOfDay;
+    final hour = time.hour;
+    final minute = time.minute;
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final formattedHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+    final formattedMinute = minute.toString().padLeft(2, '0');
+    return '$formattedHour:$formattedMinute $period';
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -261,16 +272,10 @@ class Treatment {
     return treatments;
   }
 
-  static TreatmentPlan getPlanByMedicineName(String medicineName) {
+  static TreatmentPlan getTreatmentPlanByMedicineName(String medicineName) {
     return Treatment.getSample()
         .firstWhere((t) => t.medicine.name == medicineName)
         .treatmentPlan;
-  }
-
-  String timeOfDay() {
-    return '${treatmentPlan.timeOfDay.hour.toString().padLeft(2, '0')}'
-        ' : '
-        '${treatmentPlan.timeOfDay.minute.toString().padLeft(2, '0')}';
   }
 }
 

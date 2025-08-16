@@ -50,7 +50,7 @@ class PersonalizedInsights extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  'AI-Powered',
+                  'Coming Soon (Illustrative)',
                   style: TextStyle(
                     color: Colors.blue[700],
                     fontSize: 10,

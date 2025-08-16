@@ -180,7 +180,6 @@ class PillboxScreen extends ConsumerWidget {
     }).toList();
   }
 
-  // todo: Improve medication form with more detailed information and validation
   void _showAddMedicineDialog(BuildContext context, WidgetRef ref) {
     final TextEditingController nameController = TextEditingController();
     final TextEditingController quantityController = TextEditingController();
@@ -191,24 +190,11 @@ class PillboxScreen extends ConsumerWidget {
     String initialMedicationType = 'Tablet';
     String initialColor = 'White';
 
-    /* IconData getMedicationTypeIcon(String type) {
-      switch (type.toLowerCase()) {
-        case 'tablet':
-          return Icons.local_pharmacy;
-        case 'capsule':
-          return Icons.medication;
-        case 'drops':
-          return Icons.opacity;
-        case 'cream':
-          return Icons.spa;
-        case 'spray':
-          return Icons.shower;
-        case 'injection':
-          return Icons.vaccines;
-        default:
-          return Icons.medication;
-      }
-    }*/
+    // Define validation error messages
+    String? nameError;
+    String? quantityError;
+    String? unitError;
+    String? useCaseError;
 
     final Map<String, Color> colorMap = {
       'White': Colors.white,
@@ -228,6 +214,77 @@ class PillboxScreen extends ConsumerWidget {
 
         return StatefulBuilder(
           builder: (dialogContext, setState) {
+            // Validation functions
+            void validateName() {
+              setState(() {
+                if (nameController.text.isEmpty) {
+                  nameError = 'Medicine name is required';
+                } else if (nameController.text.trim().isEmpty) {
+                  nameError = 'Medicine name cannot be only whitespace';
+                } else if (nameController.text.length < 2) {
+                  nameError = 'Medicine name must be at least 2 characters';
+                } else {
+                  nameError = null;
+                }
+              });
+            }
+
+            void validateQuantity() {
+              setState(() {
+                if (quantityController.text.isEmpty) {
+                  quantityError = 'Quantity is required';
+                } else {
+                  final quantity = int.tryParse(quantityController.text);
+                  if (quantity == null) {
+                    quantityError = 'Quantity must be a valid number';
+                  } else if (quantity <= 0) {
+                    quantityError = 'Quantity must be greater than zero';
+                  } else if (quantity > 1000) {
+                    quantityError = 'Quantity cannot exceed 1000';
+                  } else {
+                    quantityError = null;
+                  }
+                }
+              });
+            }
+
+            void validateUnit() {
+              setState(() {
+                if (unitController.text.isNotEmpty && unitController.text.trim().isEmpty) {
+                  unitError = 'Unit cannot be only whitespace';
+                } else if (unitController.text.length > 10) {
+                  unitError = 'Unit should be 10 characters or less';
+                } else {
+                  unitError = null;
+                }
+              });
+            }
+
+            void validateUseCase() {
+              setState(() {
+                if (useCaseController.text.isNotEmpty && useCaseController.text.trim().isEmpty) {
+                  useCaseError = 'Use case cannot be only whitespace';
+                } else if (useCaseController.text.length > 100) {
+                  useCaseError = 'Use case should be 100 characters or less';
+                } else {
+                  useCaseError = null;
+                }
+              });
+            }
+
+            // Function to validate all fields
+            bool validateAllFields() {
+              validateName();
+              validateQuantity();
+              validateUnit();
+              validateUseCase();
+              
+              return nameError == null && 
+                     quantityError == null && 
+                     unitError == null && 
+                     useCaseError == null;
+            }
+
             return Dialog(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -293,7 +350,13 @@ class PillboxScreen extends ConsumerWidget {
                             borderSide: BorderSide.none,
                           ),
                           contentPadding: const EdgeInsets.all(15),
+                          errorText: nameError,
+                          errorStyle: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 12,
+                          ),
                         ),
+                        onChanged: (_) => validateName(),
                       ),
                       const SizedBox(height: 20),
 
@@ -445,7 +508,13 @@ class PillboxScreen extends ConsumerWidget {
                             borderSide: BorderSide.none,
                           ),
                           contentPadding: const EdgeInsets.all(15),
+                          errorText: quantityError,
+                          errorStyle: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 12,
+                          ),
                         ),
+                        onChanged: (_) => validateQuantity(),
                       ),
                       const SizedBox(height: 16),
 
@@ -462,7 +531,13 @@ class PillboxScreen extends ConsumerWidget {
                             borderSide: BorderSide.none,
                           ),
                           contentPadding: const EdgeInsets.all(15),
+                          errorText: unitError,
+                          errorStyle: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 12,
+                          ),
                         ),
+                        onChanged: (_) => validateUnit(),
                       ),
                       const SizedBox(height: 16),
 
@@ -479,7 +554,13 @@ class PillboxScreen extends ConsumerWidget {
                             borderSide: BorderSide.none,
                           ),
                           contentPadding: const EdgeInsets.all(15),
+                          errorText: useCaseError,
+                          errorStyle: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 12,
+                          ),
                         ),
+                        onChanged: (_) => validateUseCase(),
                       ),
                       const SizedBox(height: 30),
 
@@ -512,24 +593,23 @@ class PillboxScreen extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(30),
                                 ),
                               ),
-                              onPressed: () {
-                                if (nameController.text.isNotEmpty &&
-                                    quantityController.text.isNotEmpty) {
-                                  final newMedicine = Medicine(
-                                    name: nameController.text,
-                                    type: selectedMedicationType,
-                                    color: selectedColor,
-                                  );
-                                  final quantity = int.tryParse(quantityController.text) ?? 0;
+                            ),
+                            onPressed: () {
+                              if (validateAllFields()) {
+                                final newMedicine = Medicine(
+                                  name: nameController.text.trim(),
+                                  type: selectedMedicationType,
+                                  color: selectedColor,
+                                );
+                                final quantity = int.tryParse(quantityController.text) ?? 0;
 
-                                  final specification = Specification(
-                                    unit: unitController.text.isNotEmpty
-                                        ? unitController.text
-                                        : 'mg',
-                                    useCase: useCaseController.text,
-                                  );
-                                  newMedicine.addSpecification(specification);
-
+                                final specification = Specification(
+                                  unit: unitController.text.isNotEmpty
+                                      ? unitController.text.trim()
+                                      : 'mg',
+                                  useCase: useCaseController.text.trim(),
+                                );
+                                newMedicine.addSpecification(specification);
                                   try {
                                     final notifier = ref.read(pillBoxProvider.notifier);
                                     notifier.addMedicine(newMedicine, quantity);

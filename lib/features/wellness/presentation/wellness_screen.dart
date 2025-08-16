@@ -9,12 +9,8 @@ import 'package:pillow/core/widgets/bottom_navigation.dart';
 import 'package:pillow/features/journal/presentation/journal_notifier.dart';
 import 'package:pillow/features/wellness/domain/share_as_pdf.dart';
 import 'package:pillow/features/wellness/domain/wellness_tracker.dart';
-import 'package:pillow/features/wellness/presentation/components/correlation_analysis.dart';
 import 'package:pillow/features/wellness/presentation/components/mood_painter.dart';
-import 'package:pillow/features/wellness/presentation/components/mood_trend_chart.dart';
 import 'package:pillow/features/wellness/presentation/components/personalized_insights.dart';
-import 'package:pillow/features/wellness/presentation/components/scatter_plot_painter.dart';
-import 'package:pillow/features/wellness/presentation/components/wellness_prediction.dart';
 import 'package:pillow/features/wellness/presentation/wellness_notifier.dart';
 import 'package:pretty_animated_text/pretty_animated_text.dart';
 
@@ -411,7 +407,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                   // Active symptoms and triggers
                   buildSymptomsAndTriggers(),
 
-                  const SizedBox(height: 30),
+                /*  const SizedBox(height: 30),
 
                   // Medication impact
                   BlurText(
@@ -518,10 +514,51 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                       selectedDate: _selectedDate,
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  // Debug button to verify mood data
+                  Center(
+                    child: TextButton(
+                      onPressed: () async {
+                        // Check if the mood data exists for today
+                        final today = DateTime.now();
+                        final normalizedToday = DateTime(today.year, today.month, today.day);
+                        
+                        // Debug log
+                        devPrint('DEBUG: Checking mood data for today: $normalizedToday');
+                        
+                        // First check if it exists
+                        final hasMood = await HiveService.hasMoodForDate(normalizedToday);
+                        devPrint('DEBUG: Has mood for today: $hasMood');
+                        
+                        // Get the actual data
+                        final moodData = await HiveService.getMoodForDate(normalizedToday);
+                        devPrint('DEBUG: Today\'s mood data: $moodData');
+                        
+                        // Test saving a mood value
+                        if (!hasMood) {
+                          devPrint('DEBUG: Saving test mood data for today');
+                          await HiveService.saveMoodForDate(
+                            normalizedToday,
+                            2, // Bad mood (matches your screenshot)
+                            'Test mood data'
+                          );
+                          devPrint('DEBUG: Test mood data saved');
+                          
+                          // Verify it was saved
+                          final newMoodData = await HiveService.getMoodForDate(normalizedToday);
+                          devPrint('DEBUG: Newly saved mood data: $newMoodData');
+                          
+                          // Force refresh the chart
+                          setState(() {});
+                        }
+                      },
+                      child: Text('Debug Mood Data', style: TextStyle(color: Colors.grey)),
+                    ),
+                  ),
                   const SizedBox(height: 30),
-
-                  // NEW SECTION: Correlation Analysis
-                  BlurText(
+*/
+                  // SECTION: Correlation Analysis
+              /*    BlurText(
                     text: 'Wellness Factor Analysis',
                     duration: const Duration(milliseconds: 800),
                     type: AnimationType.word,
@@ -545,9 +582,9 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                     width: double.infinity,
                     child: CorrelationAnalysis(),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 30),*/
+/*
 
-                  // NEW SECTION: Wellness Prediction
                   BlurText(
                     text: 'Mood Forecast',
                     duration: const Duration(milliseconds: 800),
@@ -559,7 +596,8 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                   ),
                   const SizedBox(height: 4),
                   ChimeBellText(
-                    text: 'AI-powered prediction of your mood trends',
+                    text:
+                        'AI-powered prediction of your mood trends (Coming soon, for illustration purposes only)',
                     duration: const Duration(milliseconds: 50),
                     textStyle: TextStyle(
                       color: Color(0xFF9E9E9E),
@@ -570,8 +608,9 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                   const SizedBox(
                     width: double.infinity,
                     child: WellnessPrediction(),
-                  ),
-                  const SizedBox(height: 30),
+                  ),*/
+                  const SizedBox(height: 50),
+
 
                   // NEW SECTION: Personalized Insights
                   BlurText(
@@ -1001,7 +1040,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.red.withOpacity(0.1),
+            color: Colors.red.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
@@ -1036,7 +1075,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.orange.withOpacity(0.1),
+            color: Colors.orange.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
@@ -1221,7 +1260,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             spreadRadius: 1,
             blurRadius: 3,
             offset: const Offset(0, 1),

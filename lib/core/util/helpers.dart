@@ -101,7 +101,7 @@ final Map<String, Color> colorMap = {
 };
 
 
-FutureBuilder<SvgPicture> futureBuildSvg(String text, selectedColor, [double size = 30]) {
+FutureBuilder<SvgPicture> futureBuildSvg(String text, String selectedColor, [double size = 30]) {
   return FutureBuilder<SvgPicture>(
       future: appSvgDynamicImage(
           fileName: text.toLowerCase(),

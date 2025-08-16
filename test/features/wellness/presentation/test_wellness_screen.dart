@@ -4,12 +4,12 @@ import 'package:intl/intl.dart';
 // A simplified version of WellnessTrackerScreen for testing
 class TestWellnessScreen extends StatefulWidget {
   final DateTime initialDate;
-  
+
   const TestWellnessScreen({
     Key? key,
     required this.initialDate,
   }) : super(key: key);
-  
+
   @override
   State<TestWellnessScreen> createState() => _TestWellnessScreenState();
 }
@@ -17,13 +17,13 @@ class TestWellnessScreen extends StatefulWidget {
 class _TestWellnessScreenState extends State<TestWellnessScreen> {
   late DateTime selectedDate;
   String selectedDateOption = 'day';
-  
+
   @override
   void initState() {
     super.initState();
     selectedDate = widget.initialDate;
   }
-  
+
   void _navigateToPrevious() {
     setState(() {
       switch (selectedDateOption) {
@@ -47,7 +47,7 @@ class _TestWellnessScreenState extends State<TestWellnessScreen> {
       }
     });
   }
-  
+
   void _navigateToNext() {
     final now = DateTime.now();
     final nextDate = switch (selectedDateOption) {
@@ -64,7 +64,7 @@ class _TestWellnessScreenState extends State<TestWellnessScreen> {
         ),
       _ => selectedDate,
     };
-    
+
     // Only allow navigation up to the current date
     if (!nextDate.isAfter(now)) {
       setState(() {
@@ -72,13 +72,13 @@ class _TestWellnessScreenState extends State<TestWellnessScreen> {
       });
     }
   }
-  
+
   void _navigateToToday() {
     setState(() {
       selectedDate = DateTime.now();
     });
   }
-  
+
   bool _canNavigateNext() {
     final now = DateTime.now();
     final nextDate = switch (selectedDateOption) {
@@ -95,14 +95,14 @@ class _TestWellnessScreenState extends State<TestWellnessScreen> {
         ),
       _ => selectedDate,
     };
-    
+
     return !nextDate.isAfter(now);
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final formattedDate = DateFormat('MMMM yyyy').format(selectedDate);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Wellness Tracker'),
@@ -123,7 +123,8 @@ class _TestWellnessScreenState extends State<TestWellnessScreen> {
               ),
               Text(
                 formattedDate,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               IconButton(
                 icon: const Icon(Icons.chevron_right),
@@ -133,7 +134,8 @@ class _TestWellnessScreenState extends State<TestWellnessScreen> {
             ],
           ),
           // Display current date
-          Text('Selected date: ${DateFormat('dd/MM/yyyy').format(selectedDate)}'),
+          Text(
+              'Selected date: ${DateFormat('dd/MM/yyyy').format(selectedDate)}'),
           // Display whether navigation is possible
           Text('Can navigate next: ${_canNavigateNext()}'),
         ],

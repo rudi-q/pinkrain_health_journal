@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:just_audio/just_audio.dart';
 
+import '../../core/util/helpers.dart';
 import '../../core/widgets/bottom_navigation.dart';
 
 class MeditationTrack {
@@ -137,18 +138,18 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> with Wid
   Future<void> _initializePlayer() async {
     // Only initialize if not already initialized
     if (_isPlayerInitialized) {
-      print("[DEBUG_LOG] Player already initialized, skipping initialization");
+      devPrint("[DEBUG_LOG] Player already initialized, skipping initialization");
       return;
     }
 
-    print("[DEBUG_LOG] Initializing audio player");
+    devPrint("[DEBUG_LOG] Initializing audio player");
     try {
       _player = AudioPlayer();
       _isPlayerInitialized = true;
-      print("[DEBUG_LOG] AudioPlayer instance created successfully");
+      devPrint("[DEBUG_LOG] AudioPlayer instance created successfully");
 
       // Set up position stream listener
-      print("[DEBUG_LOG] Setting up position stream listener");
+      devPrint("[DEBUG_LOG] Setting up position stream listener");
       _player.positionStream.listen((position) {
         if (mounted) {
           setState(() => _position = position);
@@ -156,7 +157,7 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> with Wid
       });
 
       // Set up duration stream listener
-      print("[DEBUG_LOG] Setting up duration stream listener");
+      devPrint("[DEBUG_LOG] Setting up duration stream listener");
       _player.durationStream.listen((duration) {
         if (mounted && duration != null) {
           setState(() => _duration = duration);
@@ -164,31 +165,31 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> with Wid
       });
 
       // Set up player completion listener
-      print("[DEBUG_LOG] Setting up player state stream listener");
+      devPrint("[DEBUG_LOG] Setting up player state stream listener");
       _player.playerStateStream.listen((playerState) {
         if (playerState.processingState == ProcessingState.completed) {
-          print("[DEBUG_LOG] Track completed, checking for next track");
+          devPrint("[DEBUG_LOG] Track completed, checking for next track");
           // Auto-play next track when current one completes
           if (_nowPlaying != null) {
             final currentIndex = tracks.indexOf(_nowPlaying!);
             if (currentIndex < tracks.length - 1) {
-              print("[DEBUG_LOG] Auto-playing next track");
+              devPrint("[DEBUG_LOG] Auto-playing next track");
               _playTrack(tracks[currentIndex + 1]);
             } else {
-              print("[DEBUG_LOG] No more tracks to play");
+              devPrint("[DEBUG_LOG] No more tracks to play");
             }
           }
         }
       });
 
       // Handle errors
-      print("[DEBUG_LOG] Setting up playback event stream error listener");
+      devPrint("[DEBUG_LOG] Setting up playback event stream error listener");
       _player.playbackEventStream.listen(
         (event) {},
         onError: (Object e, StackTrace st) {
-          print("[DEBUG_LOG] Playback event stream error: $e");
+          devPrint("[DEBUG_LOG] Playback event stream error: $e");
           if (e is PlayerException) {
-            print("[DEBUG_LOG] PlayerException: code=${e.code}, message=${e.message}");
+            devPrint("[DEBUG_LOG] PlayerException: code=${e.code}, message=${e.message}");
             setState(() {
               _errorMessage = "Error code: ${e.code}, message: ${e.message}";
             });
@@ -200,9 +201,9 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> with Wid
         }
       );
 
-      print("[DEBUG_LOG] Audio player initialized successfully");
+      devPrint("[DEBUG_LOG] Audio player initialized successfully");
     } catch (e) {
-      print("[DEBUG_LOG] Failed to initialize audio player: $e");
+      devPrint("[DEBUG_LOG] Failed to initialize audio player: $e");
       setState(() {
         _isPlayerInitialized = false;
         _errorMessage = "Failed to initialize audio player: $e";
@@ -247,29 +248,29 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> with Wid
         });
 
         // 3. Load the new asset and seek to start
-        print("[DEBUG_LOG] Loading track: ${track.title} from ${track.assetPath}");
+        devPrint("[DEBUG_LOG] Loading track: ${track.title} from ${track.assetPath}");
         try {
           // Sanitize the asset path by replacing apostrophes with empty strings
           // This is necessary because Flutter's asset loader has issues with apostrophes
           String sanitizedPath = track.assetPath.replaceAll("'", "");
-          print("[DEBUG_LOG] Sanitized asset path: $sanitizedPath");
+          devPrint("[DEBUG_LOG] Sanitized asset path: $sanitizedPath");
 
           await _player.setAsset(sanitizedPath);
-          print("[DEBUG_LOG] Asset loaded successfully");
+          devPrint("[DEBUG_LOG] Asset loaded successfully");
           await _player.seek(Duration.zero);
-          print("[DEBUG_LOG] Seek completed successfully");
+          devPrint("[DEBUG_LOG] Seek completed successfully");
           return true;
         } catch (e) {
-          print("[DEBUG_LOG] Error loading track (attempt ${retryCount + 1}): $e");
+          devPrint("[DEBUG_LOG] Error loading track (attempt ${retryCount + 1}): $e");
           if (e.toString().contains("Unable to load")) {
-            print("[DEBUG_LOG] Asset loading error - file may not exist or be inaccessible");
+            devPrint("[DEBUG_LOG] Asset loading error - file may not exist or be inaccessible");
           } else if (e.toString().contains("format")) {
-            print("[DEBUG_LOG] Format error - file may be corrupted or in unsupported format");
+            devPrint("[DEBUG_LOG] Format error - file may be corrupted or in unsupported format");
           }
           return false;
         }
       } catch (e) {
-        print("[DEBUG_LOG] Unexpected error in attemptLoadTrack (attempt ${retryCount + 1}): $e");
+        devPrint("[DEBUG_LOG] Unexpected error in attemptLoadTrack (attempt ${retryCount + 1}): $e");
         return false;
       }
     }
@@ -284,42 +285,42 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> with Wid
         });
 
         try {
-          print("[DEBUG_LOG] Starting playback for track: ${track.title}");
+          devPrint("[DEBUG_LOG] Starting playback for track: ${track.title}");
           await _player.play();
-          print("[DEBUG_LOG] Playback started successfully");
+          devPrint("[DEBUG_LOG] Playback started successfully");
           return; // Exit the method if successful
         } catch (e) {
           setState(() {
             _isLoading = false;
             _errorMessage = "Failed to play track: $e";
           });
-          print("[DEBUG_LOG] Error playing track: $e");
+          devPrint("[DEBUG_LOG] Error playing track: $e");
           return; // Exit on play error
         }
       } else {
         // Track failed to load, increment retry count
         retryCount++;
-        print("[DEBUG_LOG] Track loading attempt $retryCount failed");
+        devPrint("[DEBUG_LOG] Track loading attempt $retryCount failed");
 
         if (retryCount < maxRetries) {
           // Wait before retrying (exponential backoff)
           int delayMs = 500 * retryCount;
-          print("[DEBUG_LOG] Waiting ${delayMs}ms before retry ${retryCount + 1}");
+          devPrint("[DEBUG_LOG] Waiting ${delayMs}ms before retry ${retryCount + 1}");
           await Future.delayed(Duration(milliseconds: delayMs));
         }
       }
     }
 
     // If we get here, all retries failed
-    print("[DEBUG_LOG] All $maxRetries attempts to load track failed: ${track.title}");
+    devPrint("[DEBUG_LOG] All $maxRetries attempts to load track failed: ${track.title}");
     setState(() {
       _isLoading = false;
       _errorMessage = "Failed to load track (${track.title}) after multiple attempts. Please try again later.";
     });
 
     // Check if the asset file exists in the assets directory
-    print("[DEBUG_LOG] Asset path that failed: ${track.assetPath}");
-    print("[DEBUG_LOG] Please verify this file exists in the assets directory and is correctly referenced in pubspec.yaml");
+    devPrint("[DEBUG_LOG] Asset path that failed: ${track.assetPath}");
+    devPrint("[DEBUG_LOG] Please verify this file exists in the assets directory and is correctly referenced in pubspec.yaml");
   }
 
   @override
@@ -355,7 +356,7 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> with Wid
             : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.05),
+              color: Colors.grey.withValues(alpha: 0.05),
               spreadRadius: 1,
               blurRadius: 2,
               offset: const Offset(0, 1),
@@ -429,7 +430,7 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> with Wid
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             spreadRadius: 1,
             blurRadius: 4,
             offset: const Offset(0, 2),
@@ -582,7 +583,7 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> with Wid
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             spreadRadius: 1,
             blurRadius: 4,
             offset: const Offset(0, 2),

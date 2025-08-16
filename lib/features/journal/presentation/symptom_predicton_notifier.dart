@@ -1,11 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pillow/features/journal/domain/tf_lite_symptom_pred.dart'
+if (dart.library.html) 'package:pillow/features/journal/domain/mock_symptom_pred.dart'; // Import the TFLite predictor or mock predictor on web
 
 import '../../../core/util/helpers.dart';  // Import helpers for logging
 import '../data/symptom_prediction.dart';
-
-import 'package:pillow/features/journal/domain/tf_lite_symptom_pred.dart'
-if (dart.library.html) 'package:pillow/features/journal/domain/mock_symptom_pred.dart'; // Import the TFLite predictor or mock predictor on web
 
 final symptomPredictionProvider =
     StateNotifierProvider<SymptomPredictionNotifier, List<SymptomPrediction>>(
@@ -27,9 +26,23 @@ class SymptomPredictionNotifier extends StateNotifier<List<SymptomPrediction>> {
   Future<void> predict(String text,
       {DateTime? startDate, DateTime? endDate}) async {
     try {
-      if(kIsWeb){
+      bool experimentalMode = const bool.fromEnvironment('EXPERIMENTAL', defaultValue: false);
+
+      if (!experimentalMode) {
+        devPrint('Experimental Features Disabled - Symptom prediction skipped');
+        // Ensure state is empty when experimental mode is disabled
+        reset();
         return;
       }
+
+      devPrint('Experimental Features Enabled');
+
+      if(kIsWeb){
+        "Web platform detected - Symptom prediction not supported".log();
+        reset();
+        return;
+      }
+
       if (predictionInProgress) {
         "Skipping prediction - already in progress".log();
         return;

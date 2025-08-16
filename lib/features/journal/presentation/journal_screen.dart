@@ -753,7 +753,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
     final String name = medication.medicine.name;
     String type = medication.medicine.type.toLowerCase();
     final String dosage = '${medication.medicine.specs.dosage} ${medication.medicine.specs.unit}';
-    final String time = medication.timeOfDay();
+    final String time = medication.formattedTimeOfDay();
     final String color = medication.medicine.color;
 
     if (type.endsWith('s')) {
@@ -966,9 +966,13 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                 ],
               ),
               SizedBox(height: 20),
-              _buildInfoItem('Blue pill'),
-              _buildInfoItem('Take at least 30 minutes before breakfast.'),
-              _buildInfoItem('Try to take it at the same time each day.'),
+              _buildInfoItem('${medication.medicine.color.capitalize()} ${medication.medicine.type}'),
+              _buildInfoItem(medication.treatmentPlan.mealOption.isNotEmpty 
+                ? medication.treatmentPlan.mealOption 
+                : 'Take as directed'),
+              _buildInfoItem(medication.treatmentPlan.instructions.isNotEmpty 
+                ? medication.treatmentPlan.instructions 
+                : 'Try to take it at the same time each day'),
               SizedBox(height: 20),
               Row(
                 children: [
@@ -1153,9 +1157,9 @@ class EditMoodDialogState extends State<EditMoodDialog> {
 String getMoodEmoji(int mood) {
   switch (mood) {
     case 0:
-      return '😢'; // Very Sad
+      return '😭'; // Very Sad (crying face with tears)
     case 1:
-      return '😔'; // Sad
+      return '🙁'; // Sad (slightly frowning face)
     case 2:
       return '😐'; // Neutral
     case 3:

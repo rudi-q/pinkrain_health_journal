@@ -3,12 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 class TestableNavigationLogic {
   DateTime selectedDate;
   String selectedDateOption;
-  
+
   TestableNavigationLogic({
     required this.selectedDate,
     this.selectedDateOption = 'day',
   });
-  
+
   bool canNavigateNext() {
     final now = DateTime.now();
     final nextDate = switch (selectedDateOption) {
@@ -25,7 +25,7 @@ class TestableNavigationLogic {
         ),
       _ => selectedDate,
     };
-    
+
     // Only allow navigation up to the current date
     return !nextDate.isAfter(now);
   }
@@ -40,11 +40,11 @@ void main() {
         selectedDate: today,
         selectedDateOption: 'day',
       );
-      
+
       // Act & Assert
       expect(logic.canNavigateNext(), false);
     });
-    
+
     test('should not allow navigation beyond today in month view', () {
       // Arrange - use today's date
       final today = DateTime.now();
@@ -52,11 +52,11 @@ void main() {
         selectedDate: today,
         selectedDateOption: 'month',
       );
-      
+
       // Act & Assert
       expect(logic.canNavigateNext(), false);
     });
-    
+
     test('should not allow navigation beyond today in year view', () {
       // Arrange - use today's date
       final today = DateTime.now();
@@ -64,11 +64,11 @@ void main() {
         selectedDate: today,
         selectedDateOption: 'year',
       );
-      
+
       // Act & Assert
       expect(logic.canNavigateNext(), false);
     });
-    
+
     test('should allow navigation to today from a past date', () {
       // Arrange - use a past date
       final pastDate = DateTime.now().subtract(const Duration(days: 30));
@@ -76,7 +76,7 @@ void main() {
         selectedDate: pastDate,
         selectedDateOption: 'day',
       );
-      
+
       // Act & Assert
       expect(logic.canNavigateNext(), true);
     });

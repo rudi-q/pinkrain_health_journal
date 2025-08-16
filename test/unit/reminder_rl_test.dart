@@ -53,7 +53,6 @@ void main() {
     });
 
     test('selectBestReminder favors successful time slots over time', () {
-
       final favoredTime = timeSlots.last;
       for (int i = 0; i < 10; i++) {
         reminderRL.updateResults(favoredTime, true);
@@ -71,7 +70,7 @@ void main() {
       expect(favoredCount, greaterThan(totalTrials ~/ 2));
     });
 
-  /*  test('_betaSample returns a value between 0 and 1', () {
+    /*  test('_betaSample returns a value between 0 and 1', () {
       for (int i = 0; i < 100; i++) {
         double sample = reminderRL._betaSample(1, 1);
         expect(sample, greaterThanOrEqualTo(0));
@@ -85,7 +84,5 @@ void main() {
         expect(sample, greaterThan(0));
       }
     });*/
-
-
   });
 }
