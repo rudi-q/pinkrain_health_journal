@@ -1,0 +1,210 @@
+name: 📚 Documentation Issue
+description: Report missing, unclear, or incorrect documentation
+title: "[Docs]: "
+labels: ["documentation", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve Pillow's documentation! Clear documentation helps everyone.
+        
+        **Important**: Please search existing issues before creating a new one to avoid duplicates.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      description: Please complete these steps before submitting your documentation issue
+      options:
+        - label: I have searched existing issues and this is not a duplicate
+          required: true
+        - label: I have checked the current documentation is actually missing/incorrect
+          required: true
+
+  - type: dropdown
+    id: documentation-type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation needs attention?
+      options:
+        - API Documentation
+        - User Guide/Tutorial
+        - Developer Setup Guide
+        - Contributing Guidelines
+        - Code Comments
+        - README Updates
+        - Architecture Documentation
+        - Feature Documentation
+        - Privacy/Security Documentation
+        - Accessibility Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: issue-description
+    attributes:
+      label: Documentation Issue
+      description: Describe what's missing, unclear, or incorrect
+      placeholder: |
+        Please describe the documentation issue:
+        - What information is missing?
+        - What is unclear or confusing?
+        - What is incorrect?
+        - Where did you encounter this issue?
+    validations:
+      required: true
+
+  - type: textarea
+    id: location
+    attributes:
+      label: Documentation Location
+      description: Where is the problematic documentation located?
+      placeholder: |
+        Please specify:
+        - File name (e.g., README.md, CONTRIBUTING.md)
+        - Section or heading
+        - Line numbers (if applicable)
+        - URL (if web documentation)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: user-type
+    attributes:
+      label: Target Audience
+      description: Who would benefit from this documentation improvement?
+      multiple: true
+      options:
+        - New Users
+        - Experienced Users
+        - New Contributors
+        - Experienced Developers
+        - Security Researchers
+        - Translators/Localization
+        - Accessibility Users
+        - Mental Health Professionals
+        - Researchers
+
+  - type: textarea
+    id: current-documentation
+    attributes:
+      label: Current Documentation
+      description: What does the current documentation say? (copy/paste if short)
+      placeholder: |
+        If the documentation exists but is incorrect or unclear, please copy the relevant section here.
+        If documentation is missing, write "Missing" or "Not documented"
+
+  - type: textarea
+    id: suggested-improvement
+    attributes:
+      label: Suggested Improvement
+      description: How should the documentation be improved?
+      placeholder: |
+        Please provide:
+        - Suggested text or content
+        - Structure improvements
+        - Additional sections needed
+        - Examples that should be included
+        - Links to related documentation
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority Level
+      description: How important is this documentation improvement?
+      options:
+        - "Low - Minor improvement"
+        - "Medium - Helpful for users"
+        - "High - Important for understanding"
+        - "Critical - Blocks usage or contribution"
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case/Context
+      description: When would someone need this documentation?
+      placeholder: |
+        Please describe:
+        - What were you trying to accomplish?
+        - What step in the process needs better documentation?
+        - How did the lack of documentation affect your experience?
+    validations:
+      required: true
+
+  - type: textarea
+    id: examples-needed
+    attributes:
+      label: Examples or Code Samples
+      description: What examples would make this documentation clearer?
+      placeholder: |
+        If applicable, suggest:
+        - Code examples
+        - Step-by-step tutorials
+        - Screenshots or diagrams
+        - Real-world use cases
+        
+        **Privacy Note**: Don't include personal health data in examples
+
+  - type: checkboxes
+    id: accessibility-considerations
+    attributes:
+      label: Accessibility Considerations
+      description: Does this documentation need accessibility improvements?
+      options:
+        - label: This documentation should be screen reader friendly
+        - label: This documentation needs alternative text for images
+        - label: This documentation should include keyboard navigation instructions
+        - label: This documentation should consider color contrast requirements
+        - label: Not applicable
+
+  - type: dropdown
+    id: languages
+    attributes:
+      label: Internationalization
+      description: Should this documentation be available in multiple languages?
+      options:
+        - "English only is sufficient"
+        - "Would benefit from translation"
+        - "Critical for non-English speakers"
+        - "Not sure"
+
+  - type: textarea
+    id: additional-resources
+    attributes:
+      label: Additional Resources
+      description: Are there external resources that could help?
+      placeholder: |
+        Please provide links to:
+        - Similar documentation in other projects
+        - Relevant standards or guidelines
+        - External tutorials or resources
+        - Reference materials
+
+  - type: checkboxes
+    id: contribution-interest
+    attributes:
+      label: Contribution Interest
+      description: Would you like to help improve this documentation?
+      options:
+        - label: I would be interested in writing/updating this documentation
+        - label: I could help review proposed documentation changes
+        - label: I could provide examples or use cases
+        - label: I would prefer others handle this documentation
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        
+        **Documentation Guidelines**: When contributing documentation, please ensure it:
+        - Is clear and accessible to the target audience
+        - Includes practical examples (without personal data)
+        - Follows our privacy-first principles
+        - Includes appropriate medical disclaimers where relevant
+        - Uses inclusive language

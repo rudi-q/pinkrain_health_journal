@@ -1,0 +1,278 @@
+name: ⚡ Performance Issue
+description: Report performance problems, crashes, or memory issues
+title: "[Performance]: "
+labels: ["performance", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a performance issue! This helps us keep Pillow running smoothly for everyone.
+        
+        **Important**: Please search existing issues before creating a new one to avoid duplicates.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      description: Please complete these steps before submitting your performance report
+      options:
+        - label: I have searched existing issues and this is not a duplicate
+          required: true
+        - label: I am using the latest version of Pillow
+          required: true
+        - label: I have tried restarting the app to see if the issue persists
+          required: true
+
+  - type: dropdown
+    id: performance-type
+    attributes:
+      label: Performance Issue Type
+      description: What type of performance problem are you experiencing?
+      options:
+        - App Crashes/Force Closes
+        - Slow App Startup
+        - UI Lag/Stuttering
+        - High Memory Usage
+        - Battery Drain
+        - Storage/Disk Usage
+        - Animation Stuttering
+        - Data Loading Delays
+        - Audio Playback Issues
+        - Chart/Visualization Performance
+        - Background Processing Issues
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: issue-description
+    attributes:
+      label: Performance Issue Description
+      description: Describe the performance problem you're experiencing
+      placeholder: |
+        Please describe:
+        - What performance issue you're experiencing
+        - When it occurs (startup, specific features, etc.)
+        - How often it happens
+        - Impact on your usage
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this performance issue?
+      placeholder: |
+        1. Open the app
+        2. Navigate to '...'
+        3. Perform action '...'
+        4. Observe performance issue
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: Issue Frequency
+      description: How often does this performance issue occur?
+      options:
+        - Always/Every time
+        - Very frequently (80%+ of the time)
+        - Sometimes (20-80% of the time)
+        - Rarely (less than 20% of the time)
+        - Only happened once
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: Which platform are you experiencing this issue on?
+      options:
+        - Android
+        - iOS
+        - Web
+        - Multiple platforms
+    validations:
+      required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: App Version
+      description: What version of Pillow are you using?
+      placeholder: "e.g., 2.1.1"
+    validations:
+      required: true
+
+  - type: input
+    id: device-info
+    attributes:
+      label: Device Information
+      description: Device model, OS version, and available RAM/storage
+      placeholder: "e.g., iPhone 14 Pro (iOS 17.1, 128GB storage, 6GB RAM)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: experimental-features
+    attributes:
+      label: Experimental Features
+      description: Are you using experimental AI features?
+      options:
+        - "No - Standard mode"
+        - "Yes - Experimental mode enabled"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: feature-area
+    attributes:
+      label: Affected Feature Area
+      description: Which part of the app has performance issues?
+      multiple: true
+      options:
+        - App Startup/Launch
+        - Journal/Mood Tracking
+        - Medication Management
+        - Wellness Analytics/Charts
+        - Breathing Exercises
+        - Meditation/Audio Playback
+        - Notifications
+        - Data Export/Import
+        - AI/ML Predictions
+        - Navigation/Screen Transitions
+        - Background Processing
+        - Entire App
+
+  - type: textarea
+    id: performance-details
+    attributes:
+      label: Performance Details
+      description: Specific details about the performance issue
+      placeholder: |
+        Please provide:
+        - How long does the issue last?
+        - Specific timing information (e.g., "takes 10 seconds to load")
+        - Memory usage observations
+        - CPU usage patterns
+        - Battery impact noticed
+        - Any error messages or crashes
+
+  - type: textarea
+    id: device-specs
+    attributes:
+      label: Device Specifications
+      description: Additional device and system information
+      placeholder: |
+        Please include:
+        - Available storage space
+        - RAM usage when issue occurs
+        - Other apps running simultaneously
+        - Device age/condition
+        - Power saving mode status
+        - Network connectivity (if relevant)
+
+  - type: textarea
+    id: data-size
+    attributes:
+      label: Data Volume
+      description: How much data do you have stored in Pillow?
+      placeholder: |
+        Approximate amount of:
+        - Journal entries
+        - Medication records
+        - Audio files downloaded
+        - Days of data tracked
+        - Any large data exports
+        
+        **Privacy Note**: Don't share actual personal data, just quantities
+
+  - type: dropdown
+    id: impact-severity
+    attributes:
+      label: Impact Severity
+      description: How severely does this impact your use of the app?
+      options:
+        - "Critical - App unusable"
+        - "High - Significantly impacts usage"
+        - "Medium - Noticeable but manageable"
+        - "Low - Minor annoyance"
+    validations:
+      required: true
+
+  - type: textarea
+    id: workarounds
+    attributes:
+      label: Workarounds
+      description: Have you found any ways to work around this issue?
+      placeholder: |
+        Please describe:
+        - Any temporary solutions you've found
+        - Settings changes that help
+        - Usage patterns that avoid the issue
+        - App restart frequency needed
+
+  - type: textarea
+    id: logs-crashes
+    attributes:
+      label: Error Logs or Crash Reports
+      description: Any error logs, crash reports, or system information
+      placeholder: |
+        If available, please include:
+        - App crash logs
+        - System error messages
+        - Performance monitoring data
+        - Memory usage screenshots
+        
+        **Privacy Note**: Please remove any personal information from logs
+
+  - type: textarea
+    id: comparison
+    attributes:
+      label: Performance Comparison
+      description: Has performance changed over time or compared to other devices?
+      placeholder: |
+        Please compare:
+        - Previous app versions (if you've used them)
+        - Performance on other devices (if tested)
+        - Performance when app was first installed vs. now
+        - Different usage scenarios
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other information that might help diagnose the issue
+      placeholder: |
+        Please include:
+        - Network conditions when issue occurs
+        - Time of day patterns
+        - Specific user actions that trigger the issue
+        - Related performance issues in other apps
+
+  - type: checkboxes
+    id: privacy-confirmation
+    attributes:
+      label: Privacy Confirmation
+      description: Please confirm you understand our privacy policy
+      options:
+        - label: I confirm that I have not included any personal health data in this report
+          required: true
+        - label: I understand that this is an experimental research app and not a medical device
+          required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        
+        **Performance Debugging**: Our team may follow up with additional questions to help diagnose the issue. Performance problems can be complex and may require detailed investigation.
+        
+        **Privacy Notice**: Pillow is a privacy-first app. When reporting performance issues, please avoid sharing personal health information.
+        
+        **Expected Response**: Performance issues are prioritized based on severity and impact on users. Critical issues affecting app stability will be addressed first.

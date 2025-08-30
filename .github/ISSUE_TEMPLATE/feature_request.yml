@@ -1,0 +1,196 @@
+name: ✨ Feature Request
+description: Suggest a new feature or enhancement for Pillow
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a new feature! Your ideas help make Pillow better for everyone.
+        
+        **Important**: Please search existing issues before creating a new one to avoid duplicates.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      description: Please complete these steps before submitting your feature request
+      options:
+        - label: I have searched existing issues and this is not a duplicate
+          required: true
+        - label: I have read the contributing guidelines
+          required: true
+        - label: This feature aligns with Pillow's privacy-first principles
+          required: true
+
+  - type: textarea
+    id: feature-summary
+    attributes:
+      label: Feature Summary
+      description: A clear and concise description of the feature you'd like to see
+      placeholder: Briefly describe the feature you're requesting
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem-statement
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve?
+      placeholder: |
+        Is your feature request related to a problem? Please describe.
+        A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: How would you like this feature to work?
+      placeholder: |
+        Describe the solution you'd like.
+        A clear and concise description of what you want to happen.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: feature-category
+    attributes:
+      label: Feature Category
+      description: Which area of the app would this feature affect?
+      options:
+        - Journal/Mood Tracking
+        - Medication Management
+        - Wellness Analytics
+        - Breathing Exercises
+        - Meditation/Audio
+        - Notifications
+        - Data Export/Import
+        - AI/ML Features
+        - User Interface
+        - Accessibility
+        - Internationalization
+        - App Settings
+        - Privacy/Security
+        - Performance
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority Level
+      description: How important is this feature to you?
+      options:
+        - "Low - Nice to have"
+        - "Medium - Would be helpful"
+        - "High - Important for my use case"
+        - "Critical - Blocks my usage"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: Estimated Complexity
+      description: How complex do you think this feature might be to implement?
+      options:
+        - "Simple - Minor UI change or setting"
+        - "Medium - New feature with moderate complexity"
+        - "Complex - Major feature requiring significant development"
+        - "Not sure"
+
+  - type: textarea
+    id: user-stories
+    attributes:
+      label: User Stories
+      description: Describe how users would interact with this feature
+      placeholder: |
+        As a [type of user], I want [some goal] so that [some reason].
+        
+        Example scenarios:
+        - When I do X, I expect Y to happen
+        - As someone tracking mood, I want to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Have you considered any alternative solutions or features?
+      placeholder: |
+        Describe alternatives you've considered.
+        A clear and concise description of any alternative solutions or features you've considered.
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups or Examples
+      description: Any visual mockups, wireframes, or examples from other apps
+      placeholder: |
+        If you have mockups, wireframes, or examples from other apps, please describe them or provide links.
+        **Privacy Note**: Don't share personal health data in examples.
+
+  - type: checkboxes
+    id: privacy-compliance
+    attributes:
+      label: Privacy & Security Considerations
+      description: Please confirm this feature maintains privacy principles
+      options:
+        - label: This feature can work entirely offline/on-device
+          required: false
+        - label: This feature does not require sending personal data to external servers
+          required: false
+        - label: This feature maintains user control over their data
+          required: false
+        - label: I understand some features may not be possible due to privacy constraints
+          required: true
+
+  - type: dropdown
+    id: platforms
+    attributes:
+      label: Target Platforms
+      description: Which platforms should support this feature?
+      multiple: true
+      options:
+        - Android
+        - iOS
+        - Web
+        - All platforms
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other information about the feature request
+      placeholder: |
+        Add any other context, screenshots, or examples about the feature request here.
+        
+        Consider:
+        - How this fits with existing features
+        - Potential challenges or limitations
+        - Similar features in other apps (without sharing personal data)
+
+  - type: checkboxes
+    id: contribution-interest
+    attributes:
+      label: Contribution Interest
+      description: Are you interested in helping implement this feature?
+      options:
+        - label: I would be interested in contributing to this feature
+        - label: I could help with testing this feature
+        - label: I could help with documentation for this feature
+        - label: I would prefer others implement this feature
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        
+        **Privacy Notice**: All feature requests will be evaluated against Pillow's privacy-first principles. Features requiring external data transmission or cloud services may not be feasible.
+        
+        **Medical Disclaimer**: Remember that Pillow is an experimental research app for educational purposes, not a medical device. Feature requests should align with this scope.

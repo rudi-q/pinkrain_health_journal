@@ -1,0 +1,17 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔒 Security Vulnerability
+    url: mailto:reach@rudi.engineer?subject=[SECURITY]%20Pillow%20App%20Vulnerability%20Report
+    about: Report security vulnerabilities privately via email (do not create public issues for security issues)
+  - name: 💬 GitHub Discussions
+    url: https://github.com/rudi-q/pillow-health-journal-app/discussions
+    about: Ask questions, share ideas, and discuss with the community
+  - name: 📧 Direct Contact
+    url: mailto:reach@rudi.engineer
+    about: Contact the maintainer directly for private or sensitive questions
+  - name: 📚 Documentation
+    url: https://github.com/rudi-q/pillow-health-journal-app/blob/main/README.md
+    about: Check the README and documentation before creating an issue
+  - name: 🏥 Medical Emergency
+    url: tel:988
+    about: "FOR MENTAL HEALTH EMERGENCIES: Call 988 (Suicide & Crisis Lifeline) or go to your nearest emergency room. This app is not for emergencies."

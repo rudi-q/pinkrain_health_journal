@@ -1,0 +1,162 @@
+name: 🐛 Bug Report
+description: Report a bug or issue with Pillow
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to report a bug! This helps make Pillow better for everyone.
+        
+        **Important**: Please search existing issues before creating a new one to avoid duplicates.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      description: Please complete these steps before submitting your bug report
+      options:
+        - label: I have searched existing issues and this is not a duplicate
+          required: true
+        - label: I am using the latest version of Pillow
+          required: true
+        - label: I have read the contributing guidelines
+          required: true
+
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: Describe what happened and what you expected to happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Detailed steps to reproduce the behavior
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen
+      placeholder: Describe what should have happened
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: What actually happened instead
+      placeholder: Describe what actually happened
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: Which platform are you experiencing this issue on?
+      options:
+        - Android
+        - iOS
+        - Web
+        - Multiple platforms
+    validations:
+      required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: App Version
+      description: What version of Pillow are you using?
+      placeholder: "e.g., 2.1.1"
+    validations:
+      required: true
+
+  - type: input
+    id: device-info
+    attributes:
+      label: Device Information
+      description: Device model and OS version
+      placeholder: "e.g., iPhone 14 Pro (iOS 17.1) or Samsung Galaxy S23 (Android 14)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: experimental-features
+    attributes:
+      label: Experimental Features
+      description: Are you using experimental AI features?
+      options:
+        - "No - Standard mode"
+        - "Yes - Experimental mode enabled"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: feature-area
+    attributes:
+      label: Feature Area
+      description: Which part of the app is affected?
+      multiple: true
+      options:
+        - Journal/Mood Tracking
+        - Medication Management
+        - Wellness Analytics
+        - Breathing Exercises
+        - Meditation/Audio
+        - Notifications
+        - Data Export/Import
+        - AI/ML Predictions
+        - App Settings
+        - Other
+
+  - type: textarea
+    id: error-logs
+    attributes:
+      label: Error Logs or Screenshots
+      description: |
+        If applicable, add screenshots or error logs to help explain your problem.
+        **Privacy Note**: Please ensure no personal health data is visible in screenshots.
+      placeholder: Paste error logs here or describe what you see
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other context about the problem
+      placeholder: Add any other information that might be helpful
+
+  - type: checkboxes
+    id: privacy-confirmation
+    attributes:
+      label: Privacy Confirmation
+      description: Please confirm you understand our privacy policy
+      options:
+        - label: I confirm that I have not included any personal health data in this report
+          required: true
+        - label: I understand that this is an experimental research app and not a medical device
+          required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        
+        **Privacy Notice**: Pillow is a privacy-first app. All your personal data stays on your device and is never transmitted. When reporting bugs, please avoid sharing personal health information.
+        
+        **Medical Disclaimer**: This app is for research and educational purposes only and should not replace professional medical advice.

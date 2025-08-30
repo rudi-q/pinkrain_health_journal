@@ -1,0 +1,176 @@
+name: ❓ Question or Support
+description: Ask a question or get help with using Pillow
+title: "[Question]: "
+labels: ["question", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for your question! We're here to help you use Pillow effectively.
+        
+        **Before asking**: Please check if your question is already answered in:
+        - 📖 [README.md](../README.md) - Project overview and setup
+        - 🤝 [CONTRIBUTING.md](../CONTRIBUTING.md) - Development guidelines
+        - 🛡️ [SECURITY.md](../SECURITY.md) - Privacy and security info
+        - 💬 [GitHub Discussions](../../discussions) - Community Q&A
+
+  - type: dropdown
+    id: question-type
+    attributes:
+      label: Question Type
+      description: What kind of help do you need?
+      options:
+        - General Usage Help
+        - Development/Technical Question
+        - Privacy/Security Question
+        - Feature Understanding
+        - Setup/Installation Help
+        - Troubleshooting
+        - Best Practices
+        - Medical/Health Context
+        - Contributing Question
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: Please describe your question in detail. The more context you provide, the better we can help you.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: user-type
+    attributes:
+      label: User Type
+      description: Which best describes you?
+      options:
+        - New user trying Pillow for the first time
+        - Regular user with a specific question
+        - Developer interested in contributing
+        - Security researcher
+        - Healthcare professional
+        - Researcher/Academic
+        - Other
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context and Background
+      description: What were you trying to do when this question came up?
+      placeholder: |
+        Please provide context:
+        - What were you trying to accomplish?
+        - What steps did you already try?
+        - What documentation did you check?
+        - Any relevant background information
+        
+        **Privacy Note**: Please don't share personal health data
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform (if relevant)
+      description: Which platform are you using?
+      options:
+        - Android
+        - iOS
+        - Web
+        - Multiple platforms
+        - Not platform-specific
+        - Not applicable
+
+  - type: input
+    id: app-version
+    attributes:
+      label: App Version (if relevant)
+      description: What version of Pillow are you using?
+      placeholder: "e.g., 2.1.1 (check in app settings)"
+
+  - type: textarea
+    id: attempts
+    attributes:
+      label: What Have You Tried?
+      description: What solutions or approaches have you already attempted?
+      placeholder: |
+        Please describe:
+        - Steps you've already taken
+        - Solutions you've tried
+        - Resources you've consulted
+        - Any error messages you encountered
+
+  - type: textarea
+    id: expected-outcome
+    attributes:
+      label: What Would You Like to Achieve?
+      description: What is your desired outcome or goal?
+      placeholder: Describe what you're hoping to accomplish or understand
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: Urgency Level
+      description: How urgent is this question for you?
+      options:
+        - "Low - General curiosity or learning"
+        - "Medium - Helpful for my current task"
+        - "High - Blocking my progress"
+        - "Not time-sensitive"
+
+  - type: checkboxes
+    id: privacy-awareness
+    attributes:
+      label: Privacy Awareness
+      description: Please confirm your understanding of Pillow's privacy approach
+      options:
+        - label: I understand that Pillow keeps all data on my device locally
+          required: false
+        - label: I understand that Pillow is an experimental research app, not a medical device
+          required: false
+        - label: I will not share personal health information in this question
+          required: true
+
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Information
+      description: Any other details that might be helpful?
+      placeholder: |
+        Please include:
+        - Screenshots (without personal data)
+        - Error logs or messages
+        - Relevant system information
+        - Links to related issues or discussions
+
+  - type: checkboxes
+    id: community-help
+    attributes:
+      label: Community Discussion
+      description: Would this be better suited for community discussion?
+      options:
+        - label: This might be a good topic for GitHub Discussions
+        - label: Other users might benefit from the answer to this question
+        - label: I'm open to community input on this question
+        - label: This seems like a private/specific question
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        
+        **Response Expectations:**
+        - 📋 **General questions**: Usually answered within 24-48 hours
+        - 🔧 **Technical questions**: May take longer depending on complexity
+        - 🏥 **Medical questions**: We cannot provide medical advice - please consult healthcare professionals
+        - 🔒 **Privacy questions**: Prioritized for quick response
+        
+        **Alternative Support:**
+        - 💬 **GitHub Discussions**: Great for open-ended questions and community input
+        - 📧 **Email**: reach@rudi.engineer for private or sensitive questions
+        - 📚 **Documentation**: Check existing docs before asking
+        
+        **Medical Disclaimer**: Pillow is an experimental research app for educational purposes only. It should never replace professional medical advice, diagnosis, or treatment. Always consult qualified healthcare providers for medical questions.
