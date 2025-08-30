@@ -372,7 +372,8 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                       },
                     );
                   },
-                  child: Text('Remove from Pill Box', style: TextStyle(color: Colors.red[700])),
+                  child: Text('Remove from Pill Box',
+                      style: TextStyle(color: Colors.red[700])),
                 ),
               ),
             ],

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../theme/icons.dart';
+import '../../../core/theme/tokens.dart';
+
 
 
 Widget buildBottomNavigationBar({required BuildContext context, required String currentRoute}) {
@@ -12,9 +14,9 @@ Widget buildBottomNavigationBar({required BuildContext context, required String 
       children: [
         buildNavItem(context, 'Journal', 'journal', currentRoute == 'journal'),
         buildNavItem(context, 'Pillbox', 'pillbox', currentRoute == 'pillbox'),
-        buildNavItem(context, 'Wellness', 'wellness', currentRoute == 'wellness'),
-        buildNavItem(context, 'Mindfulness', 'mindfulness', 
+        buildNavItem(context, 'Mindfulness', 'mindfulness',
             currentRoute == 'mindfulness' || currentRoute == 'breath' || currentRoute == 'meditation'),
+        buildNavItem(context, 'Wellness', 'wellness', currentRoute == 'wellness'),
       ],
     ),
   );
@@ -34,7 +36,7 @@ GestureDetector buildNavItem(BuildContext context, String label, String route, b
         decoration: BoxDecoration(
           shape: BoxShape.rectangle,
           borderRadius: BorderRadius.circular(16),
-          color: isSelected ? Colors.pink[100] : Colors.transparent,
+          color: isSelected ? AppTokens.bgCard : Colors.transparent,
         ),
         padding: EdgeInsets.all(8),
         child: appVectorImage(fileName: route)

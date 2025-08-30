@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:pillow/core/services/hive_service.dart';
@@ -12,6 +13,9 @@ import 'package:pillow/features/wellness/presentation/components/mood_painter.da
 import 'package:pillow/features/wellness/presentation/components/personalized_insights.dart';
 import 'package:pillow/features/wellness/presentation/wellness_notifier.dart';
 import 'package:pretty_animated_text/pretty_animated_text.dart';
+
+import '../../../core/theme/icons.dart';
+import '../../../core/theme/tokens.dart';
 
 //todo: Implement wellness data persistence and analytics
 
@@ -167,7 +171,35 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
 
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        title: const Text(
+          'Wellness',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: AppTokens.textPrimary,
+          ),
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        automaticallyImplyLeading: false,
+        actions: [
+          GestureDetector(
+            onTap: () {
+              context.go('/profile');
+            },
+            child: Container(
+              margin: const EdgeInsets.only(right: 16),
+              padding: const EdgeInsets.all(8),
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTokens.buttonElevatedBg,
+              ),
+              child: appVectorImage(fileName: 'profile'), // Make sure this matches your icon
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -175,7 +207,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
                 // Date navigation and selector
                 Column(
                   children: [
