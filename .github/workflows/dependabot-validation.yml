@@ -12,7 +12,7 @@ jobs:
     
     strategy:
       matrix:
-        flutter-version: ['3.24.0']
+        flutter-version: ['3.35.2']
     
     steps:
       - name: Checkout code
@@ -120,8 +120,8 @@ jobs:
             - 🏗️ Build verification
             - 🔒 Security check
             
-            ### Flutter Version Compatibility:
-            - ✅ Flutter 3.24.0
+          ### Flutter Version Compatibility:
+            - ✅ Flutter 3.35.2 (with Dart 3.9.0)
             - ✅ Flutter stable
             
             This PR is ready for review and merge! 🚀`;
@@ -144,6 +144,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.35.2'
           channel: 'stable'
           cache: true
 
@@ -172,6 +173,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.35.2'
           channel: 'stable'
           cache: true
 

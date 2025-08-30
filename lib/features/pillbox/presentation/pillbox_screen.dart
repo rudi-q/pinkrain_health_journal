@@ -471,8 +471,8 @@ class PillboxScreen extends ConsumerWidget {
                                     borderRadius: BorderRadius.circular(30),
                                     border: Border.all(
                                       color: isSelected
-                                          ? AppTokens.borderStrong!
-                                          : AppTokens.borderLight!,
+                                          ? AppTokens.borderStrong
+                                          : AppTokens.borderLight,
                                     ),
                                   ),
                                 child: Center(
@@ -593,7 +593,6 @@ class PillboxScreen extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(30),
                                 ),
                               ),
-                            ),
                             onPressed: () {
                               if (validateAllFields()) {
                                 final newMedicine = Medicine(
