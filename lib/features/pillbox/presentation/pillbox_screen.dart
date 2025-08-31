@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pillow/core/theme/colors.dart';
-import 'package:pillow/features/pillbox/data/pillbox_model.dart';
-import 'package:pillow/features/pillbox/presentation/pillbox_notifier.dart';
-import 'package:pillow/features/treatment/data/treatment.dart';
-import 'package:pillow/features/treatment/domain/treatment_manager.dart';
+import 'package:pinkrain/core/theme/colors.dart';
+import 'package:pinkrain/features/pillbox/data/pillbox_model.dart';
+import 'package:pinkrain/features/pillbox/presentation/pillbox_notifier.dart';
+import 'package:pinkrain/features/treatment/data/treatment.dart';
+import 'package:pinkrain/features/treatment/domain/treatment_manager.dart';
 
 import '../../../core/models/medicine_model.dart';
 import '../../../core/theme/tokens.dart';

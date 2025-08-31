@@ -2,10 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pillow/core/models/medicine_model.dart';
-import 'package:pillow/features/treatment/data/treatment.dart';
-import 'package:pillow/features/treatment/domain/treatment_manager.dart';
-import 'package:pillow/features/treatment/presentation/edit_treatment.dart';
+import 'package:pinkrain/core/models/medicine_model.dart';
+import 'package:pinkrain/features/treatment/data/treatment.dart';
+import 'package:pinkrain/features/treatment/domain/treatment_manager.dart';
+import 'package:pinkrain/features/treatment/presentation/edit_treatment.dart';
 
 void main() {
   // Helper function to create a test treatment

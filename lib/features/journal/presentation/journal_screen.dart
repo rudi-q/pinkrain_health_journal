@@ -5,18 +5,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:pillow/core/services/hive_service.dart';
-import 'package:pillow/core/util/helpers.dart';
-import 'package:pillow/core/widgets/buttons.dart';
-import 'package:pillow/features/journal/presentation/daily_mood_prompt.dart';
+import 'package:pinkrain/core/services/hive_service.dart';
+import 'package:pinkrain/core/util/helpers.dart';
+import 'package:pinkrain/core/widgets/buttons.dart';
+import 'package:pinkrain/features/journal/presentation/daily_mood_prompt.dart';
 import 'package:pretty_animated_text/pretty_animated_text.dart';
 
 import '../../../core/theme/icons.dart';
+import '../../../core/theme/tokens.dart';
 import '../../../core/util/dateFormatConverters.dart';
 import '../../../core/widgets/bottom_navigation.dart';
 import '../data/journal_log.dart';
 import 'journal_notifier.dart';
-import '../../../core/theme/tokens.dart';
 
 
 

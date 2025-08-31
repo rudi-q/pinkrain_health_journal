@@ -91,8 +91,8 @@ PinkRain is a comprehensive mental health and wellness tracking application desi
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/rudi-q/pillow-health-journal-app.git
-   cd pillow-health-journal-app
+   git clone https://github.com/rudi-q/pinkrain_health_journal.git
+   cd pinkrain_health_journal
    ```
 
 2. **Install dependencies**
@@ -343,9 +343,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Need help or have questions?
 
-- 📧 **Email**: pillow@doubl.one
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/rudi-q/pillow-health-journal-app/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/rudi-q/pillow-health-journal-app/discussions)
+- 📧 **Email**: reach@rudi.engineer
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/rudi-q/pinkrain_health_journal/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/rudi-q/pinkrain_health_journal/discussions)
 
 ---
 

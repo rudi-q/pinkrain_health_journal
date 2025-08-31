@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pillow/features/treatment/domain/reminder_rl.dart';
+import 'package:pinkrain/features/treatment/domain/reminder_rl.dart';
 
 void main() {
   group('ReminderRL', () {

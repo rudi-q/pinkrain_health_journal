@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pillow/features/pillbox/presentation/pillbox_notifier.dart';
+import 'package:pinkrain/features/pillbox/presentation/pillbox_notifier.dart';
 
 import '../../../core/models/medicine_model.dart';
 

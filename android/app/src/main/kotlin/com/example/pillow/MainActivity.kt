@@ -1,4 +1,4 @@
-package com.example.pillow
+package com.example.pinkrain
 
 import io.flutter.embedding.android.FlutterActivity
 

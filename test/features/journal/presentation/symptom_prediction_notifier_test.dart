@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pillow/features/journal/data/symptom_prediction.dart';
-import 'package:pillow/features/journal/presentation/symptom_predicton_notifier.dart';
+import 'package:pinkrain/features/journal/data/symptom_prediction.dart';
+import 'package:pinkrain/features/journal/presentation/symptom_predicton_notifier.dart';
 
 void main() {
   group('SymptomPredictionNotifier Tests', () {

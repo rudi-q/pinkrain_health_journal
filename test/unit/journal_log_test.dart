@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pillow/core/util/helpers.dart';
-import 'package:pillow/features/journal/data/journal_log.dart';
+import 'package:pinkrain/core/util/helpers.dart';
+import 'package:pinkrain/features/journal/data/journal_log.dart';
 
 void main() {
   group('Journal Log Tests', () {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:pillow/core/util/helpers.dart';
-import 'package:pillow/features/journal/domain/tf_lite_symptom_pred.dart';
+import 'package:pinkrain/core/util/helpers.dart';
+import 'package:pinkrain/features/journal/domain/tf_lite_symptom_pred.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();

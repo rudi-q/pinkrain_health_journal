@@ -51,14 +51,14 @@ Before contributing, ensure you have:
 ### 1. Clone Your Fork
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/pillow-health-journal-app.git
-cd pillow-health-journal-app
+git clone https://github.com/YOUR_USERNAME/pinkrain-health-journal-app.git
+cd pinkrain-health-journal-app
 ```
 
 ### 2. Set Up Upstream Remote
 
 ```bash
-git remote add upstream https://github.com/rudi-q/pillow-health-journal-app.git
+git remote add upstream https://github.com/rudi-q/pinkrain-health-journal-app.git
 ```
 
 ### 3. Install Dependencies
@@ -316,7 +316,7 @@ Fixes #(issue number)
 Understanding the codebase structure:
 
 ```
-pillow-health-journal-app/
+pinkrain-health-journal-app/
 ├── lib/
 │   ├── core/
 │   │   ├── models/          # Data models
@@ -383,7 +383,7 @@ Remember that PinkRain is an experimental research project:
 
 - **GitHub Issues**: Bug reports and feature requests
 - **GitHub Discussions**: General questions and community chat
-- **Email**: pillow@doubl.one for direct contact
+- **Email**: reach@rudi.engineer for direct contact
 - **Code Review**: Get feedback on draft PRs
 
 ### Documentation Resources

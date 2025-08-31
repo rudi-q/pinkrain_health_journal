@@ -1,4 +1,4 @@
-package one.doubl.pillow
+package one.doubl.pinkrain
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:pillow/core/widgets/bottom_navigation.dart';
-import 'package:pillow/core/widgets/components.dart';
+import 'package:pinkrain/core/widgets/bottom_navigation.dart';
+import 'package:pinkrain/core/widgets/components.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -228,7 +228,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                 onTap: () async {
                   final Uri emailUri = Uri(
                     scheme: 'mailto',
-                    path: 'pillow@doubl.one',
+                    path: 'reach@rudi.engineer',
                     query: 'subject=PinkRain%20App%20Support',
                   );
 
@@ -271,7 +271,7 @@ class ProfileScreenState extends State<ProfileScreen> {
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 onTap: () async {
-                  final Uri privacyUri = Uri.parse('https://doubl.one/pillow/privacy.html');
+                  final Uri privacyUri = Uri.parse('https://doubl.one/pinkrain/privacy.html');
                   try {
                     if (await canLaunchUrl(privacyUri)) {
                       await launchUrl(privacyUri, mode: LaunchMode.externalApplication);

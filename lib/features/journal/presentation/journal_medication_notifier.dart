@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pillow/core/util/helpers.dart';
-import 'package:pillow/features/journal/data/journal_log.dart';
-import 'package:pillow/features/journal/presentation/journal_notifier.dart';
-import 'package:pillow/features/treatment/services/medication_notification_service.dart';
+import 'package:pinkrain/core/util/helpers.dart';
+import 'package:pinkrain/features/journal/data/journal_log.dart';
+import 'package:pinkrain/features/journal/presentation/journal_notifier.dart';
+import 'package:pinkrain/features/treatment/services/medication_notification_service.dart';
 
 /// State class for the JournalMedicationNotifier
 class JournalMedicationState {

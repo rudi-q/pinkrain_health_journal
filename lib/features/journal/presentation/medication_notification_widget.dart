@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:pillow/core/util/helpers.dart';
-import 'package:pillow/features/journal/presentation/journal_medication_notifier.dart';
-import 'package:pillow/features/treatment/services/medication_notification_service.dart';
+import 'package:pinkrain/core/util/helpers.dart';
+import 'package:pinkrain/features/journal/presentation/journal_medication_notifier.dart';
+import 'package:pinkrain/features/treatment/services/medication_notification_service.dart';
 
 /// A widget that wraps the Journal screen to handle medication notifications
 /// This widget checks for untaken medications and shows notifications

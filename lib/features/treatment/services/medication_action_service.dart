@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:hive/hive.dart';
-import 'package:pillow/core/util/helpers.dart';
+import 'package:pinkrain/core/util/helpers.dart';
 
 /// Service responsible for handling medication actions (take, snooze, etc.)
 /// This follows clean architecture by separating action handling from notifications

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pillow/features/journal/presentation/journal_screen.dart';
-import 'package:pillow/features/journal/presentation/medication_notification_widget.dart';
+import 'package:pinkrain/features/journal/presentation/journal_screen.dart';
+import 'package:pinkrain/features/journal/presentation/medication_notification_widget.dart';
 
 /// A wrapper for the JournalScreen that adds medication notification functionality
 /// This demonstrates how to use the MedicationNotificationWidget without modifying
