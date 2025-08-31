@@ -64,8 +64,8 @@ Future<void> captureAndShareAsPdfWidget(GlobalKey widgetKey, String fileName) as
 
     await SharePlus.instance.share(ShareParams(
         files: [XFile(file.path)],
-        text: 'My Pillow Wellness Report: $fileName.PDF',
-        subject: 'Pillow Wellness Report'
+        text: 'My PinkRain Wellness Report: $fileName.PDF',
+        subject: 'PinkRain Wellness Report'
     ));
   } catch (e) {
     devPrint('Error during capture and share: $e');

@@ -1,5 +1,5 @@
 name: ✨ Feature Request
-description: Suggest a new feature or enhancement for Pillow
+description: Suggest a new feature or enhancement for PinkRain
 title: "[Feature]: "
 labels: ["enhancement", "needs-triage"]
 assignees: []
@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for suggesting a new feature! Your ideas help make Pillow better for everyone.
+        Thank you for suggesting a new feature! Your ideas help make PinkRain better for everyone.
         
         **Important**: Please search existing issues before creating a new one to avoid duplicates.
 
@@ -21,7 +21,7 @@ body:
           required: true
         - label: I have read the contributing guidelines
           required: true
-        - label: This feature aligns with Pillow's privacy-first principles
+        - label: This feature aligns with PinkRain's privacy-first principles
           required: true
 
   - type: textarea
@@ -191,6 +191,6 @@ body:
       value: |
         ---
         
-        **Privacy Notice**: All feature requests will be evaluated against Pillow's privacy-first principles. Features requiring external data transmission or cloud services may not be feasible.
+        **Privacy Notice**: All feature requests will be evaluated against PinkRain's privacy-first principles. Features requiring external data transmission or cloud services may not be feasible.
         
-        **Medical Disclaimer**: Remember that Pillow is an experimental research app for educational purposes, not a medical device. Feature requests should align with this scope.
+        **Medical Disclaimer**: Remember that PinkRain is an experimental research app for educational purposes, not a medical device. Feature requests should align with this scope.

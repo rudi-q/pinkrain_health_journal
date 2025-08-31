@@ -1,6 +1,6 @@
-# 🤝 Contributing to Pillow
+# 🤝 Contributing to PinkRain
 
-Thank you for your interest in contributing to Pillow! This document provides guidelines and information for contributors to help make the development process smooth and consistent.
+Thank you for your interest in contributing to PinkRain! This document provides guidelines and information for contributors to help make the development process smooth and consistent.
 
 ## 📋 Table of Contents
 
@@ -126,7 +126,7 @@ docs/api-documentation-update
 
 ### Architecture Guidelines
 
-Pillow follows clean architecture principles:
+PinkRain follows clean architecture principles:
 
 ```
 lib/
@@ -370,7 +370,7 @@ All contributions must adhere to our privacy-first principles:
 
 ### Medical Disclaimer Compliance
 
-Remember that Pillow is an experimental research project:
+Remember that PinkRain is an experimental research project:
 
 - **Never** make medical claims
 - **Include** appropriate disclaimers
@@ -424,7 +424,7 @@ Always remember:
 
 ## 🎉 Thank You!
 
-Your contributions help make Pillow a better tool for mental health awareness and privacy-preserving wellness tracking. Every contribution, no matter how small, makes a difference!
+Your contributions help make PinkRain a better tool for mental health awareness and privacy-preserving wellness tracking. Every contribution, no matter how small, makes a difference!
 
 **Happy coding! 🛏️💙**
 

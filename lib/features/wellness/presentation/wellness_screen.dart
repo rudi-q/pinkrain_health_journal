@@ -319,7 +319,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                           ), onPressed: () {
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               devPrint("Height: ${_printableWidgetKey.currentContext!.size!.height}");
-                              captureAndShareAsPdfWidget(_printableWidgetKey, 'Pillow_${_selectedDate.getNameOf(_selectedDateOption)}_Wellness_Report');
+                              captureAndShareAsPdfWidget(_printableWidgetKey, 'PinkRain_${_selectedDate.getNameOf(_selectedDateOption)}_Wellness_Report');
                             });
                           },
                         ),

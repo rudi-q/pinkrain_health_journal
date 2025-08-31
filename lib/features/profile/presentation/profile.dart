@@ -229,7 +229,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                   final Uri emailUri = Uri(
                     scheme: 'mailto',
                     path: 'pillow@doubl.one',
-                    query: 'subject=Pillow%20App%20Support',
+                    query: 'subject=PinkRain%20App%20Support',
                   );
 
                   try {
@@ -253,11 +253,11 @@ class ProfileScreenState extends State<ProfileScreen> {
                   const inviteUri = 'https://tally.so/r/3EYA6l';
                   try {
                     await SharePlus.instance.share(ShareParams(
-                        previewThumbnail: XFile('assets/images/splash-icon.png', name: 'Pillow'),
-                        text: "I've been using Pillow to track my wellness and journaling."
+                        previewThumbnail: XFile('assets/images/splash-icon.png', name: 'PinkRain'),
+                        text: "I've been using PinkRain to track my wellness and journaling."
                             "\nIt's actually really helpful! Check it out! \n$inviteUri\n"
                             "\nBtw no worries, it's privacy first so all data is stored locally on your device and never leaves your phone.",
-                        subject: 'You gotta check out Pillow',
+                        subject: 'You gotta check out PinkRain',
                     ));
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(

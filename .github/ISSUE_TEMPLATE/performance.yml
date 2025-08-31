@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for reporting a performance issue! This helps us keep Pillow running smoothly for everyone.
+        Thank you for reporting a performance issue! This helps us keep PinkRain running smoothly for everyone.
         
         **Important**: Please search existing issues before creating a new one to avoid duplicates.
 
@@ -19,7 +19,7 @@ body:
       options:
         - label: I have searched existing issues and this is not a duplicate
           required: true
-        - label: I am using the latest version of Pillow
+        - label: I am using the latest version of PinkRain
           required: true
         - label: I have tried restarting the app to see if the issue persists
           required: true
@@ -103,7 +103,7 @@ body:
     id: app-version
     attributes:
       label: App Version
-      description: What version of Pillow are you using?
+      description: What version of PinkRain are you using?
       placeholder: "e.g., 2.1.1"
     validations:
       required: true
@@ -181,7 +181,7 @@ body:
     id: data-size
     attributes:
       label: Data Volume
-      description: How much data do you have stored in Pillow?
+      description: How much data do you have stored in PinkRain?
       placeholder: |
         Approximate amount of:
         - Journal entries
@@ -273,6 +273,6 @@ body:
         
         **Performance Debugging**: Our team may follow up with additional questions to help diagnose the issue. Performance problems can be complex and may require detailed investigation.
         
-        **Privacy Notice**: Pillow is a privacy-first app. When reporting performance issues, please avoid sharing personal health information.
+        **Privacy Notice**: PinkRain is a privacy-first app. When reporting performance issues, please avoid sharing personal health information.
         
         **Expected Response**: Performance issues are prioritized based on severity and impact on users. Critical issues affecting app stability will be addressed first.

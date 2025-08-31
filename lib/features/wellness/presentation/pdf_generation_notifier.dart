@@ -21,7 +21,7 @@ class PdfGenerationNotifier extends StateNotifier<AsyncValue<void>> {
       await Share.shareXFiles(
         [XFile(pdfFile.path)],
         subject: 'Wellness Report',
-        text: 'Here\'s my wellness report from Pillow',
+        text: 'Here\'s my wellness report from PinkRain',
       );
       
       state = const AsyncValue.data(null);

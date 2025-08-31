@@ -1,7 +1,7 @@
 blank_issues_enabled: false
 contact_links:
   - name: 🔒 Security Vulnerability
-    url: mailto:reach@rudi.engineer?subject=[SECURITY]%20Pillow%20App%20Vulnerability%20Report
+    url: mailto:reach@rudi.engineer?subject=[SECURITY]%20PinkRain%20App%20Vulnerability%20Report
     about: Report security vulnerabilities privately via email (do not create public issues for security issues)
   - name: 💬 GitHub Discussions
     url: https://github.com/rudi-q/pillow-health-journal-app/discussions

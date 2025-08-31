@@ -103,7 +103,7 @@ class _SplashScreenState extends State<SplashScreen>
                     const SizedBox(height: 24),
                     // App name
                     const Text(
-                      'Pillow',
+                      'PinkRain',
                       style: TextStyle(
                         fontFamily: 'Outfit',
                         fontSize: 36,

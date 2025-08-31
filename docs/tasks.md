@@ -1,4 +1,4 @@
-# Pillow App Improvement Tasks
+# PinkRain App Improvement Tasks
 
 ## Architecture and Code Organization
 1. [ ] Implement proper layered architecture across all features (separate data, domain, and presentation layers)
