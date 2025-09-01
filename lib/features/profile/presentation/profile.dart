@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pinkrain/core/widgets/bottom_navigation.dart';
 import 'package:pinkrain/core/widgets/components.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pinkrain/core/util/helpers.dart' show devPrint;
+import 'dart:io';
 
 
 class ProfileScreen extends StatefulWidget {
@@ -17,10 +21,19 @@ class ProfileScreenState extends State<ProfileScreen> {
   bool isReminderEnabled = true;
   bool isFillUpPillboxEnabled = false;
 
-
-
-
-
+  // Helper method to load asset image and create XFile
+  Future<XFile?> _loadAssetAsXFile(String assetPath, String fileName) async {
+    try {
+      final byteData = await rootBundle.load(assetPath);
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/$fileName');
+      await tempFile.writeAsBytes(byteData.buffer.asUint8List());
+      return XFile(tempFile.path);
+    } catch (e) {
+      devPrint('Error loading asset as XFile: $e');
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,17 +153,18 @@ class ProfileScreenState extends State<ProfileScreen> {
                     path: 'reach@rudi.engineer',
                     query: 'subject=PinkRain%20App%20Support',
                   );
+                  final messenger = ScaffoldMessenger.of(context);
 
                   try {
                     if (await canLaunchUrl(emailUri)) {
                       await launchUrl(emailUri);
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         SnackBar(content: Text('Could not launch email client')),
                       );
                     }
                   } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       SnackBar(content: Text('Error launching email: $e')),
                     );
                   }
@@ -160,16 +174,35 @@ class ProfileScreenState extends State<ProfileScreen> {
                 contentPadding: EdgeInsets.zero,
                 onTap: () async {
                   const inviteUri = 'https://tally.so/r/3EYA6l';
+                  final messenger = ScaffoldMessenger.of(context);
                   try {
-                    await SharePlus.instance.share(ShareParams(
-                        previewThumbnail: XFile('assets/images/splash-icon.png', name: 'PinkRain'),
-                        text: "I've been using PinkRain to track my wellness and journaling."
-                            "\nIt's actually really helpful! Check it out! \n$inviteUri\n"
-                            "\nBtw no worries, it's privacy first so all data is stored locally on your device and never leaves your phone.",
+                    // Load the asset image as XFile
+                    final imageFile = await _loadAssetAsXFile(
+                      'assets/icons/splash-icon.png',
+                      'pinkrain_icon.png'
+                    );
+                    
+                    // Prepare share parameters
+                    final shareText = "I've been using PinkRain to track my wellness and journaling."
+                        "\nIt's actually really helpful! Check it out! \n$inviteUri\n"
+                        "\nBtw no worries, it's privacy first so all data is stored locally on your device and never leaves your phone.";
+                    
+                    if (imageFile != null) {
+                      // Share with image file
+                      await SharePlus.instance.share(ShareParams(
+                        files: [imageFile],
+                        text: shareText,
                         subject: 'You gotta check out PinkRain',
-                    ));
+                      ));
+                    } else {
+                      // Fallback to text-only sharing if image loading fails
+                      await SharePlus.instance.share(ShareParams(
+                        text: shareText,
+                        subject: 'You gotta check out PinkRain',
+                      ));
+                    }
                   } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       SnackBar(content: Text('Error sending invite: $e')),
                     );
                   }
@@ -181,16 +214,17 @@ class ProfileScreenState extends State<ProfileScreen> {
                 contentPadding: EdgeInsets.zero,
                 onTap: () async {
                   final Uri privacyUri = Uri.parse('https://doubl.one/pinkrain/privacy.html');
+                  final messenger = ScaffoldMessenger.of(context);
                   try {
                     if (await canLaunchUrl(privacyUri)) {
                       await launchUrl(privacyUri, mode: LaunchMode.externalApplication);
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         SnackBar(content: Text('Could not launch privacy policy')),
                       );
                     }
                   } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       SnackBar(content: Text('Error launching privacy policy: $e')),
                     );
                   }
@@ -232,7 +266,7 @@ class ProfileScreenState extends State<ProfileScreen> {
       trailing: Switch(
         value: value,
         onChanged: onChanged,
-        activeThumbColor: Colors.pink[100],
+        thumbColor: WidgetStateProperty.all(Colors.pink[100]),
       ),
     );
   }
