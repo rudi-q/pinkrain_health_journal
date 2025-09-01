@@ -80,6 +80,6 @@ app.*.map.json
 **/config.json
 
 # Development tool files
-CLAUDE.md
+W*.md
 .*rules
 *CLEANUP.md
