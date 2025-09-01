@@ -27,17 +27,15 @@ void main() {
         // These prints help verify the test data is correct
         final log = firstLog!; // We know it's non-null since logs is not empty
         final treatment = log.treatment;
-        if (treatment != null) {
-          // medicine is non-null if treatment exists
-          devPrint('Medicine name: ${treatment.medicine.name}');
-          devPrint('Is taken initially: ${log.isTaken}');
-          log.isTaken = true;
+        // treatment is guaranteed to be non-null based on the data structure
+        devPrint('Medicine name: ${treatment.medicine.name}');
+        devPrint('Is taken initially: ${log.isTaken}');
+        log.isTaken = true;
 
-          final updatedLogs = await journalLog.getMedicationsForTheDay(date);
-          expect(updatedLogs, isNotEmpty);
-          expect(updatedLogs[0].isTaken, isTrue,
-              reason: 'Updated log should be marked as taken');
-        }
+        final updatedLogs = await journalLog.getMedicationsForTheDay(date);
+        expect(updatedLogs, isNotEmpty);
+        expect(updatedLogs[0].isTaken, isTrue,
+            reason: 'Updated log should be marked as taken');
       } else {
         markTestSkipped('No medication logs found for testing');
       }

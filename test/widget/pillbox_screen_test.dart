@@ -35,6 +35,20 @@ class TestPillBox implements PillBox {
   void removeMed(Medicine medicine) {
     pillStock.removeWhere((item) => item.medicine.name == medicine.name);
   }
+
+  // Implementation of the missing toJsonList method from IPillBox interface
+  @override
+  List<Map<String, dynamic>> toJsonList() {
+    // For testing purposes, we can return a simplified JSON representation
+    return pillStock.map((item) => {
+      'medicine': {
+        'name': item.medicine.name,
+        'type': item.medicine.type,
+        'color': item.medicine.color,
+      },
+      'quantity': item.quantity,
+    }).toList();
+  }
 }
 
 // Helper to create mock medicines for testing

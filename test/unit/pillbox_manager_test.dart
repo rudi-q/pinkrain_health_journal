@@ -26,7 +26,7 @@ void main() {
       final initialCount = PillBoxManager.pillbox.pillStock.length;
 
       // Act
-      PillBoxManager.addMedicine(medicine: medicine, quantity: 10);
+      PillBoxManager.pillbox.addMed(medicine, 10);
 
       // Assert
       expect(PillBoxManager.pillbox.pillStock.length, initialCount + 1);
@@ -51,13 +51,13 @@ void main() {
       medicine.addSpecification(Specification(dosage: 20, unit: 'mg'));
 
       // Add the medicine first
-      PillBoxManager.addMedicine(medicine: medicine, quantity: 10);
+      PillBoxManager.pillbox.addMed(medicine, 10);
 
       // Get count after adding
       final countAfterAdd = PillBoxManager.pillbox.pillStock.length;
 
       // Act
-      PillBoxManager.removeMedicine(medicine: medicine);
+      PillBoxManager.pillbox.removeMed(medicine);
 
       // Assert
       expect(PillBoxManager.pillbox.pillStock.length, countAfterAdd - 1);
