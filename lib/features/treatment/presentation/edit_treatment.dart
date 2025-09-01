@@ -466,12 +466,14 @@ class EditTreatmentScreenState extends ConsumerState<EditTreatmentScreen> {
                 }
 
                 // Show success message and pop
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Treatment updated successfully')),
-                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Treatment updated successfully')),
+                  );
 
-                // Return to previous screen
-                Navigator.of(context).pop(true);
+                  // Return to previous screen
+                  Navigator.of(context).pop(true);
+                }
               }
             } catch (e) {
               // Show error message

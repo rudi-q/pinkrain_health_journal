@@ -223,7 +223,9 @@ class DurationScreenState extends ConsumerState<DurationScreen> {
                         final pillIntakeNotifier = ref.read(pillIntakeProvider.notifier);
                         await pillIntakeNotifier.populateJournal(selectedDate);
                         
-                        context.go('/journal');
+                        if (mounted && context.mounted) {
+                          context.go('/journal');
+                        }
                       }
                     },
                     style: TextButton.styleFrom(
