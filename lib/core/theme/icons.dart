@@ -74,7 +74,7 @@ Image appImage(String fileName, {double? size, Color? color, bool? useColorFilte
 
 String colorToHex(Color color) {
   // Get the RGB value (ignore alpha by masking with 0xFFFFFF)
-  String hex = color.value.toRadixString(16).padLeft(8, '0').substring(2);
+  String hex = color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2);
   return '#$hex'.toUpperCase();
 }
 
@@ -83,9 +83,9 @@ Color darkenColor(Color color, [double factor = 0.8]) {
   factor = factor.clamp(0.0, 1.0);
 
   // Extract RGB components
-  int red = color.red;
-  int green = color.green;
-  int blue = color.blue;
+  int red = (color.r * 255.0).round() & 0xff;
+  int green = (color.g * 255.0).round() & 0xff;
+  int blue = (color.b * 255.0).round() & 0xff;
 
   // Darken each component by multiplying with the factor
   red = (red * factor).round().clamp(0, 255);
@@ -93,5 +93,5 @@ Color darkenColor(Color color, [double factor = 0.8]) {
   blue = (blue * factor).round().clamp(0, 255);
 
   // Return the new color, preserving the original alpha
-  return Color.fromARGB(color.alpha, red, green, blue);
+  return Color.fromARGB((color.a * 255.0).round() & 0xff, red, green, blue);
 }

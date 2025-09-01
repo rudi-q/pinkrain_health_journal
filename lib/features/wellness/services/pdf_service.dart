@@ -7,7 +7,6 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 class PdfService {
-  static const _fontFamily = 'Outfit';
 
   /// Generate a wellness report PDF for the specified date range
   static Future<File> generateWellnessReport(

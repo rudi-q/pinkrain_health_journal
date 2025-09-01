@@ -268,28 +268,6 @@ Color _getSecondaryStageColor(BreathingStage stage) {
   }
 }
 
-// Helper to get the duration for the current stage
-int _getDuration(String exerciseType, BreathingStage stage) {
-  switch (exerciseType) {
-    case 'box':
-      return 4; // All stages are 4 seconds in box breathing
-    case '4-7-8':
-      switch (stage) {
-        case BreathingStage.inhale:
-          return 4;
-        case BreathingStage.hold:
-          return 7;
-        case BreathingStage.exhale:
-          return 8;
-        case BreathingStage.rest:
-          return 0; // No rest in 4-7-8
-        default:
-          return 4;
-      }
-    default:
-      return 5;
-  }
-}
 
 class BreathBreakScreen extends ConsumerStatefulWidget {
   const BreathBreakScreen({super.key});
@@ -324,8 +302,7 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
   };
 
   // Sound feedback control
-  bool _enableSound = true;
-  bool _enableHaptic = true;
+  final bool _enableHaptic = true;
   BreathingStage? _lastStage;
 
   @override
@@ -709,7 +686,7 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
           color: isSelected ? AppTokens.bgCard : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppTokens.borderLight! : Colors.grey[300]!,
+            color: isSelected ? AppTokens.borderLight : Colors.grey[300]!,
             width: 1,
           ),
           boxShadow: isSelected
@@ -968,28 +945,6 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
     }
   }
 
-  Widget _buildFeelingButton(String label) {
-    return ElevatedButton(
-      onPressed: () {
-        // Save feeling data
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Feeling recorded: $label'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
-        ),
-      ),
-      child: Text(label),
-    );
-  }
 
   // Provide appropriate feedback based on breathing stage
   void _provideFeedback(BreathingStage stage) {
@@ -1022,27 +977,6 @@ class _BreathBreakScreenState extends ConsumerState<BreathBreakScreen> with Sing
     // }
   }
 
-  Widget _buildFeedbackToggle({
-    required IconData icon,
-    required bool enabled,
-    required VoidCallback onToggle,
-  }) {
-    return GestureDetector(
-      onTap: onToggle,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: enabled ? Colors.white.withAlpha(255) : Colors.white.withAlpha(127),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          icon,
-          color: enabled ? Colors.white : Colors.white.withAlpha(127),
-          size: 20,
-        ),
-      ),
-    );
-  }
 }
 
 class _IridescentBorderPainter extends CustomPainter {

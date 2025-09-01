@@ -18,10 +18,12 @@ class PdfGenerationNotifier extends StateNotifier<AsyncValue<void>> {
       final pdfFile = await PdfService.generateWellnessReport(date, timeRange);
       
       // Share the file
-      await Share.shareXFiles(
-        [XFile(pdfFile.path)],
-        subject: 'Wellness Report',
-        text: 'Here\'s my wellness report from PinkRain',
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(pdfFile.path)],
+          subject: 'Wellness Report',
+          text: 'Here\'s my wellness report from PinkRain',
+        ),
       );
       
       state = const AsyncValue.data(null);

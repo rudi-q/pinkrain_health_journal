@@ -1,21 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:pinkrain/core/widgets/bottom_navigation.dart';
 import 'package:pinkrain/core/widgets/components.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-import '../../../core/util/helpers.dart';
-
-// Model class for notification sounds
-class NotificationSound {
-  final String name;
-  final String assetPath;
-
-  NotificationSound({required this.name, required this.assetPath});
-}
 
 
 class ProfileScreen extends StatefulWidget {
@@ -29,89 +17,10 @@ class ProfileScreenState extends State<ProfileScreen> {
   bool isReminderEnabled = true;
   bool isFillUpPillboxEnabled = false;
 
-  // Audio player for previewing notification sounds
-  late AudioPlayer _audioPlayer;
 
-  // List of available notification sounds
-  final List<NotificationSound> _notificationSounds = [
-    NotificationSound(name: 'Default', assetPath: ''),
-    NotificationSound(name: 'Gentle Chime', assetPath: 'assets/audio-tracks/The_Voice_You_Needed.m4a'),
-    NotificationSound(name: 'Soft Bell', assetPath: 'assets/audio-tracks/What_You_Feel_is_Real.m4a'),
-    NotificationSound(name: 'Calm Tone', assetPath: 'assets/audio-tracks/You_Don\'t_Have_to_Earn_Rest.m4a'),
-  ];
 
-  // Currently selected notification sound
-  NotificationSound? _selectedSound;
 
-  // Key for storing the selected sound in SharedPreferences
-  static const String _selectedSoundKey = 'selected_notification_sound';
 
-  @override
-  void initState() {
-    super.initState();
-    _initAudioPlayer();
-    _loadSavedSound();
-  }
-
-  @override
-  void dispose() {
-    _audioPlayer.dispose();
-    super.dispose();
-  }
-
-  // Initialize the audio player
-  Future<void> _initAudioPlayer() async {
-    _audioPlayer = AudioPlayer();
-  }
-
-  // Load the saved notification sound preference
-  Future<void> _loadSavedSound() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedSoundPath = prefs.getString(_selectedSoundKey);
-
-    if (savedSoundPath != null) {
-      // Find the sound with the saved path
-      final sound = _notificationSounds.firstWhere(
-        (sound) => sound.assetPath == savedSoundPath,
-        orElse: () => _notificationSounds[0], // Default sound if not found
-      );
-      setState(() {
-        _selectedSound = sound;
-      });
-    } else {
-      // Use default sound if no preference is saved
-      setState(() {
-        _selectedSound = _notificationSounds[0];
-      });
-    }
-  }
-
-  // Play the selected notification sound as a preview
-  Future<void> _playSound(NotificationSound sound) async {
-    try {
-      // Stop any current playback
-      await _audioPlayer.stop();
-
-      // If it's the default sound, just return (no preview for default)
-      if (sound.assetPath.isEmpty) return;
-
-      // Load and play the sound
-      await _audioPlayer.setAsset(sound.assetPath);
-      await _audioPlayer.play();
-    } catch (e) {
-      devPrint('Error playing notification sound: $e');
-    }
-  }
-
-  // Save the selected notification sound preference
-  Future<void> _saveSelectedSound(NotificationSound sound) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_selectedSoundKey, sound.assetPath);
-
-    setState(() {
-      _selectedSound = sound;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -323,7 +232,7 @@ class ProfileScreenState extends State<ProfileScreen> {
       trailing: Switch(
         value: value,
         onChanged: onChanged,
-        activeColor: Colors.pink[100],
+        activeThumbColor: Colors.pink[100],
       ),
     );
   }

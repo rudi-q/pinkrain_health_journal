@@ -12,12 +12,11 @@ class MoodTrendChart extends StatefulWidget {
   final MoodDataFetcher? moodDataFetcher;
 
   MoodTrendChart({
-    Key? key,
+    super.key,
     required this.timeRange,
     DateTime? selectedDate,
     this.moodDataFetcher,
-  }) : selectedDate = selectedDate ?? DateTime.now(),
-       super(key: key);
+  }) : selectedDate = selectedDate ?? DateTime.now();
 
   @override
   State<MoodTrendChart> createState() => _MoodTrendChartState();

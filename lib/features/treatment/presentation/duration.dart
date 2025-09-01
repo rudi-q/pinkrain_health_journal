@@ -106,7 +106,7 @@ class DurationScreenState extends ConsumerState<DurationScreen> {
             const SizedBox(height: 30),
             // Start Field
             DropdownButtonFormField<String>(
-              value: 'tomorrow',
+              initialValue: 'tomorrow',
               decoration: InputDecoration(
                 labelText: 'Start',
                 filled: true,
@@ -162,7 +162,7 @@ class DurationScreenState extends ConsumerState<DurationScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: 'days',
+                    initialValue: 'days',
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.grey[200],

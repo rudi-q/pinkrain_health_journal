@@ -1202,7 +1202,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
     final DateTime startDate = getStartDate(_selectedDateOption, _selectedDate);
     final DateTime endDate = _selectedDate;
     final journalLog = ref.read(pillIntakeProvider.notifier).journalLog;
-    final double currentAdherence = journalLog.getAdherenceRateAll(startDate, endDate);;
+    final double currentAdherence = journalLog.getAdherenceRateAll(startDate, endDate);
     final currentText =
         "You've taken ${currentAdherence * 100}% of your meds $currentTimeFrame";
     final progressText =

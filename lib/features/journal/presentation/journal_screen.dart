@@ -1,19 +1,17 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:pinkrain/core/services/hive_service.dart';
 import 'package:pinkrain/core/util/helpers.dart';
-import 'package:pinkrain/core/widgets/buttons.dart';
 import 'package:pinkrain/features/journal/presentation/daily_mood_prompt.dart';
 import 'package:pretty_animated_text/pretty_animated_text.dart';
 
 import '../../../core/theme/icons.dart';
 import '../../../core/theme/tokens.dart';
-import '../../../core/util/dateFormatConverters.dart';
+import '../../../core/util/date_format_converters.dart';
 import '../../../core/widgets/bottom_navigation.dart';
 import '../data/journal_log.dart';
 import 'journal_notifier.dart';
@@ -190,8 +188,6 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
               return GestureDetector(
                 onTap: () {
                   int difference = normalizeDate(date).difference(normalizeDate(DateTime.now())).inDays;
-                  final normalizedNow = normalizeDate(DateTime.now());
-                  final normalizedTarget = normalizeDate(date);
 
                   final weekIndex = getWeekIndex(date);
                   _dateScrollController.jumpToPage(weekIndex);
@@ -212,7 +208,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
                         : AppTokens.bgMuted,
                     shape: BoxShape.circle,
                     border: isToday && !isSelected
-                        ? Border.all(color: Colors.grey[600]!, width: 1.5)
+                        ? Border.all(color: Colors.grey[600] ?? Colors.grey.shade600, width: 1.5)
                         : null,
                   ),
                   child: Column(
@@ -250,65 +246,6 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
   }
 
 
-  void _showDatePicker(BuildContext context) {
-    showCupertinoModalPopup(
-      context: context,
-      builder: (BuildContext context) {
-        return Container(
-          height: 300,
-          color: CupertinoColors.systemBackground.resolveFrom(context),
-          child: Column(
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Button.secondary(onPressed: Navigator.of(context).pop, text: ''),
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      child: Text(
-                        'Done',
-                        style: TextStyle(
-                          color: Colors.pink[100],
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        setState(() {
-                          // Update the selected date
-                          int difference = selectedDate.difference(DateTime.now()).inDays;
-                          _pageController.animateToPage(
-                            1000 + difference,
-                            duration: Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          );
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: CupertinoDatePicker(
-                  mode: CupertinoDatePickerMode.date,
-                  initialDateTime: selectedDate,
-                  minimumDate: DateTime(2000),
-                  maximumDate: DateTime(2101),
-                  onDateTimeChanged: (DateTime newDate) {
-                    final selectedDateNotifier = ref.read(selectedDateProvider.notifier);
-                    selectedDateNotifier.setDate(newDate, ref);
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   Widget _buildTodayHeading() {
     final date = selectedDate;
@@ -370,16 +307,16 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
         }
 
         // Determine card background color based on mood
-        Color cardColor = Colors.grey[100]!;
+        Color cardColor = Colors.grey[100] ?? Colors.grey.shade100;
         if (hasMood && moodData != null) {
           final mood = moodData['mood'] as int;
           // Gradient from light pink to light yellow based on mood (sad to happy)
           if (mood <= 1) {
-            cardColor = Colors.blue[50]!; // Sad mood
+            cardColor = Colors.blue[50] ?? Colors.blue.shade50; // Sad mood
           } else if (mood == 2) {
-            cardColor = Colors.grey[100]!; // Neutral mood
+            cardColor = Colors.grey[100] ?? Colors.grey.shade100; // Neutral mood
           } else {
-            cardColor = AppTokens.buttonPrimaryBg!; // Happy mood
+            cardColor = AppTokens.buttonPrimaryBg; // Happy mood
           }
         }
 
@@ -913,7 +850,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
         width: double.infinity,
         padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(color: Colors.grey[300] ?? Colors.grey.shade300),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(

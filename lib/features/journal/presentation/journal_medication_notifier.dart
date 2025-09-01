@@ -92,7 +92,7 @@ class JournalMedicationNotifier extends StateNotifier<JournalMedicationState> {
   }
 }
 
-/// Extension method for ConsumerState<T> to easily add medication notification
+/// Extension method for ConsumerState to easily add medication notification
 /// functionality to any widget without modifying its existing code
 extension MedicationNotifierExtension on ConsumerState {
   /// Check for untaken medications and show notifications
