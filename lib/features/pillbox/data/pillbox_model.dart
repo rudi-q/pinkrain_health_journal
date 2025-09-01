@@ -41,7 +41,7 @@ class PillBoxManager{
   static final pillbox = PillBox();
   static late PillBoxNotifier pillBoxNotifier;
 
-  static init(WidgetRef ref) {
+  static void init(WidgetRef ref) {
     pillBoxNotifier = ref.read(pillBoxProvider.notifier);
   }
 
