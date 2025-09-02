@@ -171,7 +171,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
 
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTokens.bgPrimary,
       appBar: AppBar(
         title: const Text(
           'Wellness',
@@ -181,7 +181,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
           ),
         ),
         elevation: 0,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppTokens.bgPrimary,
         automaticallyImplyLeading: false,
         actions: [
           GestureDetector(
