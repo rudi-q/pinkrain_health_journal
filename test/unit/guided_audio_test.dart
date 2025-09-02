@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pillow/features/guided-meditation/guided_audio.dart';
+import 'package:pinkrain/features/guided-meditation/guided_audio.dart';
 
 // Helper function to sanitize asset paths
 String sanitizeAssetPath(String assetPath) {

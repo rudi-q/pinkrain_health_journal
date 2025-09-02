@@ -1,9 +1,9 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:pillow/core/util/helpers.dart' show devPrint;
-import 'package:pillow/features/pillbox/data/pillbox_model.dart';
-import 'package:pillow/features/treatment/domain/treatment_manager.dart' show generateUniqueId;
+import 'package:pinkrain/core/util/helpers.dart' show devPrint;
+import 'package:pinkrain/features/pillbox/data/pillbox_model.dart';
+import 'package:pinkrain/features/treatment/domain/treatment_manager.dart' show generateUniqueId;
 
 class HiveService {
   static const String userPrefsBox = 'userPreferences';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pillow/features/journal/presentation/journal_screen_wrapper.dart';
+import 'package:pinkrain/features/journal/presentation/journal_screen_wrapper.dart';
 
 import '../../features/breathing/presentation/breathing_screen.dart';
 import '../../features/guided-meditation/guided_audio.dart';

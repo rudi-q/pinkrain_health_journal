@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pillow/core/models/medicine_model.dart';
-import 'package:pillow/features/pillbox/data/pillbox_model.dart';
-import 'package:pillow/features/pillbox/presentation/pillbox_notifier.dart';
-import 'package:pillow/features/pillbox/presentation/pillbox_screen.dart';
+import 'package:pinkrain/core/models/medicine_model.dart';
+import 'package:pinkrain/features/pillbox/data/pillbox_model.dart';
+import 'package:pinkrain/features/pillbox/presentation/pillbox_notifier.dart';
+import 'package:pinkrain/features/pillbox/presentation/pillbox_screen.dart';
 
 // Create a testable version of PillBox
 class TestPillBox implements PillBox {
@@ -34,6 +34,20 @@ class TestPillBox implements PillBox {
   @override
   void removeMed(Medicine medicine) {
     pillStock.removeWhere((item) => item.medicine.name == medicine.name);
+  }
+
+  // Implementation of the missing toJsonList method from IPillBox interface
+  @override
+  List<Map<String, dynamic>> toJsonList() {
+    // For testing purposes, we can return a simplified JSON representation
+    return pillStock.map((item) => {
+      'medicine': {
+        'name': item.medicine.name,
+        'type': item.medicine.type,
+        'color': item.medicine.color,
+      },
+      'quantity': item.quantity,
+    }).toList();
   }
 }
 

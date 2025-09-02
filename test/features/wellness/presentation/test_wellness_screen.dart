@@ -6,9 +6,9 @@ class TestWellnessScreen extends StatefulWidget {
   final DateTime initialDate;
 
   const TestWellnessScreen({
-    Key? key,
+    super.key,
     required this.initialDate,
-  }) : super(key: key);
+  });
 
   @override
   State<TestWellnessScreen> createState() => _TestWellnessScreenState();

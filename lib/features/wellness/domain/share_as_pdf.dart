@@ -18,8 +18,6 @@ Future<void> captureAndShareAsPdfWidget(GlobalKey widgetKey, String fileName) as
     final RenderRepaintBoundary boundary =
     widgetKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
 
-    // Get the size of the widget
-    final Size size = boundary.size;
 
     // Capture the widget with appropriate pixel ratio
     final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
@@ -64,8 +62,8 @@ Future<void> captureAndShareAsPdfWidget(GlobalKey widgetKey, String fileName) as
 
     await SharePlus.instance.share(ShareParams(
         files: [XFile(file.path)],
-        text: 'My Pillow Wellness Report: $fileName.PDF',
-        subject: 'Pillow Wellness Report'
+        text: 'My PinkRain Wellness Report: $fileName.PDF',
+        subject: 'PinkRain Wellness Report'
     ));
   } catch (e) {
     devPrint('Error during capture and share: $e');

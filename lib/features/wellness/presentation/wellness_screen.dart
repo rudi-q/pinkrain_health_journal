@@ -3,15 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
-import 'package:pillow/core/services/hive_service.dart';
-import 'package:pillow/core/util/helpers.dart';
-import 'package:pillow/core/widgets/bottom_navigation.dart';
-import 'package:pillow/features/journal/presentation/journal_notifier.dart';
-import 'package:pillow/features/wellness/domain/share_as_pdf.dart';
-import 'package:pillow/features/wellness/domain/wellness_tracker.dart';
-import 'package:pillow/features/wellness/presentation/components/mood_painter.dart';
-import 'package:pillow/features/wellness/presentation/components/personalized_insights.dart';
-import 'package:pillow/features/wellness/presentation/wellness_notifier.dart';
+import 'package:pinkrain/core/services/hive_service.dart';
+import 'package:pinkrain/core/util/helpers.dart';
+import 'package:pinkrain/core/widgets/bottom_navigation.dart';
+import 'package:pinkrain/features/journal/presentation/journal_notifier.dart';
+import 'package:pinkrain/features/wellness/domain/share_as_pdf.dart';
+import 'package:pinkrain/features/wellness/domain/wellness_tracker.dart';
+import 'package:pinkrain/features/wellness/presentation/components/mood_painter.dart';
+import 'package:pinkrain/features/wellness/presentation/components/personalized_insights.dart';
+import 'package:pinkrain/features/wellness/presentation/wellness_notifier.dart';
 import 'package:pretty_animated_text/pretty_animated_text.dart';
 
 import '../../../core/theme/icons.dart';
@@ -319,7 +319,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                           ), onPressed: () {
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               devPrint("Height: ${_printableWidgetKey.currentContext!.size!.height}");
-                              captureAndShareAsPdfWidget(_printableWidgetKey, 'Pillow_${_selectedDate.getNameOf(_selectedDateOption)}_Wellness_Report');
+                              captureAndShareAsPdfWidget(_printableWidgetKey, 'PinkRain_${_selectedDate.getNameOf(_selectedDateOption)}_Wellness_Report');
                             });
                           },
                         ),
@@ -1202,7 +1202,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
     final DateTime startDate = getStartDate(_selectedDateOption, _selectedDate);
     final DateTime endDate = _selectedDate;
     final journalLog = ref.read(pillIntakeProvider.notifier).journalLog;
-    final double currentAdherence = journalLog.getAdherenceRateAll(startDate, endDate);;
+    final double currentAdherence = journalLog.getAdherenceRateAll(startDate, endDate);
     final currentText =
         "You've taken ${currentAdherence * 100}% of your meds $currentTimeFrame";
     final progressText =

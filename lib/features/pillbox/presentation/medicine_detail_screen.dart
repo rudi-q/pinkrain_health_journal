@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:http/http.dart' as http;
-import 'package:pillow/core/models/medicine_model.dart';
+import 'package:pinkrain/core/models/medicine_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // import '../data/pillbox_model.dart'; // removed unused import

@@ -22,7 +22,7 @@ class Medicine {
     this.color = 'green',
   });
 
-  addSpecification(Specification specification) {
+  void addSpecification(Specification specification) {
     specs = specification;
   }
 }

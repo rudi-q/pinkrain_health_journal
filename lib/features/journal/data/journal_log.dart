@@ -1,5 +1,5 @@
-import 'package:pillow/core/services/hive_service.dart';
-import 'package:pillow/core/util/helpers.dart';
+import 'package:pinkrain/core/services/hive_service.dart';
+import 'package:pinkrain/core/util/helpers.dart';
 
 import '../../../core/models/medicine_model.dart';
 import '../../treatment/data/treatment.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pillow/core/theme/tokens.dart';
+import 'package:pinkrain/core/theme/tokens.dart';
 
 import '../../../core/widgets/appbar.dart';
 import '../../../core/widgets/bottom_navigation.dart';

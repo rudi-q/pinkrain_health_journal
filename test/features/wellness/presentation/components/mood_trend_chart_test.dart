@@ -1,7 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pillow/features/wellness/presentation/components/mood_trend_chart.dart';
+import 'package:pinkrain/features/wellness/presentation/components/mood_trend_chart.dart';
 
 void main() {
   // Setup for mocking mood data

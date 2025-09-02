@@ -1,7 +1,7 @@
-# 🛏️ Pillow - Mental Health & Wellness Journal
+# 🛏️ PinkRain - Mental Health & Wellness Journal
 
 <div align="center">
-  <img src="assets/icons/launcher.png" alt="Pillow App Logo" width="200" height="200"/>
+  <img src="assets/icons/launcher.png" alt="PinkRain App Logo" width="200" height="200"/>
   
   [![Flutter](https://img.shields.io/badge/Flutter-3.3.4+-02569B?style=flat&logo=flutter)](https://flutter.dev)
   [![Dart](https://img.shields.io/badge/Dart-3.0+-0175C2?style=flat&logo=dart)](https://dart.dev)
@@ -17,13 +17,13 @@
 
 ---
 
-## 📱 About Pillow
+## 📱 About PinkRain
 
-Pillow is a comprehensive mental health and wellness tracking application designed with privacy at its core. Unlike other health apps, **all your data remains securely stored on your device** and never leaves your phone. The app combines mood tracking, medication management, guided meditation, and AI-powered symptom prediction to provide a holistic approach to mental wellness.
+PinkRain is a comprehensive mental health and wellness tracking application designed with privacy at its core. Unlike other health apps, **all your data remains securely stored on your device** and never leaves your phone. The app combines mood tracking, medication management, guided meditation, and AI-powered symptom prediction to provide a holistic approach to mental wellness.
 
 > **⚠️ IMPORTANT DISCLAIMER**: This is an experimental research project made open source for educational and development purposes. This app is **NOT a medical device** and does not claim to improve your mental or physical health in any way. It should **NEVER be considered a replacement for professional healthcare providers**, licensed therapists, psychiatrists, or medical professionals. Always consult with qualified healthcare providers for medical advice, diagnosis, or treatment.
 
-### 🌟 Why Pillow?
+### 🌟 Why PinkRain?
 
 - **🔒 Privacy First**: Zero data collection - everything stays on your device
 - **🧠 AI-Powered**: Smart symptom prediction using TensorFlow Lite
@@ -91,8 +91,8 @@ Pillow is a comprehensive mental health and wellness tracking application design
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/rudi-q/pillow-health-journal-app.git
-   cd pillow-health-journal-app
+   git clone https://github.com/rudi-q/pinkrain_health_journal.git
+   cd pinkrain_health_journal
    ```
 
 2. **Install dependencies**
@@ -107,7 +107,7 @@ Pillow is a comprehensive mental health and wellness tracking application design
 
 ### 🧪 Experimental Features
 
-Pillow includes experimental AI-powered symptom prediction using TensorFlow Lite. This feature is **disabled by default** but can be enabled for testing and research purposes.
+PinkRain includes experimental AI-powered symptom prediction using TensorFlow Lite. This feature is **disabled by default** but can be enabled for testing and research purposes.
 
 **Enable Experimental Symptom Prediction:**
 ```bash
@@ -160,7 +160,7 @@ flutter build ios --release --dart-define=EXPERIMENTAL=true
 
 ## 🏗️ Architecture
 
-Pillow follows clean architecture principles with clear separation of concerns:
+PinkRain follows clean architecture principles with clear separation of concerns:
 
 ```
 lib/
@@ -195,7 +195,7 @@ lib/
 
 ## 🧪 Testing
 
-Pillow includes comprehensive testing:
+PinkRain includes comprehensive testing:
 
 ```bash
 # Run all tests
@@ -334,7 +334,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Flutter Team** for the amazing framework
 - **TensorFlow Lite** for on-device ML capabilities
 - **Hive** for fast local storage
-- **All contributors** who help make Pillow better
+- **All contributors** who help make PinkRain better
 - **Mental health advocates** who inspire this work
 
 ---
@@ -343,9 +343,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Need help or have questions?
 
-- 📧 **Email**: pillow@doubl.one
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/rudi-q/pillow-health-journal-app/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/rudi-q/pillow-health-journal-app/discussions)
+- 📧 **Email**: reach@rudi.engineer
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/rudi-q/pinkrain_health_journal/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/rudi-q/pinkrain_health_journal/discussions)
 
 ---
 

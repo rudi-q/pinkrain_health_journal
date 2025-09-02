@@ -1,7 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:pillow/core/services/hive_service.dart';
-import 'package:pillow/core/util/helpers.dart' show devPrint;
+import 'package:pinkrain/core/services/hive_service.dart';
+import 'package:pinkrain/core/util/helpers.dart' show devPrint;
 
 // Define a typedef for the mood data fetcher function
 typedef MoodDataFetcher = Future<Map<String, dynamic>?> Function(DateTime date);
@@ -12,12 +12,11 @@ class MoodTrendChart extends StatefulWidget {
   final MoodDataFetcher? moodDataFetcher;
 
   MoodTrendChart({
-    Key? key,
+    super.key,
     required this.timeRange,
     DateTime? selectedDate,
     this.moodDataFetcher,
-  }) : selectedDate = selectedDate ?? DateTime.now(),
-       super(key: key);
+  }) : selectedDate = selectedDate ?? DateTime.now();
 
   @override
   State<MoodTrendChart> createState() => _MoodTrendChartState();

@@ -44,7 +44,7 @@ class SignInScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             const Text(
-              'Sign in to start using Pillow.',
+              'Sign in to start using PinkRain.',
               style: TextStyle(fontSize: 18, color: Colors.grey),
             ),
             const SizedBox(height: 30),

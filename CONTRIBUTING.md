@@ -1,6 +1,6 @@
-# 🤝 Contributing to Pillow
+# 🤝 Contributing to PinkRain
 
-Thank you for your interest in contributing to Pillow! This document provides guidelines and information for contributors to help make the development process smooth and consistent.
+Thank you for your interest in contributing to PinkRain! This document provides guidelines and information for contributors to help make the development process smooth and consistent.
 
 ## 📋 Table of Contents
 
@@ -51,14 +51,14 @@ Before contributing, ensure you have:
 ### 1. Clone Your Fork
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/pillow-health-journal-app.git
-cd pillow-health-journal-app
+git clone https://github.com/YOUR_USERNAME/pinkrain-health-journal-app.git
+cd pinkrain-health-journal-app
 ```
 
 ### 2. Set Up Upstream Remote
 
 ```bash
-git remote add upstream https://github.com/rudi-q/pillow-health-journal-app.git
+git remote add upstream https://github.com/rudi-q/pinkrain-health-journal-app.git
 ```
 
 ### 3. Install Dependencies
@@ -126,7 +126,7 @@ docs/api-documentation-update
 
 ### Architecture Guidelines
 
-Pillow follows clean architecture principles:
+PinkRain follows clean architecture principles:
 
 ```
 lib/
@@ -316,7 +316,7 @@ Fixes #(issue number)
 Understanding the codebase structure:
 
 ```
-pillow-health-journal-app/
+pinkrain-health-journal-app/
 ├── lib/
 │   ├── core/
 │   │   ├── models/          # Data models
@@ -370,7 +370,7 @@ All contributions must adhere to our privacy-first principles:
 
 ### Medical Disclaimer Compliance
 
-Remember that Pillow is an experimental research project:
+Remember that PinkRain is an experimental research project:
 
 - **Never** make medical claims
 - **Include** appropriate disclaimers
@@ -383,7 +383,7 @@ Remember that Pillow is an experimental research project:
 
 - **GitHub Issues**: Bug reports and feature requests
 - **GitHub Discussions**: General questions and community chat
-- **Email**: pillow@doubl.one for direct contact
+- **Email**: reach@rudi.engineer for direct contact
 - **Code Review**: Get feedback on draft PRs
 
 ### Documentation Resources
@@ -424,7 +424,7 @@ Always remember:
 
 ## 🎉 Thank You!
 
-Your contributions help make Pillow a better tool for mental health awareness and privacy-preserving wellness tracking. Every contribution, no matter how small, makes a difference!
+Your contributions help make PinkRain a better tool for mental health awareness and privacy-preserving wellness tracking. Every contribution, no matter how small, makes a difference!
 
 **Happy coding! 🛏️💙**
 

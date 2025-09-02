@@ -451,7 +451,7 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> with Wid
               ),
             ),
           ),
-          ...categoryTracks.map((track) => _buildTrackCard(track)).toList(),
+          ...categoryTracks.map((track) => _buildTrackCard(track)),
           SizedBox(height: 8),
         ],
       ),
@@ -728,7 +728,7 @@ class GuidedMeditationScreenState extends State<GuidedMeditationScreen> with Wid
               padding: EdgeInsets.only(bottom: 20),
               children: [
                 _buildHeader(),
-                ...categories.map((category) => _buildCategorySection(category)).toList(),
+                ...categories.map((category) => _buildCategorySection(category)),
               ],
             ),
           ),

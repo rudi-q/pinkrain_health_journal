@@ -1,4 +1,4 @@
-package one.doubl.pillow
+package app.pink.rain
 
 import io.flutter.embedding.android.FlutterActivity
 

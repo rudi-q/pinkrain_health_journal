@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
-import 'package:pillow/core/util/dateFormatConverters.dart';
+import 'package:pinkrain/core/util/date_format_converters.dart';
 
 import '../../features/journal/data/journal_log.dart';
 import '../theme/icons.dart';
@@ -26,7 +26,7 @@ extension StringExtensions on String {
   }
 }
 
-void devPrint(var message) {
+void devPrint(dynamic message) {
   if (kDebugMode) {
     print(message);
   }

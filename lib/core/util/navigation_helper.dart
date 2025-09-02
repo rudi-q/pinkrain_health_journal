@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pillow/core/util/helpers.dart';
+import 'package:pinkrain/core/util/helpers.dart';
 
 /// A global navigator key that can be used to navigate from anywhere in the app
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();

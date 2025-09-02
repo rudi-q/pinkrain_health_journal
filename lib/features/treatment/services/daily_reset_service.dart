@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:pillow/core/util/helpers.dart';
-import 'package:pillow/features/treatment/services/medication_notification_service.dart';
+import 'package:pinkrain/core/util/helpers.dart';
+import 'package:pinkrain/features/treatment/services/medication_notification_service.dart';
 
 /// Service to handle daily reset operations for the app
 /// This follows clean architecture by separating the daily reset logic

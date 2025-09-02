@@ -2,7 +2,7 @@
 
 ## Overview
 
-Pillow is a privacy-first mental health and wellness tracking application built with security at its core. This document outlines our security policies, practices, and procedures for reporting security vulnerabilities.
+PinkRain is a privacy-first mental health and wellness tracking application built with security at its core. This document outlines our security policies, practices, and procedures for reporting security vulnerabilities.
 
 **Core Security Principle**: All user data remains on-device and is never transmitted or collected by external services.
 
@@ -23,7 +23,7 @@ Pillow is a privacy-first mental health and wellness tracking application built 
 
 ### Privacy-First Design
 
-Pillow implements a **zero-trust, local-first** architecture:
+PinkRain implements a **zero-trust, local-first** architecture:
 
 - **No Data Collection**: We never collect, store, or transmit user data
 - **Local Storage Only**: All data is stored locally using encrypted Hive database
@@ -90,7 +90,7 @@ We encourage responsible disclosure of security vulnerabilities. Please follow t
 ### How to Report
 
 **Email**: reach@rudi.engineer (preferred)
-**Subject**: `[SECURITY] Pillow App Vulnerability Report`
+**Subject**: `[SECURITY] PinkRain App Vulnerability Report`
 
 ### What to Include
 
@@ -122,7 +122,7 @@ Please provide the following information:
 
 ### Recognition
 
-We believe in recognizing security researchers who help make Pillow more secure:
+We believe in recognizing security researchers who help make PinkRain more secure:
 
 - **Hall of Fame**: Recognition in our security acknowledgments
 - **Credit**: Public credit in release notes (with permission)
@@ -132,7 +132,7 @@ We believe in recognizing security researchers who help make Pillow more secure:
 
 ### For Users
 
-- **Keep Updated**: Always use the latest version of Pillow
+- **Keep Updated**: Always use the latest version of PinkRain
 - **Device Security**: Use device lock screens and biometric authentication
 - **App Permissions**: Review and understand requested permissions
 - **Regular Backups**: Export your data regularly for personal backups
@@ -258,7 +258,7 @@ flutter test test/security/
 
 ### Medical Data Sensitivity
 
-As a mental health app, Pillow handles highly sensitive personal information:
+As a mental health app, PinkRain handles highly sensitive personal information:
 
 - **HIPAA Awareness**: While not HIPAA-covered, we follow similar privacy principles
 - **Mental Health Privacy**: Extra protection for sensitive mental health data
@@ -350,7 +350,7 @@ This security policy is reviewed and updated regularly:
 
 ## 🙏 Acknowledgments
 
-We thank the security research community for helping make Pillow more secure:
+We thank the security research community for helping make PinkRain more secure:
 
 - Security researchers who report vulnerabilities responsibly
 - The Flutter and Dart security teams for framework security
@@ -360,7 +360,7 @@ We thank the security research community for helping make Pillow more secure:
 
 ## ⚖️ Legal Notice
 
-This security policy is part of Pillow's commitment to user privacy and security. By using Pillow, you acknowledge that:
+This security policy is part of PinkRain's commitment to user privacy and security. By using PinkRain, you acknowledge that:
 
 - Security is a shared responsibility between users and developers
 - No system is 100% secure, but we strive for best practices

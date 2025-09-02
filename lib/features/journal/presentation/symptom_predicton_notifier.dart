@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pillow/features/journal/domain/tf_lite_symptom_pred.dart'
-if (dart.library.html) 'package:pillow/features/journal/domain/mock_symptom_pred.dart'; // Import the TFLite predictor or mock predictor on web
+import 'package:pinkrain/features/journal/domain/tf_lite_symptom_pred.dart'
+if (dart.library.html) 'package:pinkrain/features/journal/domain/mock_symptom_pred.dart'; // Import the TFLite predictor or mock predictor on web
 
 import '../../../core/util/helpers.dart';  // Import helpers for logging
 import '../data/symptom_prediction.dart';

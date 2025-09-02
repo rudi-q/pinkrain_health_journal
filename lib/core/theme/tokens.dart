@@ -1,7 +1,7 @@
 import 'colors.dart';
 
 class AppTokens {
-  /// TEXT COLORS for Pillow
+  /// TEXT COLORS for PinkRain
   static const textPrimary = AppColors.black100;
   static const textSecondary = AppColors.black40;
   static const textPlaceholder = AppColors.black40;

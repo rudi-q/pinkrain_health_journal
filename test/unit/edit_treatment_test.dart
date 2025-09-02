@@ -4,12 +4,12 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:pillow/core/models/medicine_model.dart';
-import 'package:pillow/core/services/hive_service.dart';
-import 'package:pillow/core/util/helpers.dart';
-import 'package:pillow/features/journal/data/journal_log.dart';
-import 'package:pillow/features/treatment/data/treatment.dart';
-import 'package:pillow/features/treatment/domain/treatment_manager.dart';
+import 'package:pinkrain/core/models/medicine_model.dart';
+import 'package:pinkrain/core/services/hive_service.dart';
+import 'package:pinkrain/core/util/helpers.dart';
+import 'package:pinkrain/features/journal/data/journal_log.dart';
+import 'package:pinkrain/features/treatment/data/treatment.dart';
+import 'package:pinkrain/features/treatment/domain/treatment_manager.dart';
 
 void main() {
   late TreatmentManager treatmentManager;

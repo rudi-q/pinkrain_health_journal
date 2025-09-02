@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pillow/features/pillbox/presentation/pillbox_notifier.dart';
+import 'package:pinkrain/features/pillbox/presentation/pillbox_notifier.dart';
 
 import '../../../core/models/medicine_model.dart';
 
@@ -41,7 +41,7 @@ class PillBoxManager{
   static final pillbox = PillBox();
   static late PillBoxNotifier pillBoxNotifier;
 
-  static init(WidgetRef ref) {
+  static void init(WidgetRef ref) {
     pillBoxNotifier = ref.read(pillBoxProvider.notifier);
   }
 

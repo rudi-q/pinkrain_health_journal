@@ -106,7 +106,7 @@ class DurationScreenState extends ConsumerState<DurationScreen> {
             const SizedBox(height: 30),
             // Start Field
             DropdownButtonFormField<String>(
-              value: 'tomorrow',
+              initialValue: 'tomorrow',
               decoration: InputDecoration(
                 labelText: 'Start',
                 filled: true,
@@ -162,7 +162,7 @@ class DurationScreenState extends ConsumerState<DurationScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: 'days',
+                    initialValue: 'days',
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.grey[200],
@@ -223,7 +223,9 @@ class DurationScreenState extends ConsumerState<DurationScreen> {
                         final pillIntakeNotifier = ref.read(pillIntakeProvider.notifier);
                         await pillIntakeNotifier.populateJournal(selectedDate);
                         
-                        context.go('/journal');
+                        if (mounted && context.mounted) {
+                          context.go('/journal');
+                        }
                       }
                     },
                     style: TextButton.styleFrom(

@@ -1,10 +1,12 @@
 // ignore_for_file: prefer_const_constructors, avoid_print, unnecessary_import
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pillow/core/models/medicine_model.dart';
-import 'package:pillow/features/treatment/data/treatment.dart';
-import 'package:pillow/features/treatment/domain/treatment_manager.dart';
+import 'package:pinkrain/core/models/medicine_model.dart';
+import 'package:pinkrain/features/treatment/data/treatment.dart';
+import 'package:pinkrain/features/treatment/domain/treatment_manager.dart';
 
 void main() {
+  // TreatmentManager is available if needed for future tests
+  // ignore: unused_local_variable
   late TreatmentManager treatmentManager;
 
   /// Creates a test treatment with the given parameters.
@@ -44,6 +46,8 @@ void main() {
   group('TreatmentManager - Edit Treatment Tests', () {
     test('updateTreatment should update an existing treatment correctly',
         () async {
+      // Original treatment used for comparison in future test expansions
+      // ignore: unused_local_variable
       final originalTreatment = createTestTreatment();
       final updatedTreatment = createTestTreatment(
         name: 'Updated Medicine',

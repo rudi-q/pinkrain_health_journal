@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'package:pillow/core/models/medicine_model.dart';
-import 'package:pillow/core/services/hive_service.dart';
+import 'package:pinkrain/core/models/medicine_model.dart';
+import 'package:pinkrain/core/services/hive_service.dart';
 
 import '../../../core/util/helpers.dart';
 import '../data/treatment.dart';

@@ -1,7 +1,7 @@
 import 'package:hive/hive.dart';
-import 'package:pillow/core/util/helpers.dart';
-import 'package:pillow/features/journal/data/journal_log.dart';
-import 'package:pillow/features/journal/domain/push_notifications.dart';
+import 'package:pinkrain/core/util/helpers.dart';
+import 'package:pinkrain/features/journal/data/journal_log.dart';
+import 'package:pinkrain/features/journal/domain/push_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 
 /// Service responsible for scheduling medication notifications

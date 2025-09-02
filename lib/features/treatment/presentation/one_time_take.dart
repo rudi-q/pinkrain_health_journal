@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pillow/core/models/medicine_model.dart';
-import 'package:pillow/features/treatment/data/treatment.dart';
-import 'package:pillow/features/treatment/domain/treatment_manager.dart';
+import 'package:pinkrain/core/models/medicine_model.dart';
+import 'package:pinkrain/features/treatment/data/treatment.dart';
+import 'package:pinkrain/features/treatment/domain/treatment_manager.dart';
 
 class OneTimeTakeScreen extends StatefulWidget {
   const OneTimeTakeScreen({super.key});

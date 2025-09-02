@@ -6,21 +6,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:pillow/core/services/hive_service.dart';
-import 'package:pillow/core/util/helpers.dart';
-import 'package:pillow/features/breathing/presentation/breathing_screen.dart';
-import 'package:pillow/features/guided-meditation/guided_audio.dart';
+import 'package:pinkrain/core/services/hive_service.dart';
+import 'package:pinkrain/core/util/helpers.dart';
+import 'package:pinkrain/features/breathing/presentation/breathing_screen.dart';
+import 'package:pinkrain/features/guided-meditation/guided_audio.dart';
 // Import screen widgets
-import 'package:pillow/features/journal/presentation/journal_screen.dart';
-import 'package:pillow/features/journal/presentation/journal_screen_wrapper.dart';
-import 'package:pillow/features/mindfulness/presentation/mindfulness_screen.dart';
-import 'package:pillow/features/pillbox/presentation/medicine_detail_screen.dart';
-import 'package:pillow/features/pillbox/presentation/pillbox_screen.dart';
-import 'package:pillow/features/profile/presentation/profile.dart';
-import 'package:pillow/features/splash/splash_screen.dart';
-import 'package:pillow/features/wellness/presentation/wellness_screen.dart'
+import 'package:pinkrain/features/journal/presentation/journal_screen.dart';
+import 'package:pinkrain/features/journal/presentation/journal_screen_wrapper.dart';
+import 'package:pinkrain/features/mindfulness/presentation/mindfulness_screen.dart';
+import 'package:pinkrain/features/pillbox/presentation/medicine_detail_screen.dart';
+import 'package:pinkrain/features/pillbox/presentation/pillbox_screen.dart';
+import 'package:pinkrain/features/profile/presentation/profile.dart';
+import 'package:pinkrain/features/splash/splash_screen.dart';
+import 'package:pinkrain/features/wellness/presentation/wellness_screen.dart'
     show WellnessTrackerScreen;
-import 'package:pillow/main.dart';
+import 'package:pinkrain/main.dart';
 
 void main() async {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();

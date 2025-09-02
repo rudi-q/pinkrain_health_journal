@@ -3,9 +3,9 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:pillow/core/util/helpers.dart';
-import 'package:pillow/features/journal/domain/push_notifications.dart';
-import 'package:pillow/features/treatment/services/medication_action_service.dart';
+import 'package:pinkrain/core/util/helpers.dart';
+import 'package:pinkrain/features/journal/domain/push_notifications.dart';
+import 'package:pinkrain/features/treatment/services/medication_action_service.dart';
 
 /// Integration test for notification actions
 /// Tests both the "Snooze" and "Mark as Taken" actions

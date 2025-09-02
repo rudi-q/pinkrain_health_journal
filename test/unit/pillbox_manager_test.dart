@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pillow/core/models/medicine_model.dart';
-import 'package:pillow/features/pillbox/data/pillbox_model.dart';
-import 'package:pillow/features/pillbox/presentation/pillbox_notifier.dart';
+import 'package:pinkrain/core/models/medicine_model.dart';
+import 'package:pinkrain/features/pillbox/data/pillbox_model.dart';
+import 'package:pinkrain/features/pillbox/presentation/pillbox_notifier.dart';
 
 void main() {
   group('PillBoxManager Tests', () {
@@ -26,7 +26,7 @@ void main() {
       final initialCount = PillBoxManager.pillbox.pillStock.length;
 
       // Act
-      PillBoxManager.addMedicine(medicine: medicine, quantity: 10);
+      PillBoxManager.pillbox.addMed(medicine, 10);
 
       // Assert
       expect(PillBoxManager.pillbox.pillStock.length, initialCount + 1);
@@ -51,13 +51,13 @@ void main() {
       medicine.addSpecification(Specification(dosage: 20, unit: 'mg'));
 
       // Add the medicine first
-      PillBoxManager.addMedicine(medicine: medicine, quantity: 10);
+      PillBoxManager.pillbox.addMed(medicine, 10);
 
       // Get count after adding
       final countAfterAdd = PillBoxManager.pillbox.pillStock.length;
 
       // Act
-      PillBoxManager.removeMedicine(medicine: medicine);
+      PillBoxManager.pillbox.removeMed(medicine);
 
       // Assert
       expect(PillBoxManager.pillbox.pillStock.length, countAfterAdd - 1);

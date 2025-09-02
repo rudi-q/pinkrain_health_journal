@@ -1,5 +1,5 @@
 name: ❓ Question or Support
-description: Ask a question or get help with using Pillow
+description: Ask a question or get help with using PinkRain
 title: "[Question]: "
 labels: ["question", "needs-triage"]
 assignees: []
@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for your question! We're here to help you use Pillow effectively.
+        Thank you for your question! We're here to help you use PinkRain effectively.
         
         **Before asking**: Please check if your question is already answered in:
         - 📖 [README.md](../README.md) - Project overview and setup
@@ -49,7 +49,7 @@ body:
       label: User Type
       description: Which best describes you?
       options:
-        - New user trying Pillow for the first time
+        - New user trying PinkRain for the first time
         - Regular user with a specific question
         - Developer interested in contributing
         - Security researcher
@@ -88,7 +88,7 @@ body:
     id: app-version
     attributes:
       label: App Version (if relevant)
-      description: What version of Pillow are you using?
+      description: What version of PinkRain are you using?
       placeholder: "e.g., 2.1.1 (check in app settings)"
 
   - type: textarea
@@ -125,11 +125,11 @@ body:
     id: privacy-awareness
     attributes:
       label: Privacy Awareness
-      description: Please confirm your understanding of Pillow's privacy approach
+      description: Please confirm your understanding of PinkRain's privacy approach
       options:
-        - label: I understand that Pillow keeps all data on my device locally
+        - label: I understand that PinkRain keeps all data on my device locally
           required: false
-        - label: I understand that Pillow is an experimental research app, not a medical device
+        - label: I understand that PinkRain is an experimental research app, not a medical device
           required: false
         - label: I will not share personal health information in this question
           required: true
@@ -173,4 +173,4 @@ body:
         - 📧 **Email**: reach@rudi.engineer for private or sensitive questions
         - 📚 **Documentation**: Check existing docs before asking
         
-        **Medical Disclaimer**: Pillow is an experimental research app for educational purposes only. It should never replace professional medical advice, diagnosis, or treatment. Always consult qualified healthcare providers for medical questions.
+        **Medical Disclaimer**: PinkRain is an experimental research app for educational purposes only. It should never replace professional medical advice, diagnosis, or treatment. Always consult qualified healthcare providers for medical questions.
