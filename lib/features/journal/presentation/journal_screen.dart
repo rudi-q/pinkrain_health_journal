@@ -118,7 +118,7 @@ class JournalScreenState extends ConsumerState<JournalScreen> {
     //medList = JournalLog().getMedicationsForTheDay(selectedDate);
     medList = ref.watch(pillIntakeProvider);
     return Scaffold(
-      backgroundColor: AppTokens.bgMuted,
+      backgroundColor: AppTokens.bgPrimary,
       body: RefreshIndicator(
             color: Colors.pink[100],
             backgroundColor: Colors.white,
