@@ -40,15 +40,37 @@ class NotificationService {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/launcher_icon');
     
-    // Initialize iOS settings
-    const DarwinInitializationSettings initializationSettingsIOS =
+      // Create notification categories for iOS with action buttons
+    final DarwinNotificationCategory pillReminderCategory = DarwinNotificationCategory(
+      'PILL_REMINDER_CATEGORY',
+      actions: <DarwinNotificationAction>[
+        DarwinNotificationAction.plain(
+          'SNOOZE_ACTION',
+          'Snooze',
+          options: <DarwinNotificationActionOption>{
+            DarwinNotificationActionOption.foreground,
+          },
+        ),
+        DarwinNotificationAction.plain(
+          'MARK_TAKEN_ACTION',
+          'Mark as Taken',
+          options: <DarwinNotificationActionOption>{
+            DarwinNotificationActionOption.foreground,
+          },
+        ),
+      ],
+    );
+    
+    // Initialize iOS settings with notification categories
+    final DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
+      notificationCategories: <DarwinNotificationCategory>[pillReminderCategory],
     );
     
-    const InitializationSettings initializationSettings =
+    final InitializationSettings initializationSettings =
         InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsIOS,
@@ -301,6 +323,7 @@ class NotificationService {
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      categoryIdentifier: 'PILL_REMINDER_CATEGORY',
     );
 
     final NotificationDetails platformChannelSpecifics =
@@ -362,6 +385,7 @@ class NotificationService {
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      categoryIdentifier: 'PILL_REMINDER_CATEGORY',
     );
     
     final NotificationDetails platformChannelSpecifics =
@@ -430,6 +454,7 @@ class NotificationService {
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      categoryIdentifier: 'PILL_REMINDER_CATEGORY',
     );
 
     final NotificationDetails platformChannelSpecifics =
