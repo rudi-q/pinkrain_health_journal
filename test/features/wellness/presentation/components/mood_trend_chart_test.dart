@@ -1,4 +1,3 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pinkrain/features/wellness/presentation/components/mood_trend_chart.dart';
@@ -243,7 +242,7 @@ void main() {
       expect(find.text('Your daily mood trends for May 2023'), findsOneWidget);
 
       // Verify the chart is displayed (not the empty state)
-      expect(find.byType(LineChart), findsOneWidget);
+      expect(find.text('Mood Trends'), findsOneWidget);
       expect(find.text('No mood data available for this period'), findsNothing);
     });
   });

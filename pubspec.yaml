@@ -20,7 +20,7 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   path_provider: ^2.1.5
-  fl_chart: ^0.65.0
+  cristalyse: ^1.5.0
   tflite_flutter: ^0.11.0
   pdf: ^3.10.7
   share_plus: ^11.0.0

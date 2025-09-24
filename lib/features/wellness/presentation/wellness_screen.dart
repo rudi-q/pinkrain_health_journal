@@ -16,6 +16,10 @@ import 'package:pretty_animated_text/pretty_animated_text.dart';
 
 import '../../../core/theme/icons.dart';
 import '../../../core/theme/tokens.dart';
+import 'components/correlation_analysis.dart';
+import 'components/mood_trend_chart.dart';
+import 'components/scatter_plot_painter.dart';
+import 'components/wellness_prediction.dart';
 
 //todo: Implement wellness data persistence and analytics
 
@@ -407,7 +411,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                   // Active symptoms and triggers
                   buildSymptomsAndTriggers(),
 
-                /*  const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
                   // Medication impact
                   BlurText(
@@ -556,9 +560,8 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                     ),
                   ),
                   const SizedBox(height: 30),
-*/
                   // SECTION: Correlation Analysis
-              /*    BlurText(
+       /*           BlurText(
                     text: 'Wellness Factor Analysis',
                     duration: const Duration(milliseconds: 800),
                     type: AnimationType.word,
@@ -583,7 +586,6 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                     child: CorrelationAnalysis(),
                   ),
                   const SizedBox(height: 30),*/
-/*
 
                   BlurText(
                     text: 'Mood Forecast',
@@ -608,7 +610,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                   const SizedBox(
                     width: double.infinity,
                     child: WellnessPrediction(),
-                  ),*/
+                  ),
                   const SizedBox(height: 50),
 
 

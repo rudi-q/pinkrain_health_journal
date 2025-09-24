@@ -1,7 +1,8 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:pinkrain/core/services/hive_service.dart';
 import 'package:pinkrain/core/util/helpers.dart' show devPrint;
+import 'package:cristalyse/cristalyse.dart';
+import 'charts/chart_data_models.dart';
 
 // Define a typedef for the mood data fetcher function
 typedef MoodDataFetcher = Future<Map<String, dynamic>?> Function(DateTime date);
@@ -26,11 +27,7 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
   bool _isLoading = true;
   bool _hasError = false;
   String _errorMessage = '';
-  List<FlSpot> _moodData = [];
-  double _minY = 1;
-  double _maxY = 5;
-  double _minX = 0;
-  double _maxX = 30;
+  List<MoodDataPoint> _moodData = [];
 
   @override
   void initState() {
@@ -68,24 +65,8 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
         return;
       }
       
-      // Calculate min and max values for Y axis (mood values)
-      double minY = 5;
-      double maxY = 1;
-      
-      for (var spot in moodData) {
-        if (spot.y < minY) minY = spot.y;
-        if (spot.y > maxY) maxY = spot.y;
-      }
-      
-      // Set min and max for X axis (time periods)
-      double maxX = moodData.length - 1.0;
-      
       setState(() {
         _moodData = moodData;
-        _minY = minY > 0 ? minY - 0.5 : 1;
-        _maxY = maxY < 5 ? maxY + 0.5 : 5;
-        _minX = 0;
-        _maxX = maxX;
         _isLoading = false;
       });
     } catch (e) {
@@ -98,13 +79,30 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
     }
   }
 
-  Future<List<FlSpot>> _generateMoodData() async {
-    List<FlSpot> spots = [];
+  Future<List<MoodDataPoint>> _generateMoodData() async {
+    List<MoodDataPoint> dataPoints = [];
     final referenceDate = widget.selectedDate;
     
     try {
+      // Convert string timeRange to enum
+      ChartTimeRange timeRange;
       switch (widget.timeRange) {
         case 'day':
+          timeRange = ChartTimeRange.day;
+          break;
+        case 'month':
+          timeRange = ChartTimeRange.month;
+          break;
+        case 'year':
+          timeRange = ChartTimeRange.year;
+          break;
+        default:
+          devPrint('Invalid time range: ${widget.timeRange}');
+          return [];
+      }
+
+      switch (timeRange) {
+        case ChartTimeRange.day:
           // Generate hourly data for a day
           final startOfDay = DateTime(referenceDate.year, referenceDate.month, referenceDate.day);
           
@@ -112,13 +110,17 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
           final moodData = await (widget.moodDataFetcher ?? HiveService.getMoodForDate)(startOfDay);
           
           if (moodData != null && moodData.containsKey('mood')) {
-            // If we have mood data for this day, create a single spot
-            spots.add(FlSpot(12, moodData['mood'].toDouble())); // Position at noon
+            // If we have mood data for this day, create a single data point
+            dataPoints.add(MoodDataPoint(
+              date: startOfDay.add(const Duration(hours: 12)), // Position at noon
+              mood: moodData['mood'].toDouble(),
+              note: moodData['note'] as String?,
+            ));
           }
           
           break;
           
-        case 'month':
+        case ChartTimeRange.month:
           // Generate daily data for a month
           final startOfMonth = DateTime(referenceDate.year, referenceDate.month, 1);
           final daysInMonth = DateTime(referenceDate.year, referenceDate.month + 1, 0).day;
@@ -128,13 +130,17 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
             final moodData = await (widget.moodDataFetcher ?? HiveService.getMoodForDate)(date);
             
             if (moodData != null && moodData.containsKey('mood')) {
-              spots.add(FlSpot(day.toDouble(), moodData['mood'].toDouble()));
+              dataPoints.add(MoodDataPoint(
+                date: date,
+                mood: moodData['mood'].toDouble(),
+                note: moodData['note'] as String?,
+              ));
             }
           }
           
           break;
           
-        case 'year':
+        case ChartTimeRange.year:
           // Generate monthly data for a year
           final startOfYear = DateTime(referenceDate.year, 1, 1);
           
@@ -157,17 +163,18 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
             }
             
             if (moodCount > 0) {
-              spots.add(FlSpot(month.toDouble(), totalMood / moodCount));
+              dataPoints.add(MoodDataPoint(
+                date: date,
+                mood: totalMood / moodCount,
+                note: null, // No specific note for aggregated data
+              ));
             }
           }
           
           break;
-          
-        default:
-          devPrint('Invalid time range: ${widget.timeRange}');
       }
       
-      return spots;
+      return dataPoints;
     } catch (e) {
       devPrint('Error generating mood data: $e');
       rethrow;
@@ -176,210 +183,133 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Mood Trends',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+    if (_isLoading) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    
+    if (_hasError) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            children: [
+              Icon(Icons.error_outline, color: Colors.red[300], size: 40),
+              const SizedBox(height: 10),
+              Text(
+                _errorMessage,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.red[300]),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: _loadMoodData,
+                child: Text('Retry'),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          _getChartDescription(),
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600],
+      );
+    }
+
+
+    // Convert to basic chart data format
+    final chartData = _moodData.asMap().entries.map((entry) {
+      return {
+        'x': entry.key.toDouble(),
+        'y': entry.value.mood,
+        'date': entry.value.date,
+        'note': entry.value.note,
+      };
+    }).toList();
+
+    if (chartData.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withValues(alpha: 0.1),
+              spreadRadius: 1,
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.sentiment_neutral, color: Colors.grey[400], size: 40),
+              const SizedBox(height: 10),
+              Text(
+                'No mood data available for this period',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 15),
-        if (_isLoading)
-          Center(
-            child: Padding(
-              padding: EdgeInsets.all(20.0),
-              child: CircularProgressIndicator(),
+      );
+    }
+
+    // Use simple Cristalyse chart
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withValues(alpha: 0.1),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Mood Trends',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
             ),
-          )
-        else if (_hasError)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: [
-                  Icon(Icons.error_outline, color: Colors.red[300], size: 40),
-                  const SizedBox(height: 10),
-                  Text(
-                    _errorMessage,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.red[300]),
-                  ),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: _loadMoodData,
-                    child: Text('Retry'),
-                  ),
-                ],
-              ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _getChartDescription(),
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 12,
             ),
-          )
-        else if (_moodData.isEmpty)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: [
-                  Icon(Icons.sentiment_neutral, color: Colors.grey[400], size: 40),
-                  const SizedBox(height: 10),
-                  Text(
-                    'No mood data available for this period',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                ],
-              ),
-            ),
-          )
-        else
+          ),
+          const SizedBox(height: 16),
           SizedBox(
             height: 200,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 16.0, left: 0, top: 16, bottom: 16),
-              child: LineChart(
-                LineChartData(
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: true,
-                    horizontalInterval: 1,
-                    verticalInterval: 1,
-                    getDrawingHorizontalLine: (value) {
-                      return FlLine(
-                        color: Colors.grey[300],
-                        strokeWidth: 1,
-                      );
-                    },
-                    getDrawingVerticalLine: (value) {
-                      return FlLine(
-                        color: Colors.grey[300],
-                        strokeWidth: 1,
-                      );
-                    },
-                  ),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    rightTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 30,
-                        interval: _getInterval(),
-                        getTitlesWidget: (value, meta) {
-                          return SideTitleWidget(
-                            axisSide: meta.axisSide,
-                            space: 8.0,
-                            child: Text(
-                              _getBottomTitle(value),
-                              style: TextStyle(
-                                fontSize: 12,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        interval: 1,
-                        getTitlesWidget: (value, meta) {
-                          String text = '';
-                          switch (value.toInt()) {
-                            case 1:
-                              text = 'Very Bad';
-                              break;
-                            case 2:
-                              text = 'Bad';
-                              break;
-                            case 3:
-                              text = 'Neutral';
-                              break;
-                            case 4:
-                              text = 'Good';
-                              break;
-                            case 5:
-                              text = 'Great';
-                              break;
-                          }
-                          return SideTitleWidget(
-                            axisSide: meta.axisSide,
-                            space: 8.0,
-                            child: Text(
-                              text,
-                              style: TextStyle(
-                                fontSize: 12,
-                              ),
-                            ),
-                          );
-                        },
-                        reservedSize: 70,
-                      ),
-                    ),
-                  ),
-                  borderData: FlBorderData(
-                    show: true,
-                    border: Border.all(color: Color(0xff37434d), width: 1),
-                  ),
-                  minX: _minX,
-                  maxX: _maxX,
-                  minY: _minY,
-                  maxY: _maxY,
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: _moodData,
-                      isCurved: true,
-                      gradient: LinearGradient(
-                        colors: [
-                          Theme.of(context).primaryColor.withValues(alpha: 0.5),
-                          Theme.of(context).primaryColor,
-                        ],
-                      ),
-                      barWidth: 3,
-                      isStrokeCapRound: true,
-                      dotData: FlDotData(
-                        show: true,
-                        getDotPainter: (spot, percent, barData, index) {
-                          return FlDotCirclePainter(
-                            radius: 4,
-                            color: Theme.of(context).primaryColor,
-                            strokeWidth: 1,
-                            strokeColor: Colors.white,
-                          );
-                        },
-                      ),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        gradient: LinearGradient(
-                          colors: [
-                            Theme.of(context).primaryColor.withValues(alpha: 0.3),
-                            Theme.of(context).primaryColor.withValues(alpha: 0.0),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            child: CristalyseChart()
+                .data(chartData)
+                .mapping(x: 'x', y: 'y')
+                .geomLine(strokeWidth: 3.0)
+                .geomPoint(size: 8.0)
+                .scaleXContinuous()
+                .scaleYContinuous(
+                  min: 0.5,
+                  max: 5.5,
+                )
+                .theme(ChartTheme.defaultTheme())
+                .build(),
           ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -399,7 +329,7 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(Duration(days: 1));
+    final yesterday = today.subtract(const Duration(days: 1));
     
     if (date.year == today.year && date.month == today.month && date.day == today.day) {
       return 'today';
@@ -411,47 +341,10 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
   }
 
   String _formatMonth(DateTime date) {
-    final months = [
+    const months = [
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'
     ];
     return '${months[date.month - 1]} ${date.year}';
-  }
-
-  double _getInterval() {
-    switch (widget.timeRange) {
-      case 'day':
-        return 4; // Every 4 hours
-      case 'month':
-        return 5; // Every 5 days
-      case 'year':
-        return 1; // Every month
-      default:
-        return 1;
-    }
-  }
-
-  String _getBottomTitle(double value) {
-    switch (widget.timeRange) {
-      case 'day':
-        // For day view, show hours
-        final hour = value.toInt();
-        if (hour == 0) return '12 AM';
-        if (hour == 12) return '12 PM';
-        if (hour < 12) return '$hour AM';
-        return '${hour - 12} PM';
-        
-      case 'month':
-        // For month view, show days
-        return '${value.toInt() + 1}';
-        
-      case 'year':
-        // For year view, show months
-        final months = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
-        return months[value.toInt()];
-        
-      default:
-        return '';
-    }
   }
 }
