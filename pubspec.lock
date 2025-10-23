@@ -189,10 +189,10 @@ packages:
     dependency: "direct main"
     description:
       name: cristalyse
-      sha256: a10dde8ec09b758f573386b6fdd9e0a09e963b82d1a1287807215ae04f54e34c
+      sha256: ca7cef06f4cb3848d5a3937b92ea04f4ae730e6f0583c84e85947f5b56ec6061
       url: "https://pub.dev"
     source: hosted
-    version: "1.6.1"
+    version: "1.10.2"
   cross_file:
     dependency: transitive
     description:
