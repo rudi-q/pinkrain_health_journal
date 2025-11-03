@@ -1,13 +1,13 @@
-# 🛏️ PinkRain - Mental Health & Wellness Journal
+# PinkRain, a gentle health journal 🌸
 
 <div align="center">
-  <img src="assets/icons/launcher.png" alt="PinkRain App Logo" width="200" height="200"/>
+  <img src="assets/icons/splash-icon.png" alt="PinkRain App Logo" width="200" height="200"/>
   
-  [![Flutter](https://img.shields.io/badge/Flutter-3.3.4+-02569B?style=flat&logo=flutter)](https://flutter.dev)
-  [![Dart](https://img.shields.io/badge/Dart-3.0+-0175C2?style=flat&logo=dart)](https://dart.dev)
-  [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-  [![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen)]()
-  [![Version](https://img.shields.io/badge/Version-2.1.1-blue)]()
+  [![Flutter](https://img.shields.io/badge/Flutter-3.3.4+-FFB6C1?style=flat&logo=flutter&logoColor=000000&labelColor=FFFFFF&color=FFB6C1)](https://flutter.dev)
+  [![Dart](https://img.shields.io/badge/Dart-3.0+-FFB6C1?style=flat&logo=dart&logoColor=000000&labelColor=FFFFFF&color=FFB6C1)](https://dart.dev)
+  [![License](https://img.shields.io/badge/License-MIT-FFB6C1?style=flat&labelColor=FFFFFF&color=FFB6C1)](LICENSE)
+  [![Build Status](https://img.shields.io/badge/Build-Passing-FFB6C1?style=flat&labelColor=FFFFFF&color=FFB6C1)]()
+  [![Version](https://img.shields.io/badge/Version-2.3.0-FFB6C1?style=flat&labelColor=FFFFFF&color=FFB6C1)]()
 
   **A privacy-first mental health companion that helps you track your wellness journey, manage medications, and find emotional support.**
   
@@ -15,30 +15,29 @@
 
 </div>
 
----
+## About PinkRain
 
-## 📱 About PinkRain
+PinkRain is a comprehensive mental health and wellness tracking application designed with privacy at its core. Unlike other health apps, **all your data remains securely stored on your device** and never leaves your phone. The app provides mood tracking, medication management, wellness analytics, breathing exercises, and guided meditation to support your mental wellness journey.
 
-PinkRain is a comprehensive mental health and wellness tracking application designed with privacy at its core. Unlike other health apps, **all your data remains securely stored on your device** and never leaves your phone. The app combines mood tracking, medication management, guided meditation, and AI-powered symptom prediction to provide a holistic approach to mental wellness.
+**🧪 Experimental AI Feature**: PinkRain also includes an optional experimental AI-powered symptom prediction feature that can be enabled during development or testing. This feature is **disabled by default** in the main app build, ensuring the standard version focuses on core wellness tracking without AI dependencies.
 
-> **⚠️ IMPORTANT DISCLAIMER**: This is an experimental research project made open source for educational and development purposes. This app is **NOT a medical device** and does not claim to improve your mental or physical health in any way. It should **NEVER be considered a replacement for professional healthcare providers**, licensed therapists, psychiatrists, or medical professionals. Always consult with qualified healthcare providers for medical advice, diagnosis, or treatment.
+> **❗ IMPORTANT DISCLAIMER**: This is an experimental research project made open source for educational and development purposes. This app is **NOT a medical device** and does not claim to improve your mental or physical health in any way. It should **NEVER be considered a replacement for professional healthcare providers**, licensed therapists, psychiatrists, or medical professionals. Always consult with qualified healthcare providers for medical advice, diagnosis, or treatment.
 
-### 🌟 Why PinkRain?
+### Why PinkRain?
 
-- **🔒 Privacy First**: Zero data collection - everything stays on your device
-- **🧠 AI-Powered**: Smart symptom prediction using TensorFlow Lite
-- **💊 Medication Tracking**: Never miss a dose with smart notifications
-- **📊 Wellness Insights**: Beautiful charts and correlation analysis
-- **🎵 Emotional Support**: Curated audio content for healing
-- **📱 Cross-Platform**: Built with Flutter for iOS and Android
+- **Privacy First**: Zero data collection - everything stays on your device
+- **Medication Tracking**: Never miss a dose with smart notifications and reminders
+- **Wellness Insights**: Beautiful charts, correlation analysis, and PDF reports
+- **Mood Tracking**: Daily journaling and mood logging with visual trends
+- **Emotional Support**: Curated healing audio tracks and guided meditation
+- **Mindfulness Tools**: Breathing exercises and mindfulness practices
+- **Cross-Platform**: Built with Flutter for iOS and Android
+- **Experimental AI** (Optional): AI-powered symptom prediction available as an experimental build option
 
----
-
-## ✨ Features
+## Features
 
 ### 📝 **Journal & Mood Tracking**
 - Daily mood logging with rich descriptions
-- Symptom tracking with AI-powered predictions
 - Correlation analysis between mood, symptoms, and medications
 - Beautiful visualizations and trends
 
@@ -65,10 +64,6 @@ PinkRain is a comprehensive mental health and wellness tracking application desi
 - PDF report generation for healthcare providers
 - Data export functionality
 
-### 🤖 **AI-Powered Insights**
-- TensorFlow Lite model for symptom prediction
-- Personalized wellness recommendations
-- Pattern recognition in mood and symptoms
 
 ### 🔔 **Smart Notifications**
 - Medication reminders with action buttons
@@ -76,9 +71,7 @@ PinkRain is a comprehensive mental health and wellness tracking application desi
 - Wellness insights notifications
 - Customizable notification sounds
 
----
-
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -105,60 +98,52 @@ PinkRain is a comprehensive mental health and wellness tracking application desi
    flutter run
    ```
 
-### 🧪 Experimental Features
+### 🧪 Experimental AI Feature (Optional)
 
-PinkRain includes experimental AI-powered symptom prediction using TensorFlow Lite. This feature is **disabled by default** but can be enabled for testing and research purposes.
+PinkRain includes an **experimental** AI-powered symptom prediction feature using TensorFlow Lite. **This feature is NOT enabled by default** in the main app. The standard PinkRain app works fully without any AI functionality, focusing on core wellness tracking features.
 
-**Enable Experimental Symptom Prediction:**
+#### Main App (Default - No AI)
+The standard PinkRain app includes all core features without AI:
+- ✅ Mood tracking and journaling
+- ✅ Medication management and reminders
+- ✅ Wellness analytics and charts
+- ✅ Breathing exercises and meditation
+- ✅ All privacy-first features
+- ❌ AI symptom prediction (not included)
+
+**Run standard app:**
+```bash
+# Development
+flutter run
+
+# Release builds (no AI)
+flutter build apk --release
+flutter build appbundle --release
+flutter build ios --release
+```
+
+#### Experimental Version (With AI)
+If you want to try the experimental AI symptom prediction feature, you can build PinkRain with AI enabled:
+
+**Enable Experimental AI Symptom Prediction:**
 ```bash
 # Development
 flutter run --dart-define=EXPERIMENTAL=true
 
-# Release builds
+# Release builds with AI
 flutter build apk --release --dart-define=EXPERIMENTAL=true
 flutter build appbundle --release --dart-define=EXPERIMENTAL=true
 flutter build ios --release --dart-define=EXPERIMENTAL=true
 ```
 
-**Default Mode (Symptom Prediction Disabled):**
-```bash
-# These commands run without experimental features
-flutter run
-flutter build apk --release
-flutter build appbundle --release
-flutter build ios --release
-```
+> **Important Notes**:
+> - The experimental AI feature adds ~12MB to the app size (TensorFlow Lite models)
+> - When experimental mode is disabled (default), the app functions normally without any AI features
+> - The TensorFlow Lite model files may still be included in the bundle but are not loaded into memory when AI is disabled
+> - **Web Platform**: Experimental AI features are automatically disabled on web platforms regardless of the `EXPERIMENTAL` flag, as TensorFlow Lite is not supported in web browsers
+> - The AI feature is experimental and should not be relied upon for medical decisions
 
-> **Note**: When experimental mode is disabled, the app functions normally but the AI symptom prediction feature is not available. The TensorFlow Lite model files (~12MB) are still included in the app bundle but are not loaded into memory.
->
-> **Web Platform**: Experimental features like symptom prediction are automatically disabled on web platforms regardless of the `EXPERIMENTAL` flag setting, as TensorFlow Lite is not supported in web browsers. The app will use mock implementations for web compatibility.
-
-### Building for Release
-
-**Standard Release (No Experimental Features):**
-```bash
-flutter build apk --release
-# or
-flutter build appbundle --release
-```
-
-**Experimental Release (With AI Symptom Prediction):**
-```bash
-flutter build apk --release --dart-define=EXPERIMENTAL=true
-# or
-flutter build appbundle --release --dart-define=EXPERIMENTAL=true
-```
-
-**iOS:**
-```bash
-flutter build ios --release
-# or with experimental features
-flutter build ios --release --dart-define=EXPERIMENTAL=true
-```
-
----
-
-## 🏗️ Architecture
+## Architecture
 
 PinkRain follows clean architecture principles with clear separation of concerns:
 
@@ -184,14 +169,12 @@ lib/
 
 - **State Management**: Riverpod
 - **Local Database**: Hive (NoSQL)
-- **AI/ML**: TensorFlow Lite
+- **AI/ML**: TensorFlow Lite (experimental feature only)
 - **Charts**: FL Chart
 - **Audio**: Just Audio
 - **Notifications**: Flutter Local Notifications
 - **PDF Generation**: PDF package
 - **Navigation**: Go Router
-
----
 
 ## 🧪 Testing
 
@@ -213,8 +196,6 @@ flutter test test/features/journal/
 - Widget tests for UI components
 - Integration tests for user flows
 - Notification action testing
-
----
 
 ## 🤝 Contributing
 
@@ -258,8 +239,6 @@ We welcome contributions from the community! Whether you're fixing bugs, adding 
 - 📚 **Documentation**: Improve guides and tutorials
 - 🤖 **AI/ML**: Enhance symptom prediction models
 
----
-
 ## 🛡️ Privacy & Security
 
 ### Privacy First Design
@@ -274,9 +253,7 @@ We welcome contributions from the community! Whether you're fixing bugs, adding 
 - No network requests for personal data
 - Privacy-focused third-party dependencies
 
----
-
-## ⚠️ Medical Disclaimer & Research Notice
+## ❗ Medical Disclaimer & Research Notice
 
 ### 🔬 **Experimental Research Project**
 This application is an **experimental research project** developed for educational, research, and open-source development purposes. It is made available to the community to advance understanding of mental health tracking technologies and privacy-preserving app development.
@@ -305,41 +282,35 @@ If you are experiencing a mental health emergency or crisis:
 - **Go to your nearest emergency room**
 - **This app cannot and should not be used for emergency situations**
 
-### 📜 **Limitation of Liability**
+### **Limitation of Liability**
 By using this experimental research application, you acknowledge that:
 - The developers, contributors, and maintainers assume no responsibility for any health outcomes
 - All data and insights provided are for informational and research purposes only
 - You use this application at your own risk
 - Any decisions regarding your health should be made in consultation with qualified healthcare providers
 
-### 🔍 **Research and Data Use**
+### **Research and Data Use**
 This is a research project designed to:
 - Explore privacy-preserving mental health tracking technologies
 - Demonstrate on-device AI/ML capabilities
 - Advance open-source mental health tools development
 - **All your data remains on your device and is never transmitted or collected**
 
----
-
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 **Additional Terms:** By using this software, you acknowledge that you have read and understood the Medical Disclaimer above and agree to use this experimental research application in accordance with these terms.
 
----
-
-## 🙏 Acknowledgments
+## Acknowledgments 💛
 
 - **Flutter Team** for the amazing framework
-- **TensorFlow Lite** for on-device ML capabilities
+- **TensorFlow Lite** for on-device ML capabilities (experimental AI features)
 - **Hive** for fast local storage
 - **All contributors** who help make PinkRain better
 - **Mental health advocates** who inspire this work
 
----
-
-## 📞 Support
+## Support
 
 Need help or have questions?
 
@@ -347,21 +318,17 @@ Need help or have questions?
 - 🐛 **Bug Reports**: [GitHub Issues](https://github.com/rudi-q/pinkrain_health_journal/issues)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/rudi-q/pinkrain_health_journal/discussions)
 
----
-
-## 🔮 Roadmap
+## Roadmap
 
 - [ ] **Multi-language support**
 - [ ] **Accessibility improvements**
 - [ ] **Dark Mode support**
 - [ ] **Advanced analytics**
 
----
-
 <div align="center">
-  <h3>🕊️ "Your mental health matters. Your privacy matters more." 🕊️</h3>
+  <h3>"Your mental health matters. Your privacy too" 🕊️</h3>
   
-  **Made with ❤️ for mental health awareness**
+  **Made with 🩷 for mental health awareness**
   
   ⭐ **Star this repo if you found it helpful!** ⭐
 </div>
