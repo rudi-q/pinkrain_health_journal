@@ -21,7 +21,8 @@ PinkRain is a comprehensive mental health and wellness tracking application desi
 
 **🧪 Experimental AI Feature**: PinkRain also includes an optional experimental AI-powered symptom prediction feature that can be enabled during development or testing. This feature is **disabled by default** in the main app build, ensuring the standard version focuses on core wellness tracking without AI dependencies.
 
-> **❗ IMPORTANT DISCLAIMER**: This is an experimental research project made open source for educational and development purposes. This app is **NOT a medical device** and does not claim to improve your mental or physical health in any way. It should **NEVER be considered a replacement for professional healthcare providers**, licensed therapists, psychiatrists, or medical professionals. Always consult with qualified healthcare providers for medical advice, diagnosis, or treatment.
+> **❗ IMPORTANT DISCLAIMER**: This is an experimental research project made open source for educational and development purposes. This app is **NOT a medical device** and does not claim to improve your mental or physical health in any way. It should **NEVER be considered a replacement for professional healthcare providers**, licensed therapists, psychiatrists, or medical professionals. Consult qualified healthcare providers for medical advice, diagnosis, or treatment.
+
 
 ### Why PinkRain?
 
@@ -103,6 +104,7 @@ PinkRain is a comprehensive mental health and wellness tracking application desi
 PinkRain includes an **experimental** AI-powered symptom prediction feature using TensorFlow Lite. **This feature is NOT enabled by default** in the main app. The standard PinkRain app works fully without any AI functionality, focusing on core wellness tracking features.
 
 #### Main App (Default - No AI)
+
 The standard PinkRain app includes all core features without AI:
 - ✅ Mood tracking and journaling
 - ✅ Medication management and reminders
@@ -112,6 +114,7 @@ The standard PinkRain app includes all core features without AI:
 - ❌ AI symptom prediction (not included)
 
 **Run standard app:**
+
 ```bash
 # Development
 flutter run
@@ -123,6 +126,7 @@ flutter build ios --release
 ```
 
 #### Experimental Version (With AI)
+
 If you want to try the experimental AI symptom prediction feature, you can build PinkRain with AI enabled:
 
 **Enable Experimental AI Symptom Prediction:**
@@ -314,7 +318,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Need help or have questions?
 
-- 📧 **Email**: reach@rudi.engineer
+- 📧 **Email**: [reach@rudi.engineer](mailto:reach@rudi.engineer)
 - 🐛 **Bug Reports**: [GitHub Issues](https://github.com/rudi-q/pinkrain_health_journal/issues)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/rudi-q/pinkrain_health_journal/discussions)
 
@@ -326,7 +330,7 @@ Need help or have questions?
 - [ ] **Advanced analytics**
 
 <div align="center">
-  <h3>"Your mental health matters. Your privacy too" 🕊️</h3>
+  ### "Your mental health matters. Your privacy too" 🕊️
   
   **Made with 🩷 for mental health awareness**
   
