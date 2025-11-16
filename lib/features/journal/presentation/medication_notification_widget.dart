@@ -128,14 +128,9 @@ class _MedicationNotificationWidgetState
 
   @override
   Widget build(BuildContext context) {
-    // Listen to the medication notifier for changes
-    ref.listen(journalMedicationNotifierProvider, (previous, next) {
-      // When untaken medications are detected, show notifications
-      if (next.untakenMedications.isNotEmpty) {
-        _notificationService
-            .showUntakenMedicationNotifications(next.untakenMedications);
-      }
-    });
+    // NOTE: We removed the listener here because checkUntakenMedications() 
+    // already calls showUntakenMedicationNotifications, so this was causing duplicates
+    // The listener was redundant and causing notifications to be scheduled twice
 
     // Return the child widget unchanged
     return widget.child;

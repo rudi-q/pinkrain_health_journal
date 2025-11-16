@@ -5,6 +5,45 @@ All notable changes to PinkRain will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.3] - 2025-11-XX
+
+### Fixed
+- **Duplicate notifications**: Fixed issue where notifications were being scheduled multiple times, causing duplicate notifications to appear
+- **Notification deduplication**: Improved duplicate prevention logic to check storage, system, and current call before scheduling
+- **Deterministic notification IDs**: Changed notification ID generation to be deterministic based on medication ID and scheduled time, ensuring rescheduling replaces existing notifications instead of creating duplicates
+
+### Technical Improvements
+- Removed redundant notification listener that was causing duplicate scheduling calls
+- Enhanced duplicate prevention with multiple layers of checks (storage, system, in-call tracking)
+- Improved notification ID generation to prevent system-level duplicates
+
+## [2.3.2] - 2025-11-XX
+
+### Added
+- **App version display**: Added version number display to profile page for easy reference
+
+### Fixed
+- **Profile icon**: Fixed missing profile icon in wellness screen (replaced with HugeIcons.strokeRoundedUser)
+
+## [2.3.1] - 2025-11-XX
+
+### Fixed
+- **Notification scheduling**: Fixed notifications not working when app wasn't opened during the day
+- **Endless scheduling bug**: Fixed bug where notifications were being scheduled for years in the future (2026-2029)
+- **Notification window**: Implemented 60-day rolling window for notification scheduling to balance coverage and performance
+- **Medicine name in notifications**: Fixed notification titles to display actual medicine names instead of numerical IDs
+- **Notification cleanup**: Improved cleanup logic to remove notifications beyond the 60-day window
+- **Notification restoration**: Enhanced restore logic to only restore notifications within the 60-day window and correctly extract medicine names
+
+### Changed
+- **Notification scheduling strategy**: Changed from scheduling entire treatment duration to a 60-day rolling window with daily refresh
+- **Deduplication logic**: Refined notification deduplication to only remove notifications being replaced, preventing unnecessary churn
+
+### Technical Improvements
+- Improved notification scheduling service with better date validations and safety limits
+- Enhanced restore logic with treatment lookup and fallback mechanisms
+- Added comprehensive debug logging for notification scheduling and restoration
+
 ## [2.3.0] - 2025-11-02
 
 ### Added

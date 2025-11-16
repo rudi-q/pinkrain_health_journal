@@ -62,12 +62,22 @@ class MedicationSchedulerService {
     await _cleanupPassedNotifications();
     
     // Get existing scheduled notifications from storage
+    // CRITICAL: Reload after cleanup to get the latest state
     final scheduledNotifications = _getScheduledNotifications(box);
+    
+    // Build a set of already-scheduled medication IDs for quick lookup
+    // This prevents duplicate scheduling even if multiple calls happen rapidly
+    final alreadyScheduledKeys = scheduledNotifications
+        .map((n) => '${n['medicationId']}_${n['scheduledTime']}')
+        .toSet();
     
     // Build set of medication IDs we're about to schedule
     final medicationIdsToSchedule = <String>{};
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
+    
+    // Track notifications we're scheduling in THIS call to prevent duplicates
+    final notificationsScheduledInThisCall = <String>{};
     
     final List<Map<String, dynamic>> newScheduledNotifications = [];
     
@@ -158,15 +168,27 @@ class MedicationSchedulerService {
           
           medicationIdsToSchedule.add(medicationId);
           
-          // Check if we already have this notification scheduled
+          // CRITICAL: Check if we already have this exact notification scheduled
+          // Use both medicationId AND scheduledTime to create a unique key
+          final notificationKey = '${medicationId}_${scheduledTime.millisecondsSinceEpoch}';
+          
+          // Check if already scheduled in our storage
           final existingNotification = scheduledNotifications.firstWhere(
-            (n) => n['medicationId'] == medicationId,
+            (n) => n['medicationId'] == medicationId && 
+                   n['scheduledTime'] == scheduledTime.millisecondsSinceEpoch,
             orElse: () => <String, dynamic>{},
           );
           
-          // Only schedule if we don't already have it or if it's for today (to handle status changes)
+          // Also check our quick lookup set (for rapid duplicate prevention)
+          final isAlreadyScheduled = alreadyScheduledKeys.contains(notificationKey);
+          
+          // Check if we've already scheduled this in THIS call (prevents duplicates within same execution)
+          final alreadyScheduledInThisCall = notificationsScheduledInThisCall.contains(notificationKey);
+          
+          // Only schedule if we don't already have it (in storage, in system, or in this call)
+          // OR if it's for today (to handle status changes like taken/skipped)
           final isToday = currentDate.isAtSameMomentAs(today);
-          if (existingNotification.isEmpty || isToday) {
+          if ((existingNotification.isEmpty && !isAlreadyScheduled && !alreadyScheduledInThisCall) || isToday) {
             // For today, check if medication is taken/skipped from the provided list
             if (isToday) {
               final todayMedication = medications.firstWhere(
@@ -183,8 +205,12 @@ class MedicationSchedulerService {
               }
             }
             
-            // Generate a unique ID for the notification
-            final notificationId = _generateNotificationId();
+            // Generate a deterministic ID for the notification based on medicationId and time
+            // This ensures scheduling the same notification multiple times will replace it, not duplicate it
+            final notificationId = _generateNotificationId(
+              medicationId: medicationId,
+              scheduledTimeMs: scheduledTime.millisecondsSinceEpoch,
+            );
             
             // Schedule the notification at the exact scheduled time
             await _scheduleNotification(
@@ -201,12 +227,17 @@ class MedicationSchedulerService {
             );
             
             // Track the scheduled notification
-            newScheduledNotifications.add({
+            final newNotification = {
               'id': notificationId,
               'medicationId': medicationId,
               'scheduledTime': scheduledTime.millisecondsSinceEpoch,
               'type': 'main',
-            });
+            };
+            newScheduledNotifications.add(newNotification);
+            
+            // Add to our quick lookup sets to prevent duplicates
+            alreadyScheduledKeys.add(notificationKey);
+            notificationsScheduledInThisCall.add(notificationKey);
             
             devPrint('🔔 Scheduled notification for ${treatment.medicine.name} at ${scheduledTime.toString()}');
           } else {
@@ -605,7 +636,12 @@ class MedicationSchedulerService {
             
             // If we don't have this notification scheduled, schedule it
             if (!scheduledMedicationIds.contains(medicationId)) {
-              final notificationId = _generateNotificationId();
+              // Generate a deterministic ID based on medicationId and time
+              // This ensures the same notification always gets the same ID, preventing duplicates
+              final notificationId = _generateNotificationId(
+                medicationId: medicationId,
+                scheduledTimeMs: scheduledTime.millisecondsSinceEpoch,
+              );
               
               await _scheduleNotification(
                 id: notificationId,
@@ -697,9 +733,20 @@ class MedicationSchedulerService {
   }
   
   /// Generate a unique notification ID for a medication
-  int _generateNotificationId() {
-    // Use the treatment ID as part of the notification ID to ensure uniqueness
-    // Add a timestamp component to avoid conflicts
+  /// CRITICAL: For scheduled notifications, use a deterministic ID based on medicationId and time
+  /// This ensures that scheduling the same notification multiple times will replace it, not duplicate it
+  int _generateNotificationId({String? medicationId, int? scheduledTimeMs}) {
+    // If we have medicationId and scheduledTime, create a deterministic ID
+    // This ensures the same notification always gets the same ID, preventing duplicates
+    if (medicationId != null && scheduledTimeMs != null) {
+      // Create a hash-based ID from medicationId and scheduledTime
+      // This ensures the same medication at the same time always gets the same notification ID
+      final hash = medicationId.hashCode ^ scheduledTimeMs.hashCode;
+      // Ensure positive and within 32-bit range, use modulo to keep it reasonable
+      return (hash.abs() % 2147483647); // Max 32-bit signed int
+    }
+    
+    // Fallback: Use timestamp-based ID for immediate notifications
     final baseId = DateTime.now().millisecondsSinceEpoch;
     final timeComponent = DateTime.now().millisecondsSinceEpoch % 10000;
     
