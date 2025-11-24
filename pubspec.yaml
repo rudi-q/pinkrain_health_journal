@@ -12,7 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  flutter_svg: ^2.2.2
+  flutter_svg: ^2.2.3
   go_router: ^16.3.0
   flutter_riverpod: ^2.6.1
   intl: ^0.20.2
