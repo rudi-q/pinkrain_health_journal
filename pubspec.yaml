@@ -29,7 +29,7 @@ dependencies:
   permission_handler: ^12.0.0+1
   just_audio: ^0.10.5
   url_launcher: ^6.2.5
-  http: ^1.2.0
+  http: ^1.6.0
   html: ^0.15.4
   timezone: ^0.10.1
   hugeicons: ^1.0.0
