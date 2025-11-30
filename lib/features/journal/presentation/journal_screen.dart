@@ -495,20 +495,13 @@ class JournalScreenState extends ConsumerState<JournalScreen> with WidgetsBindin
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
               onTap: () {
-                // Check if date is today
-                final now = DateTime.now();
-                final today = DateTime(now.year, now.month, now.day);
-                final selectedDate = DateTime(date.year, date.month, date.day);
-                final isToday = selectedDate == today;
-                
                 if (hasMood && moodData != null) {
                   // Show board with all mood entries
                   _showMoodDetails(date, moodData);
-                } else if (isToday) {
-                  // Only allow adding mood for today
+                } else {
+                  // Allow adding mood for today and past dates
                   _showAddMoodDialog(date);
                 }
-                // For past dates without mood data, do nothing
               },
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -527,11 +520,11 @@ class JournalScreenState extends ConsumerState<JournalScreen> with WidgetsBindin
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               BlurText(
-                                text: isToday 
-                                    ? 'How do you feel?' 
-                                    : (hasMood && moodData != null)
-                                        ? 'Your mood notes'
-                                        : 'No mood notes',
+                                text: (hasMood && moodData != null)
+                                    ? 'Your mood notes'
+                                    : isToday
+                                        ? 'How do you feel?'
+                                        : 'How were you feeling?',
                                 duration: const Duration(milliseconds: 500),
                                 type: AnimationType.word,
                                 textStyle: TextStyle(
@@ -573,19 +566,17 @@ class JournalScreenState extends ConsumerState<JournalScreen> with WidgetsBindin
                                   width: 30,
                                   height: 30,
                                 )
-                              : isToday
-                                  ? Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey[200],
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        Icons.add,
-                                        color: Colors.grey[400],
-                                        size: 20,
-                                      ),
-                                    )
-                                  : SizedBox.shrink(),
+                              : Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.add,
+                                    color: Colors.grey[400],
+                                    size: 20,
+                                  ),
+                                ),
                         ),
                       ],
                     );

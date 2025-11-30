@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pinkrain/core/services/hive_service.dart';
 import 'package:pinkrain/core/util/helpers.dart' show devPrint;
+import 'package:pinkrain/core/theme/colors.dart';
+import 'package:pinkrain/core/theme/tokens.dart';
 import 'package:cristalyse/cristalyse.dart';
 import 'charts/chart_data_models.dart';
 
@@ -84,6 +86,31 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
     final referenceDate = widget.selectedDate;
     
     try {
+      // Handle week case separately since it's not in the enum
+      if (widget.timeRange == 'week') {
+        // Generate daily data for a week (Monday to Sunday)
+        final weekday = referenceDate.weekday; // 1 = Monday, 7 = Sunday
+        final daysToSubtract = weekday - 1; // Days to subtract to get to Monday
+        final startOfWeek = DateTime(referenceDate.year, referenceDate.month, referenceDate.day)
+            .subtract(Duration(days: daysToSubtract));
+        
+        // Generate data for 7 days of the week
+        for (int day = 0; day < 7; day++) {
+          final date = startOfWeek.add(Duration(days: day));
+          final moodData = await (widget.moodDataFetcher ?? HiveService.getMoodForDate)(date);
+          
+          if (moodData != null && moodData.containsKey('mood')) {
+            dataPoints.add(MoodDataPoint(
+              date: date,
+              mood: moodData['mood'].toDouble(),
+              note: moodData['note'] as String?,
+            ));
+          }
+        }
+        
+        return dataPoints;
+      }
+
       // Convert string timeRange to enum
       ChartTimeRange timeRange;
       switch (widget.timeRange) {
@@ -184,34 +211,51 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppTokens.bgElevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppTokens.borderLight,
+            width: 1,
+          ),
+        ),
+        child: const Center(
           child: CircularProgressIndicator(),
         ),
       );
     }
     
     if (_hasError) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            children: [
-              Icon(Icons.error_outline, color: Colors.red[300], size: 40),
-              const SizedBox(height: 10),
-              Text(
-                _errorMessage,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.red[300]),
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: _loadMoodData,
-                child: Text('Retry'),
-              ),
-            ],
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppTokens.bgElevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppTokens.borderLight,
+            width: 1,
           ),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.error_outline, color: AppColors.pink100, size: 40),
+            const SizedBox(height: 10),
+            Text(
+              _errorMessage,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.pink100,
+                fontFamily: 'Outfit',
+              ),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: _loadMoodData,
+              child: const Text('Retry'),
+            ),
+          ],
         ),
       );
     }
@@ -229,29 +273,32 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
 
     if (chartData.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.1),
-              spreadRadius: 1,
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: AppTokens.bgElevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppTokens.borderLight,
+            width: 1,
+          ),
         ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.sentiment_neutral, color: Colors.grey[400], size: 40),
+              Icon(
+                Icons.sentiment_neutral,
+                color: AppTokens.iconMuted,
+                size: 40,
+              ),
               const SizedBox(height: 10),
               Text(
                 'No mood data available for this period',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey[600]),
+                style: TextStyle(
+                  color: AppTokens.textPlaceholder,
+                  fontFamily: 'Outfit',
+                ),
               ),
             ],
           ),
@@ -261,39 +308,41 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
 
     // Use simple Cristalyse chart
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AppTokens.bgElevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTokens.borderLight,
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Title
           const Text(
-            'Mood Trends',
+            'Mood Trends Analysis',
             style: TextStyle(
-              fontWeight: FontWeight.w600,
               fontSize: 16,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Outfit',
+              color: AppTokens.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            _getChartDescription(),
+            'Visualize how your mood has changed over time',
             style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 12,
+              color: AppTokens.textSecondary,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Outfit',
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           SizedBox(
+            width: double.infinity,
             height: 200,
             child: CristalyseChart()
                 .data(chartData)
@@ -305,46 +354,76 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
                   min: 0.5,
                   max: 5.5,
                 )
-                .theme(ChartTheme.defaultTheme())
+                .theme(ChartTheme.defaultTheme().copyWith(
+                  primaryColor: AppColors.pink100,
+                  colorPalette: [AppColors.pink100, AppColors.strongGreen],
+                ))
                 .build(),
+          ),
+          const SizedBox(height: 12),
+          // Axis labels
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 16,
+                    height: 3,
+                    decoration: BoxDecoration(
+                      color: AppColors.pink100,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Y-axis: Mood Level (1-5)',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppTokens.textSecondary,
+                      fontFamily: 'Outfit',
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 20),
+              Row(
+                children: [
+                  Icon(
+                    Icons.arrow_forward,
+                    size: 14,
+                    color: AppTokens.textSecondary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'X-axis: ${_getXAxisLabel()}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppTokens.textSecondary,
+                      fontFamily: 'Outfit',
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  String _getChartDescription() {
+  String _getXAxisLabel() {
     switch (widget.timeRange) {
-      case 'day':
-        return 'Your mood for ${_formatDate(widget.selectedDate)}';
+      case 'week':
+        return 'Days';
       case 'month':
-        return 'Your daily mood trends for ${_formatMonth(widget.selectedDate)}';
+        return 'Days';
       case 'year':
-        return 'Your monthly mood trends for ${widget.selectedDate.year}';
+        return 'Months';
       default:
-        return 'Your mood trends';
+        return 'Time';
     }
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
-    
-    if (date.year == today.year && date.month == today.month && date.day == today.day) {
-      return 'today';
-    } else if (date.year == yesterday.year && date.month == yesterday.month && date.day == yesterday.day) {
-      return 'yesterday';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
-  }
-
-  String _formatMonth(DateTime date) {
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    return '${months[date.month - 1]} ${date.year}';
   }
 }

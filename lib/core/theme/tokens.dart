@@ -52,6 +52,27 @@ class AppTokens {
     fontFamily: 'Outfit',
   );
 
+  // SECONDARY TEXT STYLES
+  static const TextStyle textStyleSecondary = TextStyle(
+    color: textSecondary,
+    fontWeight: fontWeightBold,
+    fontFamily: 'Outfit',
+  );
+
+  static const TextStyle textStyleSecondarySmall = TextStyle(
+    color: textSecondary,
+    fontWeight: fontWeightBold,
+    fontSize: 12,
+    fontFamily: 'Outfit',
+  );
+
+  static const TextStyle textStyleSecondaryMedium = TextStyle(
+    color: textSecondary,
+    fontWeight: fontWeightBold,
+    fontSize: 14,
+    fontFamily: 'Outfit',
+  );
+
 
   // BACKGROUND
   static const bgPrimary = AppColors.white100;

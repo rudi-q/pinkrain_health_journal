@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -10,16 +11,17 @@ import 'package:pinkrain/core/util/helpers.dart';
 import 'package:pinkrain/core/widgets/bottom_navigation.dart';
 import 'package:pinkrain/features/journal/presentation/journal_notifier.dart';
 import 'package:pinkrain/features/wellness/domain/share_as_pdf.dart';
-import 'package:pinkrain/features/wellness/domain/wellness_tracker.dart';
+// MoodTracker removed - now using HiveService for real data
 import 'package:pinkrain/features/wellness/presentation/components/personalized_insights.dart';
 import 'package:pinkrain/features/wellness/presentation/wellness_notifier.dart';
 import 'package:pretty_animated_text/pretty_animated_text.dart';
 
 import '../../../core/theme/colors.dart';
+import '../../../core/theme/icons.dart';
 import '../../../core/theme/tokens.dart';
 import 'components/mood_trend_chart.dart';
 import 'components/scatter_plot_painter.dart';
-import 'components/wellness_prediction.dart';
+// import 'components/wellness_prediction.dart'; // Commented out with Mood Forecast
 
 //todo: Implement wellness data persistence and analytics
 
@@ -38,7 +40,7 @@ class WellnessTrackerScreen extends ConsumerStatefulWidget {
 
 class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
   int _selectedMood = -1; // -1 means no mood selected
-  String _selectedDateOption = 'month';
+  String _selectedDateOption = 'week';
   late DateTime _selectedDate;
   late WellnessScreenNotifier wellnessNotifier;
 
@@ -70,8 +72,15 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
   // Format the selected date based on the current view
   String get formattedSelectedDate {
     switch (_selectedDateOption) {
-      case 'day':
-        return DateFormat('MMMM d, yyyy').format(_selectedDate);
+      case 'week':
+        // Get start and end of week (Monday to Sunday)
+        final startOfWeek = _getStartOfWeek(_selectedDate);
+        final endOfWeek = startOfWeek.add(const Duration(days: 6));
+        if (startOfWeek.month == endOfWeek.month) {
+          return '${DateFormat('MMM d').format(startOfWeek)} - ${DateFormat('d, yyyy').format(endOfWeek)}';
+        } else {
+          return '${DateFormat('MMM d').format(startOfWeek)} - ${DateFormat('MMM d, yyyy').format(endOfWeek)}';
+        }
       case 'month':
         return DateFormat('MMMM yyyy').format(_selectedDate);
       case 'year':
@@ -81,12 +90,19 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
     }
   }
 
+  // Get the start of the week (Monday) for a given date
+  DateTime _getStartOfWeek(DateTime date) {
+    final weekday = date.weekday; // 1 = Monday, 7 = Sunday
+    final daysToSubtract = weekday - 1; // Days to subtract to get to Monday
+    return DateTime(date.year, date.month, date.day).subtract(Duration(days: daysToSubtract));
+  }
+
   // Navigate to previous period based on current view
   void _navigateToPrevious() {
     switch (_selectedDateOption) {
-      case 'day':
+      case 'week':
         wellnessNotifier
-            .setDate(_selectedDate.subtract(const Duration(days: 1)));
+            .setDate(_selectedDate.subtract(const Duration(days: 7)));
         break;
       case 'month':
         wellnessNotifier.setDate(DateTime(
@@ -111,7 +127,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
   void _navigateToNext() {
     final now = DateTime.now();
     final nextDate = switch (_selectedDateOption) {
-      'day' => _selectedDate.add(const Duration(days: 1)),
+      'week' => _selectedDate.add(const Duration(days: 7)),
       'month' => DateTime(
           _selectedDate.year,
           _selectedDate.month + 1,
@@ -134,31 +150,121 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
     }
   }
 
-  // Navigate to today
-  void _navigateToToday() {
-    wellnessNotifier.setDate(DateTime.now());
-
-    setState(() {
-      _selectedDateOption = 'day';
-    });
-  }
-
   // Load the mood data for the selected date
   Future<void> _loadMoodForSelectedDate() async {
-    if (_selectedDateOption == 'day') {
-      // Get mood data for the selected date from HiveService
-      final moodData = await HiveService.getMoodForDate(_selectedDate);
-      if (moodData != null && mounted) {
-        setState(() {
-          _selectedMood = moodData['mood'] as int;
-        });
-      } else {
-        // Reset mood if no data found
-        setState(() {
-          _selectedMood = -1;
-        });
+    if (_selectedDateOption == 'week') {
+      // For week view, we don't need to load a specific mood
+      // The mood data will be shown in the chart/aggregated view
+      setState(() {
+        _selectedMood = -1;
+      });
+    }
+  }
+
+  /// Get mood counts for the current date range from HiveService
+  Future<Map<int, int>> _getMoodCountsForRange() async {
+    final Map<int, int> moodCounts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+    
+    DateTime startDate;
+    DateTime endDate = _selectedDate;
+    
+    switch (_selectedDateOption) {
+      case 'week':
+        startDate = _getStartOfWeek(_selectedDate);
+        endDate = startDate.add(const Duration(days: 6));
+        break;
+      case 'month':
+        startDate = DateTime(_selectedDate.year, _selectedDate.month, 1);
+        endDate = DateTime(_selectedDate.year, _selectedDate.month + 1, 0);
+        break;
+      case 'year':
+        startDate = DateTime(_selectedDate.year, 1, 1);
+        endDate = DateTime(_selectedDate.year, 12, 31);
+        break;
+      default:
+        startDate = _selectedDate;
+    }
+    
+    // Iterate through each day and count moods
+    for (DateTime date = startDate; !date.isAfter(endDate); date = date.add(const Duration(days: 1))) {
+      final moodData = await HiveService.getMoodForDate(date);
+      if (moodData != null && moodData.containsKey('mood')) {
+        final mood = moodData['mood'] as int;
+        if (mood >= 1 && mood <= 5) {
+          moodCounts[mood] = (moodCounts[mood] ?? 0) + 1;
+        }
       }
     }
+    
+    return moodCounts;
+  }
+
+  /// Calculate Pearson correlation coefficient from data points
+  double _calculateCorrelation(List<Map<String, dynamic>> data) {
+    if (data.length < 2) return 0.0;
+    
+    final n = data.length;
+    double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
+    
+    for (var point in data) {
+      final x = point['x'] as double;
+      final y = point['y'] as double;
+      sumX += x;
+      sumY += y;
+      sumXY += x * y;
+      sumX2 += x * x;
+      sumY2 += y * y;
+    }
+    
+    final numerator = (n * sumXY) - (sumX * sumY);
+    final denominator = ((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+    
+    if (denominator <= 0) return 0.0;
+    
+    return numerator / math.sqrt(denominator > 0 ? denominator.abs() : 1);
+  }
+
+  /// Get correlation description based on the correlation value
+  Map<String, String> _getCorrelationDescription(double correlation, int dataPoints) {
+    if (dataPoints < 3) {
+      return {
+        'title': 'Not enough data',
+        'description': 'Log more mood entries with medications\nto see correlation insights',
+      };
+    }
+    
+    final absCorrelation = correlation.abs();
+    String strength;
+    String direction = correlation >= 0 ? 'positive' : 'negative';
+    
+    if (absCorrelation >= 0.7) {
+      strength = 'Strong';
+    } else if (absCorrelation >= 0.4) {
+      strength = 'Moderate';
+    } else if (absCorrelation >= 0.2) {
+      strength = 'Weak';
+    } else {
+      return {
+        'title': 'No clear correlation',
+        'description': 'Your mood doesn\'t show a clear\npattern with medication adherence',
+      };
+    }
+    
+    String description;
+    if (correlation >= 0.4) {
+      description = 'Taking medications regularly\nis associated with better\nmood scores';
+    } else if (correlation >= 0.2) {
+      description = 'There may be a slight link\nbetween medication adherence\nand improved mood';
+    } else if (correlation <= -0.4) {
+      description = 'An unexpected pattern detected.\nConsider discussing with\nyour healthcare provider';
+    } else {
+      description = 'Continue tracking to get\nmore accurate insights';
+    }
+    
+    return {
+      'title': '$strength $direction correlation',
+      'description': description,
+    };
   }
 
   @override
@@ -167,7 +273,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
     _selectedDate = ref.watch(wellnessScreenProvider);
 
     // Load mood data when the selected date changes
-    if (previousDate != _selectedDate && _selectedDateOption == 'day') {
+    if (previousDate != _selectedDate && _selectedDateOption == 'week') {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _loadMoodForSelectedDate();
       });
@@ -209,95 +315,22 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 10),
-                // Date navigation and selector
-                Column(
-                  children: [
-                    // Date navigation controls
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.chevron_left),
-                          onPressed: _navigateToPrevious,
-                        ),
-                        GestureDetector(
-                          onTap: () => _showDatePicker(context),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                formattedSelectedDate,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              const Icon(Icons.calendar_today, size: 16),
-                            ],
-                          ),
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Today button
-                            TextButton(
-                              onPressed: _navigateToToday,
-                              style: TextButton.styleFrom(
-                                minimumSize: Size.zero,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: const Text('Today'),
-                            ),
-                            // Next button
-                            IconButton(
-                              icon: const Icon(Icons.chevron_right),
-                              onPressed: DateTime(
-                                _selectedDate.year,
-                                _selectedDate.month,
-                                _selectedDate.day,
-                              ).isSameDate(DateTime.now())
-                                  ? null
-                                  : _navigateToNext,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    // Date range selector
+      body: Column(
+        children: [
+          Expanded(
+            child: SafeArea(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 10),
+                    // Week/Month/Year selector
                     Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _dateOption('day'),
-                            _dateOption('month'),
-                            _dateOption('year'),
-                          ],
-                        ),
-                      ),
+                      child: _buildDateRangeSelector(),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 30),
+                    const SizedBox(height: 30),
 
                 // Wellness title and description
             RepaintBoundary(
@@ -340,8 +373,9 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                     child: Text(
                       'Track your journey and nurture your whole self - mind and body together.',
                       style: TextStyle(
-                        color: Colors.black54,
+                        color: AppTokens.textSecondary,
                         fontSize: 14,
+                        fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -355,57 +389,39 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                     duration: const Duration(milliseconds: 800),
                     type: AnimationType.word,
                     textStyle: const TextStyle(
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
                   const SizedBox(height: 15),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: List.generate(
-                      5,
-                      (index) => _moodIcon(index: index),
-                    ),
+                  FutureBuilder<Map<int, int>>(
+                    future: _getMoodCountsForRange(),
+                    builder: (context, snapshot) {
+                      final moodCounts = snapshot.data ?? {};
+                      final totalMoods = moodCounts.values.fold(0, (sum, count) => sum + count);
+                      
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: List.generate(
+                          5,
+                          (index) => _moodIcon(
+                            index: index,
+                            moodCount: moodCounts[index + 1] ?? 0,
+                            totalMoods: totalMoods > 0 ? totalMoods : 1,
+                          ),
+                        ),
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 20),
 
-                  // More details button
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      BlurText(
-                        text: 'Want to share more details?',
-                        duration: const Duration(milliseconds: 800),
-                        type: AnimationType.word,
-                        textStyle: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const Icon(Icons.chevron_right),
-                    ],
-                  ),
+                 
 
                   const SizedBox(height: 30),
 
                   // Medication adherence
-                  BlurText(
-                    text: 'Medication adherence',
-                    duration: const Duration(milliseconds: 800),
-                    type: AnimationType.word,
-                    textStyle: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-
                   _buildMedicationAdherenceCard(),
-
-                  const SizedBox(height: 15),
-
-                  _medicineAdherenceBar(),
 
                   const SizedBox(height: 30),
                   // Missed dose patterns
@@ -419,149 +435,15 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                   const SizedBox(height: 30),
 
                   // Medication impact
-                  BlurText(
-                    text: 'Medication impact',
-                    duration: const Duration(milliseconds: 800),
-                    type: AnimationType.word,
-                    textStyle: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 70,
-                        height: 70,
-                        margin: const EdgeInsets.only(right: 20),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: FutureBuilder<List<Map<String, dynamic>>>(
-                          future: HiveService.getMedicationMoodCorrelation(
-                            startDate: _selectedDate.subtract(const Duration(days: 30)),
-                            endDate: _selectedDate,
-                          ),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return const Center(child: CircularProgressIndicator());
-                            }
-                            
-                            if (snapshot.hasError) {
-                              return Center(
-                                child: Text(
-                                  'Error loading data',
-                                  style: TextStyle(color: Colors.red[300]),
-                                ),
-                              );
-                            }
-                            
-                            final data = snapshot.data ?? [];
-                            return CustomPaint(
-                              painter: ScatterPlotPainter(correlationData: data),
-                            );
-                          },
-                        ),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            BlurText(
-                              text: 'Strong positive correlation',
-                              duration: const Duration(milliseconds: 800),
-                              type: AnimationType.word,
-                              textStyle: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            ChimeBellText(
-                              text:
-                                  'When you take your medications\nregularly, your symptoms\ntypically improve within 2 days',
-                              duration: const Duration(milliseconds: 50),
-                              textStyle: TextStyle(
-                                color: Color(0xFF9E9E9E),
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildMedicationImpactCard(),
                   const SizedBox(height: 30),
 
                   // NEW SECTION: Mood Trend Chart
-                  BlurText(
-                    text: 'Mood Trends Analysis',
-                    duration: const Duration(milliseconds: 800),
-                    type: AnimationType.word,
-                    textStyle: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  ChimeBellText(
-                    text: 'Visualize how your mood has changed over time',
-                    duration: const Duration(milliseconds: 50),
-                    textStyle: TextStyle(
-                      color: Color(0xFF9E9E9E),
-                      fontSize: 12,
-                    ),
-                  ),
-                  const SizedBox(height: 15),
                   SizedBox(
                     width: double.infinity,
                     child: MoodTrendChart(
                       timeRange: _selectedDateOption,
                       selectedDate: _selectedDate,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Debug button to verify mood data
-                  Center(
-                    child: TextButton(
-                      onPressed: () async {
-                        // Check if the mood data exists for today
-                        final today = DateTime.now();
-                        final normalizedToday = DateTime(today.year, today.month, today.day);
-                        
-                        // Debug log
-                        devPrint('DEBUG: Checking mood data for today: $normalizedToday');
-                        
-                        // First check if it exists
-                        final hasMood = await HiveService.hasMoodForDate(normalizedToday);
-                        devPrint('DEBUG: Has mood for today: $hasMood');
-                        
-                        // Get the actual data
-                        final moodData = await HiveService.getMoodForDate(normalizedToday);
-                        devPrint('DEBUG: Today\'s mood data: $moodData');
-                        
-                        // Test saving a mood value
-                        if (!hasMood) {
-                          devPrint('DEBUG: Saving test mood data for today');
-                          await HiveService.saveMoodForDate(
-                            normalizedToday,
-                            2, // Bad mood (matches your screenshot)
-                            'Test mood data'
-                          );
-                          devPrint('DEBUG: Test mood data saved');
-                          
-                          // Verify it was saved
-                          final newMoodData = await HiveService.getMoodForDate(normalizedToday);
-                          devPrint('DEBUG: Newly saved mood data: $newMoodData');
-                          
-                          // Force refresh the chart
-                          setState(() {});
-                        }
-                      },
-                      child: Text('Debug Mood Data', style: TextStyle(color: Colors.grey)),
                     ),
                   ),
                   const SizedBox(height: 30),
@@ -571,7 +453,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                     duration: const Duration(milliseconds: 800),
                     type: AnimationType.word,
                     textStyle: TextStyle(
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
@@ -581,8 +463,9 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                         'Discover which factors most strongly influence your mood',
                     duration: const Duration(milliseconds: 50),
                     textStyle: TextStyle(
-                      color: Color(0xFF9E9E9E),
+                      color: AppTokens.textSecondary,
                       fontSize: 12,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 15),
@@ -592,12 +475,12 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                   ),
                   const SizedBox(height: 30),*/
 
-                  BlurText(
+                  /* BlurText(
                     text: 'Mood Forecast',
                     duration: const Duration(milliseconds: 800),
                     type: AnimationType.word,
                     textStyle: TextStyle(
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
@@ -607,8 +490,9 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                         'AI-powered prediction of your mood trends (Coming soon, for illustration purposes only)',
                     duration: const Duration(milliseconds: 50),
                     textStyle: TextStyle(
-                      color: Color(0xFF9E9E9E),
+                      color: AppTokens.textSecondary,
                       fontSize: 12,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 15),
@@ -616,33 +500,16 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                     width: double.infinity,
                     child: WellnessPrediction(),
                   ),
-                  const SizedBox(height: 50),
+                  const SizedBox(height: 50), */
 
 
                   // NEW SECTION: Personalized Insights
-                  BlurText(
-                    text: 'Your Personalized Insights',
-                    duration: const Duration(milliseconds: 800),
-                    type: AnimationType.word,
-                    textStyle: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  ChimeBellText(
-                    text:
-                        'Data-driven recommendations tailored to your wellness patterns',
-                    duration: const Duration(milliseconds: 50),
-                    textStyle: TextStyle(
-                      color: Color(0xFF9E9E9E),
-                      fontSize: 12,
-                    ),
-                  ),
-                  const SizedBox(height: 15),
                   SizedBox(
                     width: double.infinity,
-                    child: PersonalizedInsights(timeRange: _selectedDateOption),
+                    child: PersonalizedInsights(
+                      timeRange: _selectedDateOption,
+                      selectedDate: _selectedDate,
+                    ),
                   ),
                   const SizedBox(height: 30),
 
@@ -650,180 +517,128 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
                   const SizedBox(height: 30),
 
                   const SizedBox(height: 10),
-                ]),
+                    const SizedBox(height: 80), // Space for floating tabs
+                  ],
+                ),
+              ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            ]),
           ),
-        ),
+          // Date navigation controls above bottom navigation bar
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: HugeIcon(
+                      icon: HugeIcons.strokeRoundedArrowLeft01,
+                      size: 24,
+                      strokeWidth: 1,
+                      color: AppTokens.iconPrimary,
+                    ),
+                    onPressed: _navigateToPrevious,
+                  ),
+                  Text(
+                    formattedSelectedDate,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  // Next button
+                  IconButton(
+                    icon: HugeIcon(
+                      icon: HugeIcons.strokeRoundedArrowRight01,
+                      size: 24,
+                      strokeWidth: 1,
+                      color: DateTime(
+                        _selectedDate.year,
+                        _selectedDate.month,
+                        _selectedDate.day,
+                      ).isSameDate(DateTime.now())
+                          ? AppTokens.iconMuted
+                          : AppTokens.iconPrimary,
+                    ),
+                    onPressed: DateTime(
+                      _selectedDate.year,
+                      _selectedDate.month,
+                      _selectedDate.day,
+                    ).isSameDate(DateTime.now())
+                        ? null
+                        : _navigateToNext,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar:
           buildBottomNavigationBar(context: context, currentRoute: 'wellness'),
     );
   }
 
-  void _showDatePicker(BuildContext context) async {
-    final now = DateTime.now();
-
-    switch (_selectedDateOption) {
-      case 'day':
-        final pickedDate = await showDatePicker(
-          context: context,
-          initialDate: _selectedDate.isAfter(now) ? now : _selectedDate,
-          firstDate: DateTime(2020),
-          lastDate: now,
-          builder: (context, child) {
-            return Theme(
-              data: Theme.of(context).copyWith(
-                colorScheme: ColorScheme.light(
-                  primary: Theme.of(context).primaryColor,
+  Widget _buildDateRangeSelector() {
+    final options = ['week', 'month', 'year'];
+    final selectedIndex = options.indexOf(_selectedDateOption);
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.pink5,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppTokens.borderLight,
+          width: 1,
+        ),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Calculate the width of each tab (container padding + tab width)
+          final tabWidth = 80.0;
+          final indicatorLeft = selectedIndex * tabWidth;
+          
+          return Stack(
+            children: [
+              // Sliding indicator
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOutCubic,
+                left: indicatorLeft,
+                top: 4,
+                bottom: 4,
+                child: Container(
+                  width: tabWidth,
+                  decoration: BoxDecoration(
+                    color: AppTokens.buttonPrimaryBg,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.pink40.withAlpha(40),
+                        spreadRadius: 0,
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              child: child!,
-            );
-          },
-        );
-
-        if (pickedDate != null) {
-          wellnessNotifier.setDate(pickedDate);
-
-          "Selected date: $formattedSelectedDate".log();
-        }
-        break;
-
-      case 'month':
-        // Show month picker
-        await _showMonthPicker(context);
-        break;
-
-      case 'year':
-        // Show year picker
-        await _showYearPicker(context);
-        break;
-    }
-  }
-
-  // Custom month picker
-  Future<void> _showMonthPicker(BuildContext context) async {
-    final now = DateTime.now();
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Select Month'),
-          content: SizedBox(
-            width: double.maxFinite,
-            height: 300,
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                childAspectRatio: 1.5,
+              // Tab buttons
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: options.map((option) => _dateOption(option)).toList(),
               ),
-              itemCount: 12,
-              itemBuilder: (context, index) {
-                final month = index + 1;
-                final date = DateTime(_selectedDate.year, month, 1);
-                final isSelected = _selectedDate.month == month;
-                final isFuture = date.year == now.year && month > now.month;
-
-                return InkWell(
-                  onTap: isFuture
-                      ? null
-                      : () {
-                          wellnessNotifier.setDate(DateTime(
-                            _selectedDate.year,
-                            month,
-                            1,
-                          ));
-                          Navigator.pop(context);
-                          "Selected month: $formattedSelectedDate".log();
-                        },
-                  child: Container(
-                    margin: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? Theme.of(context).primaryColor
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
-                    child: Center(
-                      child: Text(
-                        DateFormat('MMM').format(DateTime(2022, month)),
-                        style: TextStyle(
-                          color: isFuture
-                              ? Colors.grey[400]
-                              : isSelected
-                                  ? Colors.white
-                                  : Colors.black,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // Custom year picker
-  Future<void> _showYearPicker(BuildContext context) async {
-    final now = DateTime.now();
-    final startYear = 2020;
-    final endYear = now.year;
-    final years =
-        List.generate(endYear - startYear + 1, (index) => startYear + index);
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Select Year'),
-          content: SizedBox(
-            width: double.maxFinite,
-            height: 300,
-            child: ListView.builder(
-              itemCount: years.length,
-              itemBuilder: (context, index) {
-                final year = years[index];
-                final isSelected = _selectedDate.year == year;
-
-                return ListTile(
-                  title: Text(year.toString()),
-                  selected: isSelected,
-                  selectedTileColor:
-                      Theme.of(context).primaryColor.withAlpha(50),
-                  textColor: isSelected ? Theme.of(context).primaryColor : null,
-                  onTap: () {
-                    wellnessNotifier.setDate(DateTime(
-                      year,
-                      _selectedDate.month,
-                      1,
-                    ));
-                    Navigator.pop(context);
-                    "Selected year: $formattedSelectedDate".log();
-                  },
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-          ],
-        );
-      },
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -836,73 +651,45 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color:
-              isSelected ? Theme.of(context).primaryColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-        ),
+        width: 80,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Text(
           text.capitalize(),
+          textAlign: TextAlign.center,
           style: TextStyle(
-            color: isSelected ? Colors.white : Colors.black54,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? AppTokens.textPrimary : AppTokens.textSecondary,
+            fontWeight: isSelected ? AppTokens.fontWeightBold : AppTokens.fontWeightW500,
+            fontSize: 14,
+            fontFamily: 'Outfit',
           ),
         ),
       ),
     );
   }
 
-  Widget _moodIcon({required int index, int intensity = 500}) {
+  Widget _moodIcon({required int index, int intensity = 500, int moodCount = 0, int totalMoods = 1}) {
     bool isSelected = _selectedMood == index;
 
-    // For day view, show the mood selection UI similar to journal screen
-    if (_selectedDateOption == 'day') {
-      return GestureDetector(
-        onTap: () async {
-          setState(() {
-            _selectedMood = index;
-          });
-
-          // Save mood data using HiveService
-          await _saveMoodData(index);
-
-          // Force a rebuild to update the UI
-          setState(() {});
-        },
-        child: SvgPicture.asset(
-          'assets/icons/${_getMoodIconName(index)}.svg',
-          width: 50,
-          height: 50,
-          colorFilter: _getMoodIconColorFilter(isSelected),
-        ),
-      );
-    }
-    // For month view, show the aggregated data
-    else if (_selectedDateOption == 'month') {
-      MoodTracker.populateSample();
+    // For week/month/year view, show aggregated data
+    if (_selectedDateOption == 'week' || _selectedDateOption == 'month' || _selectedDateOption == 'year') {
       isSelected = true;
-      final int moodCount = MoodTracker.getMoodCountByRange(
-          DateTime(_selectedDate.year, _selectedDate.month, 1),
-          DateTime(_selectedDate.year, _selectedDate.month, 30),
-          index + 1);
-      intensity = 50 + ((moodCount / MoodTracker.moodLog.length) * 800).toInt();
-      intensity -= intensity % 100;
-    }
-
-    // For other views (year) or default case
-    else {
+      // Calculate intensity based on mood count ratio
+      if (totalMoods > 0 && moodCount > 0) {
+        intensity = 100 + ((moodCount / totalMoods) * 800).toInt();
+        intensity = intensity.clamp(100, 900);
+        intensity -= intensity % 100;
+      } else {
+        intensity = 100; // Muted when no data
+      }
+    } else {
       intensity -= intensity % 100;
     }
 
     // Return the default visualization for non-day views
     return GestureDetector(
       onTap: () {
-        if (_selectedDateOption == 'day') {
-          setState(() {
-            _selectedMood = index;
-          });
-        }
+        // Week view doesn't support individual mood selection
+        // Moods are shown in aggregated view
       },
       child: SvgPicture.asset(
         'assets/icons/${_getMoodIconName(index)}.svg',
@@ -949,17 +736,19 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
       children: [
         Text(
           day,
-          style: TextStyle(
-            color: Color(0xFF9E9E9E),
+          style: const TextStyle(
+            color: AppTokens.textPrimary,
             fontSize: 12,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Outfit',
           ),
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 8),
         Container(
-          width: 24,
-          height: 24,
+          width: 20,
+          height: 20,
           decoration: BoxDecoration(
-            color: isComplete ? Colors.green[100] : Colors.pink[100],
+            color: isComplete ? AppColors.pastelGreen : AppColors.pink100,
             shape: BoxShape.circle,
           ),
         ),
@@ -967,81 +756,645 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
     );
   }
 
-  Widget _effectivenessBar(String medication, double score, Color color) {
-    // Assuming score is on a scale of 0-10
-    final fillPercentage = score / 10.0;
+  Widget _effectivenessBar(String medication, int taken, int scheduled, Color color) {
+    // Calculate fill percentage based on taken/scheduled
+    final fillPercentage = scheduled > 0 ? taken / scheduled : 0.0;
 
     return Row(
       children: [
-        SizedBox(
-          width: 100,
+        Expanded(
+          flex: 2,
           child: Text(
             medication,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 14,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Outfit',
+              color: AppTokens.textPrimary,
             ),
           ),
         ),
         Expanded(
+          flex: 3,
           child: Stack(
             children: [
               // Background bar
               Container(
-                height: 12,
+                height: 8,
                 decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(6),
+                  color: AppColors.pink5,
+                  borderRadius: BorderRadius.circular(4),
                 ),
               ),
-              // Filled portion based on score
+              // Filled portion based on taken/scheduled
               FractionallySizedBox(
                 widthFactor: fillPercentage,
                 child: Container(
-                  height: 12,
+                  height: 8,
                   decoration: BoxDecoration(
                     color: color,
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(width: 10),
-        Text(
-          score.toStringAsFixed(1),
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
+        const SizedBox(width: 12),
+        SizedBox(
+          width: 50,
+          child: Text(
+            '$taken/$scheduled',
+            textAlign: TextAlign.right,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              fontFamily: 'Outfit',
+              color: AppTokens.textPrimary,
+            ),
           ),
         ),
       ],
     );
   }
 
-  Column buildSymptomsAndTriggers() {
-    return Column(
+  /// Build medication impact card with real correlation data
+  Widget _buildMedicationImpactCard() {
+    // Calculate date range based on selected date option
+    DateTime startDate;
+    switch (_selectedDateOption) {
+      case 'week':
+        startDate = _getStartOfWeek(_selectedDate);
+        break;
+      case 'month':
+        startDate = DateTime(_selectedDate.year, _selectedDate.month, 1);
+        break;
+      case 'year':
+        startDate = DateTime(_selectedDate.year, 1, 1);
+        break;
+      default:
+        startDate = _selectedDate.subtract(const Duration(days: 30));
+    }
+
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: HiveService.getMedicationMoodCorrelation(
+        startDate: startDate,
+        endDate: _selectedDate,
+      ),
+      builder: (context, snapshot) {
+        final data = snapshot.data ?? [];
+        final hasEnoughData = data.length >= 3;
+        
+        // Show empty state if not enough data
+        if (!hasEnoughData && snapshot.connectionState != ConnectionState.waiting) {
+          return Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppTokens.bgElevated,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppTokens.borderLight,
+                width: 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Icon
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: AppColors.pink10,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.scatter_plot_outlined,
+                    color: Colors.pink[300],
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Title
+                const Text(
+                  'Medication Impact',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Outfit',
+                    color: AppTokens.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Description
+                Text(
+                  'See how your medications affect your mood',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: 'Outfit',
+                    fontWeight: FontWeight.bold,
+                    color: AppTokens.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // What's needed
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.pink5,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'To unlock this insight, you need:',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Outfit',
+                          color: AppTokens.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildRequirementRow(
+                        icon: Icons.mood,
+                        text: 'Log your mood daily',
+                        isComplete: data.isNotEmpty, // Has at least 1 day with both
+                      ),
+                      const SizedBox(height: 6),
+                      _buildRequirementRow(
+                        icon: Icons.medication_outlined,
+                        text: 'Track medication taken/missed',
+                        isComplete: data.isNotEmpty, // Has at least 1 day with both
+                      ),
+                      const SizedBox(height: 6),
+                      _buildRequirementRow(
+                        icon: Icons.calendar_today,
+                        text: 'At least 3 days with both',
+                        isComplete: data.length >= 3,
+                      ),
+                    ],
+                  ),
+                ),
+                if (data.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    '${data.length}/3 days tracked',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        }
+        
+        final correlation = _calculateCorrelation(data);
+        final description = _getCorrelationDescription(correlation, data.length);
+        
+        // Determine icon and color based on correlation
+        IconData correlationIcon;
+        Color correlationColor;
+        
+        if (correlation >= 0.4) {
+          correlationIcon = Icons.trending_up;
+          correlationColor = AppColors.strongGreen;
+        } else if (correlation <= -0.4) {
+          correlationIcon = Icons.trending_down;
+          correlationColor = AppColors.strongRed;
+        } else {
+          correlationIcon = Icons.trending_flat;
+          correlationColor = AppColors.pastelYellow;
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppTokens.bgElevated,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppTokens.borderLight,
+              width: 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title
+              const Text(
+                'Medication Impact',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Outfit',
+                  color: AppTokens.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Scatter plot
+                  Container(
+                    width: 80,
+                    height: 80,
+                    margin: const EdgeInsets.only(right: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.pink5,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppTokens.borderLight,
+                        width: 1,
+                      ),
+                    ),
+                    child: CustomPaint(
+                      size: const Size(80, 80),
+                      painter: ScatterPlotPainter(correlationData: data),
+                    ),
+                  ),
+                  // Correlation info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              correlationIcon,
+                              color: correlationColor,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                description['title']!,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  fontFamily: 'Outfit',
+                                  color: AppTokens.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          description['description']!,
+                          style: TextStyle(
+                            color: AppTokens.textSecondary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Outfit',
+                          ),
+                        ),
+                        if (data.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'Based on ${data.length} data point${data.length == 1 ? '' : 's'}',
+                            style: TextStyle(
+                              color: AppTokens.textSecondary,
+                              fontSize: 12,
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Outfit',
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Helper widget for requirement checklist rows
+  Widget _buildRequirementRow({
+    required IconData icon,
+    required String text,
+    required bool isComplete,
+  }) {
+    return Row(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _symptomItem('Headache', 0.8),
-            _symptomItem('Fatigue', 0.6),
-            _symptomItem('Nausea', 0.3),
-          ],
+        Icon(
+          isComplete ? Icons.check_circle : Icons.radio_button_unchecked,
+          color: isComplete ? AppColors.strongGreen : AppColors.black40,
+          size: 16,
         ),
-        const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _triggerItem('Stress', 0.7),
-            _triggerItem('Poor Sleep', 0.5),
-            _triggerItem('Caffeine', 0.4),
-          ],
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 13,
+              fontFamily: 'Outfit',
+            ),
+          ),
         ),
       ],
     );
+  }
+
+  FutureBuilder<Map<String, double>> buildSymptomsAndTriggers() {
+    // Calculate date range based on selected date option
+    final DateTime startDate = getStartDate(_selectedDateOption, _selectedDate);
+    final DateTime endDate = _selectedDate;
+
+    return FutureBuilder<Map<String, double>>(
+      future: _calculateSymptomsAndTriggers(startDate, endDate),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+          // Show empty state when there's no data
+          return _buildEmptySymptomsState();
+        }
+
+        final data = snapshot.data!;
+        final symptoms = data.entries
+            .where((e) => _isSymptom(e.key))
+            .toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+        final triggers = data.entries
+            .where((e) => !_isSymptom(e.key))
+            .toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+
+        // Take top 3 symptoms and triggers
+        final topSymptoms = symptoms.take(3).toList();
+        final topTriggers = triggers.take(3).toList();
+
+        if (topSymptoms.isEmpty && topTriggers.isEmpty) {
+          return _buildEmptySymptomsState();
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppTokens.bgElevated,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppTokens.borderLight,
+              width: 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title
+              const Text(
+                'Active symptoms and triggers',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Outfit',
+                  color: AppTokens.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Symptoms
+              if (topSymptoms.isNotEmpty)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: topSymptoms
+                      .map((entry) => _symptomItem(entry.key, entry.value))
+                      .toList(),
+                ),
+              if (topSymptoms.isNotEmpty && topTriggers.isNotEmpty)
+                const SizedBox(height: 20),
+              // Triggers
+              if (topTriggers.isNotEmpty)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: topTriggers
+                      .map((entry) => _triggerItem(entry.key, entry.value))
+                      .toList(),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Build empty state for symptoms and triggers section
+  Widget _buildEmptySymptomsState() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTokens.bgElevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTokens.borderLight,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title
+          const Text(
+            'Active symptoms and triggers',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Outfit',
+              color: AppTokens.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Empty state content
+          Column(
+            children: [
+              appVectorImage(
+                fileName: 'book',
+                size: 48,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Add mood notes to see insights',
+                style: AppTokens.textStyleSmall.copyWith(
+                  fontWeight: AppTokens.fontWeightW600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Identify symptoms and triggers to help you understand your wellness patterns.',
+                style: AppTokens.textStyleSmall.copyWith(
+                  fontSize: 14,
+                  fontWeight: AppTokens.fontWeightW600,
+                  color: AppTokens.textPlaceholder,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Calculate symptoms and triggers from journal data
+  Future<Map<String, double>> _calculateSymptomsAndTriggers(
+      DateTime startDate, DateTime endDate) async {
+    // Map to track which days each symptom/trigger appeared on
+    final Map<String, Set<DateTime>> symptomDays = {};
+    final Set<DateTime> daysWithData = {};
+
+    // Iterate through each day in the range
+    for (DateTime date = startDate;
+        !date.isAfter(endDate);
+        date = date.add(const Duration(days: 1))) {
+      final normalizedDate = DateTime(date.year, date.month, date.day);
+      bool hasDataForDay = false;
+      final Set<String> foundToday = {};
+
+      // Get mood entries for this day
+      final moodEntries = await HiveService.getMoodEntriesForDate(date);
+      if (moodEntries != null && moodEntries.isNotEmpty) {
+        hasDataForDay = true;
+        // Extract symptoms/triggers from descriptions
+        for (var entry in moodEntries) {
+          final description = entry['description'] as String? ?? '';
+          if (description.isNotEmpty) {
+            final extracted = _extractSymptomsAndTriggers(description);
+            for (var item in extracted) {
+              foundToday.add(item);
+            }
+          }
+        }
+      }
+
+      // Also check for saved symptom data
+      final symptomEntries = await HiveService.getSymptomEntries(date, date);
+      if (symptomEntries.isNotEmpty) {
+        hasDataForDay = true;
+        for (var entry in symptomEntries) {
+          for (var symptom in entry.symptoms) {
+            foundToday.add(symptom);
+          }
+        }
+      }
+
+      // Track which days each symptom/trigger appeared
+      for (var item in foundToday) {
+        symptomDays.putIfAbsent(item, () => {}).add(normalizedDate);
+      }
+
+      if (hasDataForDay) {
+        daysWithData.add(normalizedDate);
+      }
+    }
+
+    // Convert to frequencies (percentage of days with data)
+    final frequencies = <String, double>{};
+    final totalDays = daysWithData.length;
+    if (totalDays > 0) {
+      for (var entry in symptomDays.entries) {
+        frequencies[entry.key] = entry.value.length / totalDays;
+      }
+    }
+
+    return frequencies;
+  }
+
+  /// Extract symptoms and triggers from journal description using keyword matching
+  List<String> _extractSymptomsAndTriggers(String text) {
+    final lowerText = text.toLowerCase();
+    final found = <String>[];
+
+    // Symptom keywords
+    final symptomKeywords = {
+      'headache': 'Headache',
+      'head ache': 'Headache',
+      'migraine': 'Headache',
+      'fatigue': 'Fatigue',
+      'tired': 'Fatigue',
+      'exhausted': 'Fatigue',
+      'exhaustion': 'Fatigue',
+      'nausea': 'Nausea',
+      'nauseous': 'Nausea',
+      'dizzy': 'Dizziness',
+      'dizziness': 'Dizziness',
+      'pain': 'Pain',
+      'ache': 'Pain',
+      'sore': 'Pain',
+      'fever': 'Fever',
+      'chills': 'Chills',
+      'cough': 'Cough',
+      'congestion': 'Congestion',
+      'stuffy': 'Congestion',
+    };
+
+    // Trigger keywords
+    final triggerKeywords = {
+      'stress': 'Stress',
+      'stressed': 'Stress',
+      'stressing': 'Stress',
+      'anxious': 'Stress',
+      'anxiety': 'Stress',
+      'sleep': 'Poor Sleep',
+      'slept': 'Poor Sleep',
+      'insomnia': 'Poor Sleep',
+      'tossing': 'Poor Sleep',
+      'turning': 'Poor Sleep',
+      'caffeine': 'Caffeine',
+      'coffee': 'Caffeine',
+      'tea': 'Caffeine',
+      'dehydrated': 'Dehydration',
+      'dehydration': 'Dehydration',
+      'thirsty': 'Dehydration',
+      'screen': 'Screen Time',
+      'phone': 'Screen Time',
+      'computer': 'Screen Time',
+      'exercise': 'Exercise',
+      'workout': 'Exercise',
+      'gym': 'Exercise',
+    };
+
+    // Check for symptoms
+    for (var entry in symptomKeywords.entries) {
+      if (lowerText.contains(entry.key) && !found.contains(entry.value)) {
+        found.add(entry.value);
+      }
+    }
+
+    // Check for triggers
+    for (var entry in triggerKeywords.entries) {
+      if (lowerText.contains(entry.key) && !found.contains(entry.value)) {
+        found.add(entry.value);
+      }
+    }
+
+    return found;
+  }
+
+  /// Check if a keyword represents a symptom (vs trigger)
+  bool _isSymptom(String keyword) {
+    const symptoms = {
+      'Headache',
+      'Fatigue',
+      'Nausea',
+      'Dizziness',
+      'Pain',
+      'Fever',
+      'Chills',
+      'Cough',
+      'Congestion',
+    };
+    return symptoms.contains(keyword);
   }
 
   Widget _symptomItem(String name, double frequency) {
@@ -1050,12 +1403,12 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.red.withValues(alpha: 0.1),
+            color: AppColors.pink5,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
             Icons.sick,
-            color: Colors.red[400],
+            color: AppColors.pink100,
             size: 24,
           ),
         ),
@@ -1064,7 +1417,9 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
           name,
           style: const TextStyle(
             fontSize: 12,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Outfit',
+            color: AppTokens.textPrimary,
           ),
         ),
         const SizedBox(height: 4),
@@ -1072,7 +1427,9 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
           '${(frequency * 100).toInt()}%',
           style: TextStyle(
             fontSize: 10,
-            color: Colors.grey[600],
+            color: AppTokens.textSecondary,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Outfit',
           ),
         ),
       ],
@@ -1085,12 +1442,12 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.orange.withValues(alpha: 0.1),
+            color: AppColors.pink10,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
             Icons.warning_amber,
-            color: Colors.orange[400],
+            color: AppColors.pink100,
             size: 24,
           ),
         ),
@@ -1099,7 +1456,9 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
           name,
           style: const TextStyle(
             fontSize: 12,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Outfit',
+            color: AppTokens.textPrimary,
           ),
         ),
         const SizedBox(height: 4),
@@ -1107,7 +1466,9 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
           '${(frequency * 100).toInt()}%',
           style: TextStyle(
             fontSize: 10,
-            color: Colors.grey[600],
+            color: AppTokens.textSecondary,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Outfit',
           ),
         ),
       ],
@@ -1118,145 +1479,323 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
     final pillIntakeNotifier = ref.watch(pillIntakeProvider.notifier);
     final missedDays = pillIntakeNotifier.getMissedDoseDays();
 
+    // Format missed days for the summary text
+    String summaryText;
+    if (missedDays.isEmpty) {
+      summaryText = 'Great job! You haven\'t missed any doses recently.';
+    } else {
+      // Sort days chronologically (Monday = 1, Tuesday = 2, ..., Sunday = 7)
+      final dayOrder = {
+        'Monday': 1,
+        'Tuesday': 2,
+        'Wednesday': 3,
+        'Thursday': 4,
+        'Friday': 5,
+        'Saturday': 6,
+        'Sunday': 7,
+      };
+      
+      final sortedDays = missedDays.toList()
+        ..sort((a, b) => (dayOrder[a] ?? 0).compareTo(dayOrder[b] ?? 0));
+      
+      final dayNames = sortedDays.map((day) {
+        // Convert day names to plural form
+        // Days ending in 'y' need special handling: Monday -> Mondays, Tuesday -> Tuesdays, etc.
+        if (day.endsWith('day')) {
+          return '${day}s';
+        } else if (day.endsWith('y')) {
+          // For days ending in 'y' (like Sunday), just add 's'
+          return '${day}s';
+        } else {
+          return '${day}s';
+        }
+      }).toList();
+      summaryText = 'You tend to miss doses on ${dayNames.join(' and ')}';
+    }
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _dayIndicator('Mon', !missedDays.contains('Monday')),
-            _dayIndicator('Tue', !missedDays.contains('Tuesday')),
-            _dayIndicator('Wed', !missedDays.contains('Wednesday')),
-            _dayIndicator('Thu', !missedDays.contains('Thursday')),
-            _dayIndicator('Fri', !missedDays.contains('Friday')),
-            _dayIndicator('Sat', !missedDays.contains('Saturday')),
-            _dayIndicator('Sun', !missedDays.contains('Sunday')),
-          ],
-        ),
-        const SizedBox(height: 15),
-        BlurText(
-          text: missedDays.isEmpty
-              ? 'Great job! You haven\'t missed any doses recently.'
-              : 'You tend to miss doses on ${missedDays.join(' and ')}',
-          duration: const Duration(milliseconds: 800),
-          type: AnimationType.word,
-          textStyle: TextStyle(
-            color: Color(0xFF9E9E9E),
-            fontSize: 12,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _medicineAdherenceBar() {
-    final medications = ref.watch(pillIntakeProvider);
-    final pillIntakeNotifier = ref.read(pillIntakeProvider.notifier);
-    final journalLog = pillIntakeNotifier.journalLog;
-
-    // Calculate date range based on selected date option
-    final DateTime startDate = getStartDate(_selectedDateOption, _selectedDate);
-    final DateTime endDate = _selectedDate;
-
-   /* switch (_selectedDateOption) {
-      case 'day':
-        // For a day, just use the selected date
-        startDate = _selectedDate;
-        break;
-      case 'month':
-        // For a month, use the first day of the month to the selected date
-        startDate = DateTime(_selectedDate.year, _selectedDate.month, 1);
-        break;
-      case 'year':
-        // For a year, use the first day of the year to the selected date
-        startDate = DateTime(_selectedDate.year, 1, 1);
-        break;
-      default:
-        // Default to last 30 days
-        startDate = _selectedDate.subtract(const Duration(days: 30));
-    }*/
-
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: medications.length,
-      itemBuilder: (context, index) {
-        final treatment = medications[index].treatment;
-        final medName = treatment.medicine.name;
-
-        final double adherenceRate =
-            journalLog.getAdherenceRate(treatment, startDate, endDate);
-
-        // Convert to a 0-10 scale for the UI
-        final double medRate = adherenceRate * 10;
-        final medColor = medRate < 7 ? Colors.purple[100] : Colors.green[200];
-
-        return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: _effectivenessBar(medName, medRate, medColor!));
-      },
-    );
-  }
-
-  Row _buildMedicationAdherenceCard() {
-    String currentTimeFrame = _selectedDate.getNameOf(_selectedDateOption);
-    currentTimeFrame = currentTimeFrame == 'today'
-        ? 'today'
-        : _selectedDateOption == 'day'
-            ? 'on $currentTimeFrame'
-            : 'in $currentTimeFrame';
-    final String previousTimeFrame = currentTimeFrame == 'today'
-        ? 'yesterday'
-        : 'the previous $_selectedDateOption';
-
-    // Calculate date range based on selected date option
-    final DateTime startDate = getStartDate(_selectedDateOption, _selectedDate);
-    final DateTime endDate = _selectedDate;
-    final journalLog = ref.read(pillIntakeProvider.notifier).journalLog;
-    final double currentAdherence = journalLog.getAdherenceRateAll(startDate, endDate);
-    final currentText =
-        "You've taken ${currentAdherence * 100}% of your meds $currentTimeFrame";
-    final progressText =
-        "That's better than $previousTimeFrame (${(currentAdherence - 0.05) * 100}%)";
-    return Row(
-      children: [
-        CircularPercentIndicator(
-          radius: 35,
-          lineWidth: 6,
-          percent: currentAdherence,
-          center: Text(
-            '${currentAdherence * 100}%',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppTokens.bgElevated,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppTokens.borderLight,
+              width: 1,
             ),
           ),
-          progressColor: Colors.purple[100],
-          backgroundColor: Colors.grey[200]!,
-        ),
-        const SizedBox(width: 15),
-        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                currentText,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
+              // Title
+              const Text(
+                'Missed dose patterns',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Outfit',
+                  color: AppTokens.textPrimary,
                 ),
               ),
-              const SizedBox(height: 5),
-              Text(
-                progressText,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey[600],
+              const SizedBox(height: 20),
+              // Day indicators
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _dayIndicator('Mon', !missedDays.contains('Monday')),
+                  _dayIndicator('Tue', !missedDays.contains('Tuesday')),
+                  _dayIndicator('Wed', !missedDays.contains('Wednesday')),
+                  _dayIndicator('Thu', !missedDays.contains('Thursday')),
+                  _dayIndicator('Fri', !missedDays.contains('Friday')),
+                  _dayIndicator('Sat', !missedDays.contains('Saturday')),
+                  _dayIndicator('Sun', !missedDays.contains('Sunday')),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Summary text
+              Center(
+                child: Text(
+                  summaryText,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppTokens.textSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Outfit',
+                  ),
                 ),
               ),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  FutureBuilder<double> _buildMedicationAdherenceCard() {
+    String currentTimeFrame = _selectedDate.getNameOf(_selectedDateOption);
+    currentTimeFrame = currentTimeFrame == 'today'
+        ? 'today'
+        : _selectedDateOption == 'week'
+            ? 'this week'
+            : _selectedDateOption == 'month'
+                ? 'this month'
+                : 'this year';
+    
+    // Calculate previous period for comparison
+    final DateTime startDate = getStartDate(_selectedDateOption, _selectedDate);
+    final DateTime previousStartDate = switch (_selectedDateOption) {
+      'week' => startDate.subtract(const Duration(days: 7)),
+      'month' => DateTime(_selectedDate.year, _selectedDate.month - 1, 1),
+      'year' => DateTime(_selectedDate.year - 1, 1, 1),
+      _ => startDate.subtract(const Duration(days: 30)),
+    };
+    final DateTime previousEndDate = switch (_selectedDateOption) {
+      'week' => previousStartDate.add(const Duration(days: 6)),
+      'month' => DateTime(_selectedDate.year, _selectedDate.month, 0),
+      'year' => DateTime(_selectedDate.year - 1, 12, 31),
+      _ => startDate.subtract(const Duration(days: 1)),
+    };
+    
+    final DateTime endDate = _selectedDate;
+    final journalLog = ref.read(pillIntakeProvider.notifier).journalLog;
+
+    return FutureBuilder<double>(
+      future: journalLog.getAdherenceRateAllAsync(startDate, endDate),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppTokens.bgElevated,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Row(
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 15),
+                Expanded(child: Text('Loading adherence data...')),
+              ],
+            ),
+          );
+        }
+
+        final currentAdherence = snapshot.data ?? 0.0;
+        final adherencePercent = (currentAdherence * 100).toStringAsFixed(0);
+        
+        // Get previous period adherence for comparison
+        return FutureBuilder<double>(
+          future: journalLog.getAdherenceRateAllAsync(previousStartDate, previousEndDate),
+          builder: (context, prevSnapshot) {
+            double previousAdherence = 0.0;
+            if (prevSnapshot.hasData) {
+              previousAdherence = prevSnapshot.data ?? 0.0;
+            }
+            
+            final previousPercent = (previousAdherence * 100).toStringAsFixed(0);
+            final isBetter = currentAdherence > previousAdherence;
+            final String previousTimeFrame = _selectedDateOption == 'week'
+                ? 'last week'
+                : _selectedDateOption == 'month'
+                    ? 'last month'
+                    : 'last year';
+            
+            final currentText =
+                "You've taken $adherencePercent% of your medications $currentTimeFrame";
+            final progressText = prevSnapshot.hasData
+                ? "${isBetter ? "That's better than" : "That's less than"} $previousTimeFrame ($previousPercent%)"
+                : "Keep up the great work!";
+
+            // Get medications for the bars
+            final medications = ref.watch(pillIntakeProvider);
+            final pillIntakeNotifier = ref.read(pillIntakeProvider.notifier);
+            final journalLogForBars = pillIntakeNotifier.journalLog;
+
+            return Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTokens.bgElevated,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppTokens.borderLight,
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  const Text(
+                    'Medication adherence',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Outfit',
+                      color: AppTokens.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Circular progress and text
+                  Row(
+                    children: [
+                      CircularPercentIndicator(
+                        radius: 50,
+                        lineWidth: 8,
+                        percent: currentAdherence,
+                        center: Text(
+                          '$adherencePercent%',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            fontFamily: 'Outfit',
+                            color: AppTokens.textPrimary,
+                          ),
+                        ),
+                        progressColor: AppTokens.buttonPrimaryBg,
+                        backgroundColor: AppColors.pink10,
+                        circularStrokeCap: CircularStrokeCap.round,
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              currentText,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                fontFamily: 'Outfit',
+                                color: AppTokens.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              progressText,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppTokens.textSecondary,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Outfit',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Medication bars
+                  if (medications.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    const Divider(
+                      height: 1,
+                      color: AppTokens.borderLight,
+                    ),
+                    const SizedBox(height: 16),
+                    ...medications.map((medication) {
+                      final treatment = medication.treatment;
+                      final medName = treatment.medicine.name;
+
+                      return FutureBuilder<Map<String, int>>(
+                        future: journalLogForBars.getAdherenceCountsAsync(treatment, startDate, endDate),
+                        builder: (context, medSnapshot) {
+                          if (medSnapshot.connectionState == ConnectionState.waiting) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                      medName,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'Outfit',
+                                        color: AppTokens.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                  const Expanded(
+                                    flex: 3,
+                                    child: LinearProgressIndicator(),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+
+                          final counts = medSnapshot.data ?? {'taken': 0, 'scheduled': 0};
+                          final taken = counts['taken'] ?? 0;
+                          final scheduled = counts['scheduled'] ?? 0;
+                          
+                          // Calculate adherence rate for color coding
+                          final adherenceRate = scheduled > 0 ? taken / scheduled : 0.0;
+                          final medRate = adherenceRate * 10;
+                          
+                          // Use PinkRain colors: pink for lower adherence, green for good adherence
+                          final medColor = medRate < 7 
+                              ? AppColors.pink100 
+                              : AppColors.pastelGreen;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _effectivenessBar(medName, taken, scheduled, medColor),
+                          );
+                        },
+                      );
+                    }),
+                  ],
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -1307,21 +1846,4 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
     );
   }*/
 
-  // Save the mood data to HiveService
-  Future<void> _saveMoodData(int mood) async {
-    try {
-      // Use the selected date
-      final date = _selectedDate;
-
-      // Use the HiveService method to save mood data
-      await HiveService.saveMoodForDate(date, mood, '');
-
-      // Force UI update
-      setState(() {
-        _selectedMood = mood;
-      });
-    } catch (e) {
-      "Error saving mood data: $e".log();
-    }
-  }
 }

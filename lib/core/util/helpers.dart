@@ -51,11 +51,26 @@ extension DateTimeExtensions on DateTime {
     final thisDate = DateTime(year, month, day);
     
     switch(selectedDateOption) {
-      case 'day':
-        if (thisDate.isAtSameMomentAs(today)) {
-          return 'Today';
+      case 'week':
+        // Get start of week (Monday)
+        final weekday = thisDate.weekday; // 1 = Monday, 7 = Sunday
+        final daysToSubtract = weekday - 1;
+        final startOfWeek = DateTime(thisDate.year, thisDate.month, thisDate.day)
+            .subtract(Duration(days: daysToSubtract));
+        final endOfWeek = startOfWeek.add(const Duration(days: 6));
+        
+        // Check if this week contains today
+        if (startOfWeek.isBefore(today) || startOfWeek.isAtSameMomentAs(today)) {
+          if (endOfWeek.isAfter(today) || endOfWeek.isAtSameMomentAs(today)) {
+            return 'This Week';
+          }
+        }
+        
+        // Format week range
+        if (startOfWeek.month == endOfWeek.month) {
+          return '${DateFormat('MMM d').format(startOfWeek)} - ${DateFormat('d').format(endOfWeek)}';
         } else {
-          return DateFormat('MMMM d, yyyy').format(this);
+          return '${DateFormat('MMM d').format(startOfWeek)} - ${DateFormat('MMM d').format(endOfWeek)}';
         }
       case 'month':
         return getMonthName(month);
@@ -189,20 +204,23 @@ FutureBuilder<SvgPicture> futureBuildSvg(String text, String? selectedColor, [do
 DateTime getStartDate(String selectedDateOption, DateTime selectedDate) {
   DateTime startDate;
   switch (selectedDateOption) {
-    case 'day':
-    // For a day, just use the selected date
-      startDate = selectedDate;
+    case 'week':
+      // For a week, get the start of the week (Monday)
+      final weekday = selectedDate.weekday; // 1 = Monday, 7 = Sunday
+      final daysToSubtract = weekday - 1; // Days to subtract to get to Monday
+      startDate = DateTime(selectedDate.year, selectedDate.month, selectedDate.day)
+          .subtract(Duration(days: daysToSubtract));
       break;
     case 'month':
-    // For a month, use the first day of the month to the selected date
+      // For a month, use the first day of the month to the selected date
       startDate = DateTime(selectedDate.year, selectedDate.month, 1);
       break;
     case 'year':
-    // For a year, use the first day of the year to the selected date
+      // For a year, use the first day of the year to the selected date
       startDate = DateTime(selectedDate.year, 1, 1);
       break;
     default:
-    // Default to last 30 days
+      // Default to last 30 days
       startDate = selectedDate.subtract(const Duration(days: 30));
   }
   return startDate;

@@ -1,220 +1,522 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pinkrain/core/services/hive_service.dart';
+import 'package:pinkrain/core/theme/colors.dart';
+import 'package:pinkrain/core/theme/tokens.dart';
+import 'package:pinkrain/features/journal/presentation/journal_notifier.dart';
 
-class PersonalizedInsights extends StatelessWidget {
-  final String timeRange; // 'day', 'month', or 'year'
+/// Data class to hold insight information
+class InsightData {
+  final String title;
+  final String description;
+  final IconData icon;
+  final Color color;
+  final bool isPositive;
+
+  const InsightData({
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.color,
+    this.isPositive = true,
+  });
+}
+
+class PersonalizedInsights extends ConsumerStatefulWidget {
+  final String timeRange; // 'week', 'month', or 'year'
+  final DateTime selectedDate;
 
   const PersonalizedInsights({
     super.key,
     required this.timeRange,
+    required this.selectedDate,
   });
+
+  @override
+  ConsumerState<PersonalizedInsights> createState() => _PersonalizedInsightsState();
+}
+
+class _PersonalizedInsightsState extends ConsumerState<PersonalizedInsights> {
+  List<InsightData> _insights = [];
+  bool _isLoading = true;
+  int _totalDataPoints = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _analyzeAndGenerateInsights();
+  }
+
+  @override
+  void didUpdateWidget(PersonalizedInsights oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.timeRange != widget.timeRange ||
+        oldWidget.selectedDate != widget.selectedDate) {
+      _analyzeAndGenerateInsights();
+    }
+  }
+
+  /// Get the start date based on time range and selected date
+  DateTime _getStartDate() {
+    final date = widget.selectedDate;
+    switch (widget.timeRange) {
+      case 'week':
+        final weekday = date.weekday;
+        return DateTime(date.year, date.month, date.day)
+            .subtract(Duration(days: weekday - 1));
+      case 'month':
+        return DateTime(date.year, date.month, 1);
+      case 'year':
+        return DateTime(date.year, 1, 1);
+      default:
+        return date.subtract(const Duration(days: 7));
+    }
+  }
+
+  /// Get the end date based on time range and selected date
+  DateTime _getEndDate() {
+    final date = widget.selectedDate;
+    switch (widget.timeRange) {
+      case 'week':
+        final weekday = date.weekday;
+        final startOfWeek = DateTime(date.year, date.month, date.day)
+            .subtract(Duration(days: weekday - 1));
+        return startOfWeek.add(const Duration(days: 6));
+      case 'month':
+        return DateTime(date.year, date.month + 1, 0); // Last day of month
+      case 'year':
+        return DateTime(date.year, 12, 31);
+      default:
+        return date;
+    }
+  }
+
+  /// Analyze user data and generate personalized insights
+  Future<void> _analyzeAndGenerateInsights() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final insights = <InsightData>[];
+    final endDate = _getEndDate();
+    final startDate = _getStartDate();
+    int dataPoints = 0;
+
+    try {
+      // Analyze mood patterns
+      final moodAnalysis = await _analyzeMoodPatterns(startDate, endDate);
+      insights.addAll(moodAnalysis['insights'] as List<InsightData>);
+      dataPoints += moodAnalysis['dataPoints'] as int;
+
+      // Analyze medication adherence impact
+      final medAnalysis = await _analyzeMedicationImpact(startDate, endDate);
+      insights.addAll(medAnalysis['insights'] as List<InsightData>);
+      dataPoints += medAnalysis['dataPoints'] as int;
+
+      // Analyze symptom patterns
+      final symptomAnalysis = await _analyzeSymptomPatterns(startDate, endDate);
+      insights.addAll(symptomAnalysis['insights'] as List<InsightData>);
+      dataPoints += symptomAnalysis['dataPoints'] as int;
+
+      // If no insights generated, show empty state message
+      if (insights.isEmpty) {
+        insights.add(InsightData(
+          title: 'Keep logging your wellness',
+          description: 'Continue tracking your mood and medications to unlock personalized insights about your patterns.',
+          icon: Icons.auto_awesome,
+          color: AppColors.pink100,
+        ));
+      }
+
+      setState(() {
+        _insights = insights;
+        _totalDataPoints = dataPoints;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _insights = [
+          InsightData(
+            title: 'Unable to analyze data',
+            description: 'There was an issue analyzing your data. Please try again later.',
+            icon: Icons.error_outline,
+            color: AppColors.pastelRed,
+            isPositive: false,
+          ),
+        ];
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// Analyze mood patterns from stored data
+  Future<Map<String, dynamic>> _analyzeMoodPatterns(
+      DateTime startDate, DateTime endDate) async {
+    final insights = <InsightData>[];
+    int dataPoints = 0;
+    
+    // Collect mood data
+    final moodByDay = <int, List<int>>{}; // weekday -> list of moods
+    final allMoods = <int>[];
+    
+    for (DateTime date = startDate;
+        !date.isAfter(endDate);
+        date = date.add(const Duration(days: 1))) {
+      final moodData = await HiveService.getMoodForDate(date);
+      if (moodData != null && moodData.containsKey('mood')) {
+        final mood = moodData['mood'] as int;
+        allMoods.add(mood);
+        dataPoints++;
+        
+        moodByDay.putIfAbsent(date.weekday, () => []).add(mood);
+      }
+    }
+
+    if (allMoods.isEmpty) {
+      return {'insights': insights, 'dataPoints': dataPoints};
+    }
+
+    // Calculate average mood
+    final avgMood = allMoods.reduce((a, b) => a + b) / allMoods.length;
+
+    // Find best and worst days of week
+    double bestDayAvg = 0;
+    double worstDayAvg = 5;
+    int bestDay = 1;
+    int worstDay = 1;
+
+    for (var entry in moodByDay.entries) {
+      if (entry.value.isNotEmpty) {
+        final dayAvg = entry.value.reduce((a, b) => a + b) / entry.value.length;
+        if (dayAvg > bestDayAvg) {
+          bestDayAvg = dayAvg;
+          bestDay = entry.key;
+        }
+        if (dayAvg < worstDayAvg) {
+          worstDayAvg = dayAvg;
+          worstDay = entry.key;
+        }
+      }
+    }
+
+    final dayNames = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    // Generate mood pattern insights
+    if (moodByDay.length >= 3 && bestDayAvg > avgMood + 0.3) {
+      insights.add(InsightData(
+        title: 'Your best day is ${dayNames[bestDay]}',
+        description: 'Your mood tends to be highest on ${dayNames[bestDay]}s. Consider what makes this day special.',
+        icon: Icons.sentiment_very_satisfied,
+        color: AppColors.pastelGreen,
+      ));
+    }
+
+    if (moodByDay.length >= 3 && worstDayAvg < avgMood - 0.3 && bestDay != worstDay) {
+      insights.add(InsightData(
+        title: '${dayNames[worstDay]}s may need extra care',
+        description: 'Your mood tends to dip on ${dayNames[worstDay]}s. Try scheduling self-care activities.',
+        icon: Icons.self_improvement,
+        color: AppColors.pastelPurple,
+        isPositive: false,
+      ));
+    }
+
+    // Mood trend insight
+    if (allMoods.length >= 5) {
+      final firstHalf = allMoods.sublist(0, allMoods.length ~/ 2);
+      final secondHalf = allMoods.sublist(allMoods.length ~/ 2);
+      final firstAvg = firstHalf.reduce((a, b) => a + b) / firstHalf.length;
+      final secondAvg = secondHalf.reduce((a, b) => a + b) / secondHalf.length;
+
+      if (secondAvg > firstAvg + 0.3) {
+        insights.add(InsightData(
+          title: 'Your mood is improving',
+          description: 'Great progress! Your average mood has increased over this period.',
+          icon: Icons.trending_up,
+          color: AppColors.pastelGreen,
+        ));
+      } else if (secondAvg < firstAvg - 0.3) {
+        insights.add(InsightData(
+          title: 'Your mood may need attention',
+          description: 'Your mood has been trending lower. Consider trying new wellness activities.',
+          icon: Icons.trending_down,
+          color: AppColors.pastelOrange,
+          isPositive: false,
+        ));
+      }
+    }
+
+    return {'insights': insights, 'dataPoints': dataPoints};
+  }
+
+  /// Analyze medication adherence and its impact on mood
+  Future<Map<String, dynamic>> _analyzeMedicationImpact(
+      DateTime startDate, DateTime endDate) async {
+    final insights = <InsightData>[];
+    int dataPoints = 0;
+
+    // Use the same data source as the Medication Adherence card
+    final journalLog = ref.read(pillIntakeProvider.notifier).journalLog;
+    final adherenceRate = await journalLog.getAdherenceRateAllAsync(startDate, endDate);
+    final avgAdherence = adherenceRate * 100; // Convert to percentage
+    
+    // Count data points (days with medication logs)
+    for (DateTime date = startDate;
+        !date.isAfter(endDate);
+        date = date.add(const Duration(days: 1))) {
+      final medicationLogs = await HiveService.getMedicationLogsForDate(date);
+      if (medicationLogs != null && medicationLogs.isNotEmpty) {
+        dataPoints++;
+      }
+    }
+
+    // Get correlation data for mood-adherence comparison
+    final correlationData = await HiveService.getMedicationMoodCorrelation(
+      startDate: startDate,
+      endDate: endDate,
+    );
+
+    // Analyze mood differences between high and low adherence days
+    if (correlationData.length >= 3) {
+      final highAdherenceMoods = <double>[];
+      final lowAdherenceMoods = <double>[];
+
+      for (var point in correlationData) {
+        final adherence = point['x'] as double;
+        final mood = point['y'] as double;
+        
+        if (adherence >= 80) {
+          highAdherenceMoods.add(mood);
+        } else if (adherence < 50) {
+          lowAdherenceMoods.add(mood);
+        }
+      }
+
+      if (highAdherenceMoods.isNotEmpty && lowAdherenceMoods.isNotEmpty) {
+        final highAvg = highAdherenceMoods.reduce((a, b) => a + b) / highAdherenceMoods.length;
+        final lowAvg = lowAdherenceMoods.reduce((a, b) => a + b) / lowAdherenceMoods.length;
+
+        if (highAvg > lowAvg + 0.5) {
+          final improvement = ((highAvg - lowAvg) / lowAvg * 100).toStringAsFixed(0);
+          insights.add(InsightData(
+            title: 'Medications are helping',
+            description: 'Your mood is ~$improvement% better on days with good medication adherence.',
+            icon: Icons.medication,
+            color: AppColors.pastelGreen,
+          ));
+        }
+      }
+    }
+
+    // Generate adherence-based insights (only if we have medication data)
+    if (dataPoints > 0 || adherenceRate > 0) {
+      if (avgAdherence >= 90) {
+        insights.add(InsightData(
+          title: 'Excellent medication consistency',
+          description: 'You\'re maintaining ${avgAdherence.toStringAsFixed(0)}% adherence this ${widget.timeRange}. Great job!',
+          icon: Icons.verified,
+          color: AppColors.pastelBlue,
+        ));
+      } else if (avgAdherence >= 70) {
+        insights.add(InsightData(
+          title: 'Good medication adherence',
+          description: 'Your ${widget.timeRange}ly adherence is ${avgAdherence.toStringAsFixed(0)}%. Keep it up!',
+          icon: Icons.thumb_up,
+          color: AppColors.pastelGreen,
+        ));
+      } else if (avgAdherence < 60) {
+        insights.add(InsightData(
+          title: 'Room for improvement',
+          description: 'Your ${widget.timeRange}ly adherence is ${avgAdherence.toStringAsFixed(0)}%. Setting reminders could help.',
+          icon: Icons.alarm,
+          color: AppColors.pastelOrange,
+          isPositive: false,
+        ));
+      }
+    }
+
+    return {'insights': insights, 'dataPoints': dataPoints};
+  }
+
+  /// Analyze symptom patterns
+  Future<Map<String, dynamic>> _analyzeSymptomPatterns(
+      DateTime startDate, DateTime endDate) async {
+    final insights = <InsightData>[];
+    int dataPoints = 0;
+
+    // Get symptom entries
+    final symptomEntries = await HiveService.getSymptomEntries(startDate, endDate);
+    dataPoints = symptomEntries.length;
+
+    if (symptomEntries.isEmpty) {
+      return {'insights': insights, 'dataPoints': dataPoints};
+    }
+
+    // Count symptom frequencies
+    final symptomCounts = <String, int>{};
+    for (var entry in symptomEntries) {
+      for (var symptom in entry.symptoms) {
+        symptomCounts[symptom] = (symptomCounts[symptom] ?? 0) + 1;
+      }
+    }
+
+    if (symptomCounts.isEmpty) {
+      return {'insights': insights, 'dataPoints': dataPoints};
+    }
+
+    // Find most common symptom
+    final sortedSymptoms = symptomCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    if (sortedSymptoms.isNotEmpty && sortedSymptoms.first.value >= 2) {
+      final topSymptom = sortedSymptoms.first;
+      final percentage = (topSymptom.value / symptomEntries.length * 100).toStringAsFixed(0);
+      
+      insights.add(InsightData(
+        title: '${topSymptom.key} is your top symptom',
+        description: 'You\'ve logged ${topSymptom.key.toLowerCase()} on $percentage% of days.',
+        icon: Icons.medical_information,
+        color: AppColors.pastelPurple,
+        isPositive: false,
+      ));
+    }
+
+    return {'insights': insights, 'dataPoints': dataPoints};
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTokens.bgElevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTokens.borderLight,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title
+          Text(
+            'Your Personalized Insights',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Outfit',
+              color: AppTokens.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          // Description
+          Text(
+            'Data-driven recommendations tailored to your wellness patterns',
+            style: TextStyle(
+              color: AppTokens.textSecondary,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Outfit',
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (_isLoading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24.0),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else ...[
+            // Insight cards
+            ..._insights.map((insight) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _InsightCard(insight: insight),
+                )),
+            const SizedBox(height: 8),
+            // Data points info
+            if (_totalDataPoints > 0)
+              Text(
+                'Based on $_totalDataPoints data points from your ${widget.timeRange}ly tracking',
+                style: TextStyle(
+                  color: AppTokens.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Outfit',
+                ),
+              )
+            else
+              Text(
+                'Start logging to receive personalized insights',
+                style: TextStyle(
+                  color: AppTokens.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Outfit',
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _InsightCard extends StatelessWidget {
+  final InsightData insight;
+
+  const _InsightCard({required this.insight});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: insight.color.withAlpha(40),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withAlpha(26), // 0.1 opacity = 26 alpha
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.lightbulb_outline,
-                color: Colors.amber,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Personalized Insights',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'Coming Soon (Illustrative)',
-                  style: TextStyle(
-                    color: Colors.blue[700],
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildInsightCards(),
-          const SizedBox(height: 12),
-          Text(
-            'Insights are generated based on your personal data patterns and scientific research',
-            style: TextStyle(
-              color: Colors.grey[500],
-              fontSize: 10,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInsightCards() {
-    // Generate insights based on time range
-    final insights = _getInsightsForTimeRange();
-    
-    return Column(
-      children: insights.map((insight) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _InsightCard(
-            title: insight['title'] as String,
-            description: insight['description'] as String,
-            icon: insight['icon'] as IconData,
-            color: insight['color'] as Color,
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  List<Map<String, dynamic>> _getInsightsForTimeRange() {
-    switch (timeRange) {
-      case 'day':
-        return [
-          {
-            'title': 'Morning Routine Impact',
-            'description': 'Your mood is typically 30% better on days when you take your medication before 9am.',
-            'icon': Icons.access_time,
-            'color': Colors.blue[100]!,
-          },
-          {
-            'title': 'Screen Time Alert',
-            'description': 'You tend to report lower mood scores after periods of extended screen time (>3 hours).',
-            'icon': Icons.phone_android,
-            'color': Colors.orange[100]!,
-          },
-        ];
-      case 'month':
-        return [
-          {
-            'title': 'Social Connection',
-            'description': 'Your mood scores are consistently higher on days with social interactions. Consider scheduling more social activities.',
-            'icon': Icons.people,
-            'color': Colors.purple[100]!,
-          },
-          {
-            'title': 'Sleep Pattern',
-            'description': 'Your mood is most stable when you maintain a consistent sleep schedule. Your optimal bedtime appears to be around 10:30pm.',
-            'icon': Icons.nightlight_round,
-            'color': Colors.indigo[100]!,
-          },
-          {
-            'title': 'Medication Effectiveness',
-            'description': 'Your symptom reports show a 40% reduction in headaches when medication adherence is above 90%.',
-            'icon': Icons.medication,
-            'color': Colors.green[100]!,
-          },
-        ];
-      case 'year':
-        return [
-          {
-            'title': 'Seasonal Pattern',
-            'description': 'Your mood tends to dip during winter months. Consider light therapy and vitamin D supplements from November to February.',
-            'icon': Icons.wb_sunny,
-            'color': Colors.amber[100]!,
-          },
-          {
-            'title': 'Exercise Impact',
-            'description': 'Months with regular exercise (3+ times per week) show 25% higher average mood scores.',
-            'icon': Icons.fitness_center,
-            'color': Colors.red[100]!,
-          },
-        ];
-      default:
-        return [
-          {
-            'title': 'Wellness Pattern',
-            'description': 'Based on your data, we\'ve identified patterns that could help improve your wellbeing.',
-            'icon': Icons.insights,
-            'color': Colors.teal[100]!,
-          },
-        ];
-    }
-  }
-}
-
-class _InsightCard extends StatelessWidget {
-  final String title;
-  final String description;
-  final IconData icon;
-  final Color color;
-
-  const _InsightCard({
-    required this.title,
-    required this.description,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withAlpha(77), // 0.3 opacity = 77 alpha
-        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: insight.color.withAlpha(80),
+          width: 1,
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
+              color: AppTokens.bgElevated,
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
-              icon,
-              color: color,
-              size: 20,
+              insight.icon,
+              color: insight.isPositive ? AppColors.strongGreen : AppColors.pastelOrange,
+              size: 22,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  insight.title,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.bold,
                     fontSize: 14,
+                    fontFamily: 'Outfit',
+                    color: AppTokens.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  description,
+                  insight.description,
                   style: TextStyle(
-                    color: Colors.grey[700],
-                    fontSize: 12,
+                    color: AppTokens.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Outfit',
                   ),
                 ),
               ],

@@ -37,15 +37,8 @@ class WellnessPrediction extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              const Text(
-                'Mood Forecast',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
-              ),
-              const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -62,14 +55,6 @@ class WellnessPrediction extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Forecasting your mood for the next 7 days based on historical patterns',
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 12,
-            ),
           ),
           const SizedBox(height: 16),
           SizedBox(
