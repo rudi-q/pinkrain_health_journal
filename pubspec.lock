@@ -430,10 +430,10 @@ packages:
     dependency: "direct main"
     description:
       name: hugeicons
-      sha256: "036d917bd12e2dee331de7910a11417ebf6c80be1962c0d63ee945e3184f0937"
+      sha256: "7118b52d96466cdc3394e549ff18e7ff1a92938982777f8feb09e20dca6f6521"
       url: "https://pub.dev"
     source: hosted
-    version: "1.1.1"
+    version: "1.1.2"
   hux:
     dependency: "direct main"
     description:
