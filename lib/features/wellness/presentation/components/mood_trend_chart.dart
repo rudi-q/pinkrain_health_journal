@@ -3,6 +3,7 @@ import 'package:pinkrain/core/services/hive_service.dart';
 import 'package:pinkrain/core/util/helpers.dart' show devPrint;
 import 'package:pinkrain/core/theme/colors.dart';
 import 'package:pinkrain/core/theme/tokens.dart';
+import 'package:pinkrain/core/widgets/buttons.dart';
 import 'package:cristalyse/cristalyse.dart';
 import 'charts/chart_data_models.dart';
 
@@ -240,20 +241,22 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
         ),
         child: Column(
           children: [
-            Icon(Icons.error_outline, color: AppColors.pink100, size: 40),
+            Icon(Icons.error_outline, color: AppTokens.iconPrimary, size: 44),
             const SizedBox(height: 10),
             Text(
               _errorMessage,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: AppColors.pink100,
+                color: AppTokens.textPrimary,
                 fontFamily: 'Outfit',
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
               ),
             ),
             const SizedBox(height: 10),
-            ElevatedButton(
+            Button.primary(
               onPressed: _loadMoodData,
-              child: const Text('Retry'),
+              text: 'Retry',
             ),
           ],
         ),
@@ -288,16 +291,18 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
             children: [
               Icon(
                 Icons.sentiment_neutral,
-                color: AppTokens.iconMuted,
-                size: 40,
+                color: AppTokens.iconPrimary,
+                size: 44,
               ),
               const SizedBox(height: 10),
               Text(
                 'No mood data available for this period',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: AppTokens.textPlaceholder,
+                  color: AppTokens.textPrimary,
                   fontFamily: 'Outfit',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
                 ),
               ),
             ],
