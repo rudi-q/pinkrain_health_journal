@@ -242,7 +242,7 @@ void main() {
       expect(find.text('Your daily mood trends for May 2023'), findsOneWidget);
 
       // Verify the chart is displayed (not the empty state)
-      expect(find.text('Mood Trends'), findsOneWidget);
+      expect(find.text('Visualize how your mood has changed over time'), findsOneWidget);
       expect(find.text('No mood data available for this period'), findsNothing);
     });
   });
