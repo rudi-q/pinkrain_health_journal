@@ -23,7 +23,7 @@ class WellnessChartFactory {
     final chartConfig = config ??
         WellnessChartConfig(
           title: 'Mood Trends',
-          description: _getMoodTrendDescription(timeRange, selectedDate),
+          description: getMoodTrendDescription(timeRange, selectedDate),
         );
 
     if (chartData.isEmpty) {
@@ -258,20 +258,20 @@ class WellnessChartFactory {
   }
 
   /// Get mood trend description based on time range and date
-  static String _getMoodTrendDescription(
+  static String getMoodTrendDescription(
       ChartTimeRange timeRange, DateTime selectedDate) {
     switch (timeRange) {
       case ChartTimeRange.day:
-        return 'Your mood for ${_formatDate(selectedDate)}';
+        return 'Your mood for ${formatDate(selectedDate)}';
       case ChartTimeRange.month:
-        return 'Your daily mood trends for ${_formatMonth(selectedDate)}';
+        return 'Your daily mood trends for ${formatMonth(selectedDate)}';
       case ChartTimeRange.year:
         return 'Your monthly mood trends for ${selectedDate.year}';
     }
   }
 
   /// Format date for display
-  static String _formatDate(DateTime date) {
+  static String formatDate(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
@@ -290,7 +290,7 @@ class WellnessChartFactory {
   }
 
   /// Format month for display
-  static String _formatMonth(DateTime date) {
+  static String formatMonth(DateTime date) {
     const months = [
       'January',
       'February',

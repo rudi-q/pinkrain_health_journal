@@ -93,6 +93,7 @@ class _PersonalizedInsightsState extends ConsumerState<PersonalizedInsights> {
 
   /// Analyze user data and generate personalized insights
   Future<void> _analyzeAndGenerateInsights() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
     });
@@ -128,12 +129,14 @@ class _PersonalizedInsightsState extends ConsumerState<PersonalizedInsights> {
         ));
       }
 
+      if (!mounted) return;
       setState(() {
         _insights = insights;
         _totalDataPoints = dataPoints;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _insights = [
           InsightData(
@@ -154,21 +157,36 @@ class _PersonalizedInsightsState extends ConsumerState<PersonalizedInsights> {
       DateTime startDate, DateTime endDate) async {
     final insights = <InsightData>[];
     int dataPoints = 0;
-    
+
     // Collect mood data
     final moodByDay = <int, List<int>>{}; // weekday -> list of moods
     final allMoods = <int>[];
-    
+
+    // Batch load mood entries to avoid slow sequential disk reads
+    const int batchSize = 60; // prevent overwhelming IO for long ranges
+    final dates = <DateTime>[];
     for (DateTime date = startDate;
         !date.isAfter(endDate);
         date = date.add(const Duration(days: 1))) {
-      final moodData = await HiveService.getMoodForDate(date);
-      if (moodData != null && moodData.containsKey('mood')) {
-        final mood = moodData['mood'] as int;
-        allMoods.add(mood);
-        dataPoints++;
-        
-        moodByDay.putIfAbsent(date.weekday, () => []).add(mood);
+      dates.add(date);
+    }
+
+    for (int i = 0; i < dates.length; i += batchSize) {
+      final batchDates = dates.sublist(i, i + batchSize > dates.length ? dates.length : i + batchSize);
+      final batchResults = await Future.wait(
+        batchDates.map((date) => HiveService.getMoodForDate(date)),
+      );
+
+      for (int j = 0; j < batchDates.length; j++) {
+        final date = batchDates[j];
+        final moodData = batchResults[j];
+        if (moodData != null && moodData.containsKey('mood')) {
+          final mood = moodData['mood'] as int;
+          allMoods.add(mood);
+          dataPoints++;
+
+          moodByDay.putIfAbsent(date.weekday, () => []).add(mood);
+        }
       }
     }
 
@@ -331,6 +349,13 @@ class _PersonalizedInsightsState extends ConsumerState<PersonalizedInsights> {
           description: 'Your ${widget.timeRange}ly adherence is ${avgAdherence.toStringAsFixed(0)}%. Keep it up!',
           icon: Icons.thumb_up,
           color: AppColors.pastelGreen,
+        ));
+      } else if (avgAdherence >= 60) {
+        insights.add(InsightData(
+          title: 'Moderate medication adherence',
+          description: 'Your ${widget.timeRange}ly adherence is ${avgAdherence.toStringAsFixed(0)}%. A few more consistent days will move you up.',
+          icon: Icons.stacked_line_chart,
+          color: AppColors.pastelYellow,
         ));
       } else if (avgAdherence < 60) {
         insights.add(InsightData(

@@ -6,6 +6,7 @@ import 'package:pinkrain/core/theme/tokens.dart';
 import 'package:pinkrain/core/widgets/buttons.dart';
 import 'package:cristalyse/cristalyse.dart';
 import 'charts/chart_data_models.dart';
+import 'charts/chart_factory.dart';
 
 // Define a typedef for the mood data fetcher function
 typedef MoodDataFetcher = Future<Map<String, dynamic>?> Function(DateTime date);
@@ -326,9 +327,9 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Title
-          const Text(
-            'Mood Trends Analysis',
-            style: TextStyle(
+          Text(
+            _getChartDescription(),
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               fontFamily: 'Outfit',
@@ -430,5 +431,28 @@ class _MoodTrendChartState extends State<MoodTrendChart> {
       default:
         return 'Time';
     }
+  }
+
+  ChartTimeRange? _getChartTimeRange() {
+    switch (widget.timeRange) {
+      case 'day':
+        return ChartTimeRange.day;
+      case 'month':
+        return ChartTimeRange.month;
+      case 'year':
+        return ChartTimeRange.year;
+      default:
+        return null; // 'week' is not in the enum
+    }
+  }
+
+  String _getChartDescription() {
+    final chartTimeRange = _getChartTimeRange();
+    if (chartTimeRange != null) {
+      return WellnessChartFactory.getMoodTrendDescription(
+          chartTimeRange, widget.selectedDate);
+    }
+    // Fallback for 'week' or other unsupported ranges
+    return 'Mood Trends Analysis';
   }
 }

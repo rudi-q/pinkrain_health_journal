@@ -677,7 +677,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
       // Calculate intensity based on mood count ratio
       if (totalMoods > 0 && moodCount > 0) {
         intensity = 100 + ((moodCount / totalMoods) * 800).toInt();
-        intensity = intensity.clamp(100, 900);
+        intensity = intensity.clamp(100, 900).toInt();
         intensity -= intensity % 100;
       } else {
         intensity = 100; // Muted when no data
@@ -844,11 +844,20 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
         endDate: _selectedDate,
       ),
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
         final data = snapshot.data ?? [];
         final hasEnoughData = data.length >= 3;
-        
+
         // Show empty state if not enough data
-        if (!hasEnoughData && snapshot.connectionState != ConnectionState.waiting) {
+        if (!hasEnoughData) {
           return Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -1254,48 +1263,64 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
     final Map<String, Set<DateTime>> symptomDays = {};
     final Set<DateTime> daysWithData = {};
 
-    // Iterate through each day in the range
+    // Build date list once
+    final dates = <DateTime>[];
     for (DateTime date = startDate;
         !date.isAfter(endDate);
         date = date.add(const Duration(days: 1))) {
-      final normalizedDate = DateTime(date.year, date.month, date.day);
-      bool hasDataForDay = false;
-      final Set<String> foundToday = {};
+      dates.add(DateTime(date.year, date.month, date.day));
+    }
 
-      // Get mood entries for this day
-      final moodEntries = await HiveService.getMoodEntriesForDate(date);
-      if (moodEntries != null && moodEntries.isNotEmpty) {
-        hasDataForDay = true;
-        // Extract symptoms/triggers from descriptions
-        for (var entry in moodEntries) {
-          final description = entry['description'] as String? ?? '';
-          if (description.isNotEmpty) {
-            final extracted = _extractSymptomsAndTriggers(description);
-            for (var item in extracted) {
-              foundToday.add(item);
+    // Batch IO to avoid slow per-day round trips
+    const int batchSize = 10;
+    for (int i = 0; i < dates.length; i += batchSize) {
+      final batchDates =
+          dates.sublist(i, i + batchSize > dates.length ? dates.length : i + batchSize);
+
+      final moodFutures =
+          batchDates.map((date) => HiveService.getMoodEntriesForDate(date)).toList();
+      final symptomFutures =
+          batchDates.map((date) => HiveService.getSymptomEntries(date, date)).toList();
+
+      final moodResults = await Future.wait(moodFutures);
+      final symptomResults = await Future.wait(symptomFutures);
+
+      for (int j = 0; j < batchDates.length; j++) {
+        final date = batchDates[j];
+        bool hasDataForDay = false;
+        final Set<String> foundToday = {};
+
+        final moodEntries = moodResults[j];
+        if (moodEntries != null && moodEntries.isNotEmpty) {
+          hasDataForDay = true;
+          for (var entry in moodEntries) {
+            final description = entry['description'] as String? ?? '';
+            if (description.isNotEmpty) {
+              final extracted = _extractSymptomsAndTriggers(description);
+              for (var item in extracted) {
+                foundToday.add(item);
+              }
             }
           }
         }
-      }
 
-      // Also check for saved symptom data
-      final symptomEntries = await HiveService.getSymptomEntries(date, date);
-      if (symptomEntries.isNotEmpty) {
-        hasDataForDay = true;
-        for (var entry in symptomEntries) {
-          for (var symptom in entry.symptoms) {
-            foundToday.add(symptom);
+        final symptomEntries = symptomResults[j];
+        if (symptomEntries.isNotEmpty) {
+          hasDataForDay = true;
+          for (var entry in symptomEntries) {
+            for (var symptom in entry.symptoms) {
+              foundToday.add(symptom);
+            }
           }
         }
-      }
 
-      // Track which days each symptom/trigger appeared
-      for (var item in foundToday) {
-        symptomDays.putIfAbsent(item, () => {}).add(normalizedDate);
-      }
+        for (var item in foundToday) {
+          symptomDays.putIfAbsent(item, () => {}).add(date);
+        }
 
-      if (hasDataForDay) {
-        daysWithData.add(normalizedDate);
+        if (hasDataForDay) {
+          daysWithData.add(date);
+        }
       }
     }
 
@@ -1322,7 +1347,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
     /// Check if a keyword match is negated by looking at preceding text
     bool isNegated(int matchStart, String fullText) {
       // Extract text window before the match (up to ~50 characters or ~3-4 words)
-      final windowStart = (matchStart - 50).clamp(0, fullText.length);
+      final windowStart = (matchStart - 50) < 0 ? 0 : matchStart - 50;
       final windowText = fullText.substring(windowStart, matchStart).toLowerCase();
       
       // Tokenize the window and check last 3 words for negation

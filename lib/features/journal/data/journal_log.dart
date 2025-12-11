@@ -459,8 +459,12 @@ class JournalLog {
     return takenCount / totalDays;
   }
 
-  /// Get adherence counts (taken and scheduled) for a treatment
-  /// Returns a map with 'taken' and 'scheduled' keys
+  /// Get adherence counts (taken and scheduled) for a treatment.
+  /// Precondition: `medicationLogs` must already be populated for every date in
+  /// `startDate..endDate`; callers should preload via `getAdherenceCountsAsync`
+  /// or by invoking `getMedicationsForTheDay` for each date to avoid
+  /// under-counting scheduled doses. Returns a map with 'taken' and 'scheduled'
+  /// keys.
   Map<String, int> getAdherenceCounts(
       Treatment treatment, DateTime startDate, DateTime endDate) {
     int takenCount = 0;
@@ -490,12 +494,11 @@ class JournalLog {
     return {'taken': takenCount, 'scheduled': scheduledCount};
   }
 
-  /// Asynchronous version that loads data and returns adherence counts
-  Future<Map<String, int>> getAdherenceCountsAsync(
-      Treatment treatment, DateTime startDate, DateTime endDate) async {
+  Future<void> _preloadMedicationLogs(
+      DateTime startDate, DateTime endDate) async {
     // Collect all date futures and await them in batch for better performance
     final futures = <Future<List<IntakeLog>>>[];
-    
+
     DateTime currentDate = startDate.normalize();
     while (!currentDate.isAfter(endDate)) {
       futures.add(getMedicationsForTheDay(currentDate));
@@ -505,54 +508,27 @@ class JournalLog {
       currentDate = DateTime(nextDate.year, nextDate.month, nextDate.day);
     }
 
-    // Await all futures in parallel
     await Future.wait(futures);
+  }
 
-    // Use the synchronous version now that all data is loaded
+  /// Asynchronous version that loads data and returns adherence counts
+  Future<Map<String, int>> getAdherenceCountsAsync(
+      Treatment treatment, DateTime startDate, DateTime endDate) async {
+    await _preloadMedicationLogs(startDate, endDate);
     return getAdherenceCounts(treatment, startDate, endDate);
   }
 
   /// Asynchronous version of getAdherenceRate that loads data from storage
   Future<double> getAdherenceRateAsync(
       Treatment treatment, DateTime startDate, DateTime endDate) async {
-    // Collect all date futures and await them in batch for better performance
-    final futures = <Future<List<IntakeLog>>>[];
-    
-    DateTime currentDate = startDate.normalize();
-    while (!currentDate.isAfter(endDate)) {
-      futures.add(getMedicationsForTheDay(currentDate));
-
-      // Increment day safely
-      final nextDate = currentDate.add(const Duration(days: 1));
-      currentDate = DateTime(nextDate.year, nextDate.month, nextDate.day);
-    }
-
-    // Await all futures in parallel
-    await Future.wait(futures);
-
-    // Use the synchronous version now that all data is loaded
+    await _preloadMedicationLogs(startDate, endDate);
     return getAdherenceRate(treatment, startDate, endDate);
   }
 
   /// Asynchronous version of getAdherenceRateAll that loads data from storage
   Future<double> getAdherenceRateAllAsync(
       DateTime startDate, DateTime endDate) async {
-    // Collect all date futures and await them in batch for better performance
-    final futures = <Future<List<IntakeLog>>>[];
-    
-    DateTime currentDate = startDate.normalize();
-    while (!currentDate.isAfter(endDate)) {
-      futures.add(getMedicationsForTheDay(currentDate));
-
-      // Increment day safely
-      final nextDate = currentDate.add(const Duration(days: 1));
-      currentDate = DateTime(nextDate.year, nextDate.month, nextDate.day);
-    }
-
-    // Await all futures in parallel
-    await Future.wait(futures);
-
-    // Use the synchronous version now that all data is loaded
+    await _preloadMedicationLogs(startDate, endDate);
     return getAdherenceRateAll(startDate, endDate);
   }
 
