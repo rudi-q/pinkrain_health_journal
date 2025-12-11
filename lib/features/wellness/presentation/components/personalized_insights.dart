@@ -297,10 +297,18 @@ class _PersonalizedInsightsState extends ConsumerState<PersonalizedInsights> {
         final lowAvg = lowAdherenceMoods.reduce((a, b) => a + b) / lowAdherenceMoods.length;
 
         if (highAvg > lowAvg + 0.5) {
-          final improvement = ((highAvg - lowAvg) / lowAvg * 100).toStringAsFixed(0);
+          String description;
+          if (lowAvg == 0) {
+            // Avoid division by zero - show absolute point improvement instead
+            final pointImprovement = (highAvg - lowAvg).toStringAsFixed(1);
+            description = 'Your mood is $pointImprovement points better on days with good medication adherence.';
+          } else {
+            final improvement = ((highAvg - lowAvg) / lowAvg * 100).toStringAsFixed(0);
+            description = 'Your mood is ~$improvement% better on days with good medication adherence.';
+          }
           insights.add(InsightData(
             title: 'Medications are helping',
-            description: 'Your mood is ~$improvement% better on days with good medication adherence.',
+            description: description,
             icon: Icons.medication,
             color: AppColors.pastelGreen,
           ));

@@ -493,15 +493,20 @@ class JournalLog {
   /// Asynchronous version that loads data and returns adherence counts
   Future<Map<String, int>> getAdherenceCountsAsync(
       Treatment treatment, DateTime startDate, DateTime endDate) async {
-    // Load data for each day in the range
+    // Collect all date futures and await them in batch for better performance
+    final futures = <Future<List<IntakeLog>>>[];
+    
     DateTime currentDate = startDate.normalize();
     while (!currentDate.isAfter(endDate)) {
-      await getMedicationsForTheDay(currentDate);
+      futures.add(getMedicationsForTheDay(currentDate));
 
       // Increment day safely
       final nextDate = currentDate.add(const Duration(days: 1));
       currentDate = DateTime(nextDate.year, nextDate.month, nextDate.day);
     }
+
+    // Await all futures in parallel
+    await Future.wait(futures);
 
     // Use the synchronous version now that all data is loaded
     return getAdherenceCounts(treatment, startDate, endDate);
@@ -510,15 +515,20 @@ class JournalLog {
   /// Asynchronous version of getAdherenceRate that loads data from storage
   Future<double> getAdherenceRateAsync(
       Treatment treatment, DateTime startDate, DateTime endDate) async {
-    // Load data for each day in the range
+    // Collect all date futures and await them in batch for better performance
+    final futures = <Future<List<IntakeLog>>>[];
+    
     DateTime currentDate = startDate.normalize();
     while (!currentDate.isAfter(endDate)) {
-      await getMedicationsForTheDay(currentDate);
+      futures.add(getMedicationsForTheDay(currentDate));
 
       // Increment day safely
       final nextDate = currentDate.add(const Duration(days: 1));
       currentDate = DateTime(nextDate.year, nextDate.month, nextDate.day);
     }
+
+    // Await all futures in parallel
+    await Future.wait(futures);
 
     // Use the synchronous version now that all data is loaded
     return getAdherenceRate(treatment, startDate, endDate);
@@ -527,15 +537,20 @@ class JournalLog {
   /// Asynchronous version of getAdherenceRateAll that loads data from storage
   Future<double> getAdherenceRateAllAsync(
       DateTime startDate, DateTime endDate) async {
-    // Load data for each day in the range
+    // Collect all date futures and await them in batch for better performance
+    final futures = <Future<List<IntakeLog>>>[];
+    
     DateTime currentDate = startDate.normalize();
     while (!currentDate.isAfter(endDate)) {
-      await getMedicationsForTheDay(currentDate);
+      futures.add(getMedicationsForTheDay(currentDate));
 
       // Increment day safely
       final nextDate = currentDate.add(const Duration(days: 1));
       currentDate = DateTime(nextDate.year, nextDate.month, nextDate.day);
     }
+
+    // Await all futures in parallel
+    await Future.wait(futures);
 
     // Use the synchronous version now that all data is loaded
     return getAdherenceRateAll(startDate, endDate);

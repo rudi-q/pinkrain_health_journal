@@ -185,9 +185,18 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
         startDate = _selectedDate;
     }
     
-    // Iterate through each day and count moods
+    // Collect all date futures and await them in batch
+    final futures = <Future<Map<String, dynamic>?>>[];
+    
     for (DateTime date = startDate; !date.isAfter(endDate); date = date.add(const Duration(days: 1))) {
-      final moodData = await HiveService.getMoodForDate(date);
+      futures.add(HiveService.getMoodForDate(date));
+    }
+    
+    // Await all futures in parallel
+    final results = await Future.wait(futures);
+    
+    // Aggregate counts from the completed results
+    for (final moodData in results) {
       if (moodData != null && moodData.containsKey('mood')) {
         final mood = moodData['mood'] as int;
         if (mood >= 1 && mood <= 5) {
@@ -221,7 +230,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
     
     if (denominator <= 0) return 0.0;
     
-    return numerator / math.sqrt(denominator > 0 ? denominator.abs() : 1);
+    return numerator / math.sqrt(denominator);
   }
 
   /// Get correlation description based on the correlation value
@@ -532,49 +541,49 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
             top: false,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: HugeIcon(
-                      icon: HugeIcons.strokeRoundedArrowLeft01,
-                      size: 24,
-                      strokeWidth: 1,
-                      color: AppTokens.iconPrimary,
-                    ),
-                    onPressed: _navigateToPrevious,
-                  ),
-                  Text(
-                    formattedSelectedDate,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  // Next button
-                  IconButton(
-                    icon: HugeIcon(
-                      icon: HugeIcons.strokeRoundedArrowRight01,
-                      size: 24,
-                      strokeWidth: 1,
-                      color: DateTime(
-                        _selectedDate.year,
-                        _selectedDate.month,
-                        _selectedDate.day,
-                      ).isSameDate(DateTime.now())
-                          ? AppTokens.iconMuted
-                          : AppTokens.iconPrimary,
-                    ),
-                    onPressed: DateTime(
-                      _selectedDate.year,
-                      _selectedDate.month,
-                      _selectedDate.day,
-                    ).isSameDate(DateTime.now())
-                        ? null
-                        : _navigateToNext,
-                  ),
-                ],
+              child: Builder(
+                builder: (context) {
+                  final isSelectedDateToday = DateTime(
+                    _selectedDate.year,
+                    _selectedDate.month,
+                    _selectedDate.day,
+                  ).isSameDate(DateTime.now());
+                  
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: HugeIcon(
+                          icon: HugeIcons.strokeRoundedArrowLeft01,
+                          size: 24,
+                          strokeWidth: 1,
+                          color: AppTokens.iconPrimary,
+                        ),
+                        onPressed: _navigateToPrevious,
+                      ),
+                      Text(
+                        formattedSelectedDate,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      // Next button
+                      IconButton(
+                        icon: HugeIcon(
+                          icon: HugeIcons.strokeRoundedArrowRight01,
+                          size: 24,
+                          strokeWidth: 1,
+                          color: isSelectedDateToday
+                              ? AppTokens.iconMuted
+                              : AppTokens.iconPrimary,
+                        ),
+                        onPressed: isSelectedDateToday ? null : _navigateToNext,
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ),
@@ -599,45 +608,37 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
           width: 1,
         ),
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // Calculate the width of each tab (container padding + tab width)
-          final tabWidth = 80.0;
-          final indicatorLeft = selectedIndex * tabWidth;
-          
-          return Stack(
-            children: [
-              // Sliding indicator
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOutCubic,
-                left: indicatorLeft,
-                top: 4,
-                bottom: 4,
-                child: Container(
-                  width: tabWidth,
-                  decoration: BoxDecoration(
-                    color: AppTokens.buttonPrimaryBg,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.pink40.withAlpha(40),
-                        spreadRadius: 0,
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+      child: Stack(
+        children: [
+          // Sliding indicator
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOutCubic,
+            left: selectedIndex * 80.0,
+            top: 4,
+            bottom: 4,
+            child: Container(
+              width: 80.0,
+              decoration: BoxDecoration(
+                color: AppTokens.buttonPrimaryBg,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.pink40.withAlpha(40),
+                    spreadRadius: 0,
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
                   ),
-                ),
+                ],
               ),
-              // Tab buttons
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: options.map((option) => _dateOption(option)).toList(),
-              ),
-            ],
-          );
-        },
+            ),
+          ),
+          // Tab buttons
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: options.map((option) => _dateOption(option)).toList(),
+          ),
+        ],
       ),
     );
   }
@@ -1315,6 +1316,31 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
     final lowerText = text.toLowerCase();
     final found = <String>[];
 
+    // Negation tokens that indicate a keyword should be skipped
+    const negationTokens = {'no', 'not', 'never', 'without', 'none', 'didn\'t', 'don\'t', 'won\'t', 'can\'t', 'couldn\'t'};
+
+    /// Check if a keyword match is negated by looking at preceding text
+    bool isNegated(int matchStart, String fullText) {
+      // Extract text window before the match (up to ~50 characters or ~3-4 words)
+      final windowStart = (matchStart - 50).clamp(0, fullText.length);
+      final windowText = fullText.substring(windowStart, matchStart).toLowerCase();
+      
+      // Tokenize the window and check last 3 words for negation
+      final windowWords = windowText.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+      final wordsToCheck = windowWords.length > 3 
+          ? windowWords.sublist(windowWords.length - 3)
+          : windowWords;
+      
+      for (final word in wordsToCheck) {
+        // Remove punctuation for comparison
+        final cleanWord = word.replaceAll(RegExp('[^\\w\']'), '');
+        if (cleanWord.isNotEmpty && negationTokens.contains(cleanWord)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     // Symptom keywords
     final symptomKeywords = {
       'headache': 'Headache',
@@ -1364,17 +1390,35 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
       'gym': 'Exercise',
     };
 
-    // Check for symptoms
+    // Check for symptoms with word-boundary aware matching
     for (var entry in symptomKeywords.entries) {
-      if (lowerText.contains(entry.key) && !found.contains(entry.value)) {
-        found.add(entry.value);
+      if (found.contains(entry.value)) continue;
+      
+      // Use regex with word boundaries for whole-word matching
+      final pattern = RegExp(r'\b' + RegExp.escape(entry.key) + r'\b', caseSensitive: false);
+      final match = pattern.firstMatch(lowerText);
+      
+      if (match != null) {
+        // Check if negated by examining text before the match
+        if (!isNegated(match.start, lowerText)) {
+          found.add(entry.value);
+        }
       }
     }
 
-    // Check for triggers
+    // Check for triggers with word-boundary aware matching
     for (var entry in triggerKeywords.entries) {
-      if (lowerText.contains(entry.key) && !found.contains(entry.value)) {
-        found.add(entry.value);
+      if (found.contains(entry.value)) continue;
+      
+      // Use regex with word boundaries for whole-word matching
+      final pattern = RegExp(r'\b' + RegExp.escape(entry.key) + r'\b', caseSensitive: false);
+      final match = pattern.firstMatch(lowerText);
+      
+      if (match != null) {
+        // Check if negated by examining text before the match
+        if (!isNegated(match.start, lowerText)) {
+          found.add(entry.value);
+        }
       }
     }
 
@@ -1498,18 +1542,7 @@ class WellnessTrackerScreenState extends ConsumerState<WellnessTrackerScreen> {
       final sortedDays = missedDays.toList()
         ..sort((a, b) => (dayOrder[a] ?? 0).compareTo(dayOrder[b] ?? 0));
       
-      final dayNames = sortedDays.map((day) {
-        // Convert day names to plural form
-        // Days ending in 'y' need special handling: Monday -> Mondays, Tuesday -> Tuesdays, etc.
-        if (day.endsWith('day')) {
-          return '${day}s';
-        } else if (day.endsWith('y')) {
-          // For days ending in 'y' (like Sunday), just add 's'
-          return '${day}s';
-        } else {
-          return '${day}s';
-        }
-      }).toList();
+      final dayNames = sortedDays.map((day) => '${day}s').toList();
       summaryText = 'You tend to miss doses on ${dayNames.join(' and ')}';
     }
 
