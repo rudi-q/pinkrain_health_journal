@@ -40,6 +40,11 @@ class _PersonalizedInsightsState extends ConsumerState<PersonalizedInsights> {
   List<InsightData> _insights = [];
   bool _isLoading = true;
   int _totalDataPoints = 0;
+  
+  /// Generation token to prevent race conditions in async insight analysis.
+  /// Incremented at the start of each invocation; only the run whose local
+  /// token matches the current _insightGeneration may update state.
+  int _insightGeneration = 0;
 
   @override
   void initState() {
@@ -93,6 +98,10 @@ class _PersonalizedInsightsState extends ConsumerState<PersonalizedInsights> {
 
   /// Analyze user data and generate personalized insights
   Future<void> _analyzeAndGenerateInsights() async {
+    // Increment generation token BEFORE any async work to mark this as the latest run
+    _insightGeneration++;
+    final localGeneration = _insightGeneration;
+    
     if (!mounted) return;
     setState(() {
       _isLoading = true;
@@ -129,14 +138,16 @@ class _PersonalizedInsightsState extends ConsumerState<PersonalizedInsights> {
         ));
       }
 
-      if (!mounted) return;
+      // Only update state if this is still the latest generation and widget is mounted
+      if (!mounted || localGeneration != _insightGeneration) return;
       setState(() {
         _insights = insights;
         _totalDataPoints = dataPoints;
         _isLoading = false;
       });
     } catch (e) {
-      if (!mounted) return;
+      // Only update state if this is still the latest generation and widget is mounted
+      if (!mounted || localGeneration != _insightGeneration) return;
       setState(() {
         _insights = [
           InsightData(
@@ -279,12 +290,26 @@ class _PersonalizedInsightsState extends ConsumerState<PersonalizedInsights> {
     final avgAdherence = adherenceRate * 100; // Convert to percentage
     
     // Count data points (days with medication logs)
+    // Batch load medication logs to avoid slow sequential disk reads
+    const int batchSize = 60; // prevent overwhelming IO for long ranges
+    final dates = <DateTime>[];
     for (DateTime date = startDate;
         !date.isAfter(endDate);
         date = date.add(const Duration(days: 1))) {
-      final medicationLogs = await HiveService.getMedicationLogsForDate(date);
-      if (medicationLogs != null && medicationLogs.isNotEmpty) {
-        dataPoints++;
+      dates.add(date);
+    }
+
+    for (int i = 0; i < dates.length; i += batchSize) {
+      final batchDates = dates.sublist(
+          i, i + batchSize > dates.length ? dates.length : i + batchSize);
+      final batchResults = await Future.wait(
+        batchDates.map((date) => HiveService.getMedicationLogsForDate(date)),
+      );
+
+      for (final medicationLogs in batchResults) {
+        if (medicationLogs != null && medicationLogs.isNotEmpty) {
+          dataPoints++;
+        }
       }
     }
 
