@@ -2,7 +2,7 @@ name: pinkrain
 description: "Health Tracking App"
 publish_to: 'none'
 
-version: 2.3.3+1
+version: 2.3.4+1
 
 environment:
   sdk: '>=3.3.4 <4.0.0'

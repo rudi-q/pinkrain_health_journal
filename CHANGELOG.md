@@ -5,7 +5,21 @@ All notable changes to PinkRain will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.3.3] - 2025-11-XX
+## [2.3.4] - 2025-12-12
+
+### Fixed
+- **Personalized insights race condition**: Fixed issue where overlapping async calls to generate insights could cause stale data to overwrite newer results by introducing a generation token mechanism
+- **Batch medication I/O**: Optimized medication data loading with batched I/O operations for better performance
+
+### Changed
+- **Wellness insights loading**: Optimized loading performance for wellness insights
+- **Chart descriptions**: Improved chart descriptions and dynamic chart titles
+- **Adherence documentation**: Updated adherence-related documentation
+- **Retry button styling**: Updated wellness screen retry button and error states to match PinkRain style
+
+---
+
+## [2.3.3] - 2025-11-25
 
 ### Fixed
 - **Duplicate notifications**: Fixed issue where notifications were being scheduled multiple times, causing duplicate notifications to appear
@@ -17,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced duplicate prevention with multiple layers of checks (storage, system, in-call tracking)
 - Improved notification ID generation to prevent system-level duplicates
 
-## [2.3.2] - 2025-11-XX
+## [2.3.2] - 2025-11-17
 
 ### Added
 - **App version display**: Added version number display to profile page for easy reference
@@ -25,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Profile icon**: Fixed missing profile icon in wellness screen (replaced with HugeIcons.strokeRoundedUser)
 
-## [2.3.1] - 2025-11-XX
+## [2.3.1] - 2025-11-07
 
 ### Fixed
 - **Notification scheduling**: Fixed notifications not working when app wasn't opened during the day
