@@ -33,7 +33,7 @@ dependencies:
   html: ^0.15.4
   timezone: ^0.10.1
   hugeicons: ^1.1.4
-  hux: ^0.22.2
+  hux: ^0.23.1
   package_info_plus: ^8.0.0
 
 dev_dependencies:
