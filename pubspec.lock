@@ -438,10 +438,10 @@ packages:
     dependency: "direct main"
     description:
       name: hux
-      sha256: c201e4b6640f8faa680f1ba4a33a5496fbe19b06b3d386292d82b3d38a79fed3
+      sha256: "5aa09875dad826f71befcae553709f28fbfdb0d4975f43fab94263a1fcd4a7fe"
       url: "https://pub.dev"
     source: hosted
-    version: "0.23.1"
+    version: "0.24.0"
   image:
     dependency: transitive
     description:
