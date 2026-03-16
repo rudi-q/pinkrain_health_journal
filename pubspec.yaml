@@ -23,7 +23,7 @@ dependencies:
   path_provider: ^2.1.5
   cristalyse: ^1.17.5
   tflite_flutter: ^0.12.1
-  pdf: ^3.10.7
+  pdf: ^3.12.0
   share_plus: ^11.0.0
   flutter_local_notifications: ^19.5.0
   permission_handler: ^12.0.0+1
