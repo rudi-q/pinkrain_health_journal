@@ -301,7 +301,11 @@ class DataTransferService {
         throw DataImportException(
             'symptomData["$label"] must be a map (got ${value.runtimeType}).');
       }
-      _requireString(value['date'], 'date', 'symptomData["$label"]');
+      // `getSymptomEntries` does `DateTime.parse(entry['date'])` inside a
+      // loop wrapped in `try/catch` that returns `[]` — so a single
+      // unparseable date silently drops ALL symptom data forever, not just
+      // the bad entry. Validate parseability, not just string-ness.
+      _requireDateString(value['date'], 'date', 'symptomData["$label"]');
       final symptoms = value['symptoms'];
       if (symptoms is! List) {
         throw DataImportException(
@@ -316,11 +320,15 @@ class DataTransferService {
     }
   }
 
-  /// `IntakeLog.fromMap` is intentionally defensive about per-field types
-  /// (silently substitutes "Unknown Medicine" / `0.0` dosage / etc.), so
-  /// we don't replicate its full type ladder. But we do enforce that the
-  /// container shape is a List of Maps — anything else would either crash
-  /// the loader or generate a screen full of placeholder rows.
+  /// `IntakeLog.fromMap` is intentionally defensive about per-field types,
+  /// silently substituting "Unknown Medicine" / `0.0` dosage / `false` /
+  /// `DateTime.now()` for missing or wrong-typed fields. That defensiveness
+  /// is exactly the silent-corruption mode we cannot accept here: a
+  /// hand-edited export with `dosage: "ten"` would import without error and
+  /// then quietly become `dosage: 1.0` in the user's history. So we
+  /// validate every field `IntakeLog.toMap` writes, strictly to the type
+  /// the writer produces. `dose_time` is the only field allowed to be null
+  /// or missing (it's optional for legacy single-dose treatments).
   static void _validateMedicationLogs(Map box) {
     for (final entry in box.entries) {
       final key = entry.key;
@@ -335,7 +343,32 @@ class DataTransferService {
           throw DataImportException(
               'medicationLogs["$label"][$i] must be a map (got ${value[i].runtimeType}).');
         }
+        _validateMedicationLogEntry(value[i] as Map, label, i);
       }
+    }
+  }
+
+  static void _validateMedicationLogEntry(Map row, String key, int index) {
+    final location = 'medicationLogs["$key"][$index]';
+    _requireString(row['treatment_id'], 'treatment_id', location);
+    _requireString(row['medicine_name'], 'medicine_name', location);
+    _requireString(row['medicine_type'], 'medicine_type', location);
+    _requireString(row['medicine_color'], 'medicine_color', location);
+    _requireNum(row['dosage'], 'dosage', location);
+    _requireString(row['unit'], 'unit', location);
+    _requireDateString(row['treatment_plan_start_date'],
+        'treatment_plan_start_date', location);
+    _requireDateString(row['treatment_plan_end_date'],
+        'treatment_plan_end_date', location);
+    _requireBool(row['is_taken'], 'is_taken', location);
+    _requireBool(row['is_skipped'], 'is_skipped', location);
+
+    // dose_time is the one optional field: null/missing is legitimate
+    // (single-dose treatments from older app versions). If present, must
+    // be a parseable ISO-8601 string.
+    final doseTime = row['dose_time'];
+    if (doseTime != null) {
+      _requireDateString(doseTime, 'dose_time', location);
     }
   }
 
@@ -495,6 +528,13 @@ class DataTransferService {
     if (value is! int) {
       throw DataImportException(
           '"$field" in $location must be an integer (got ${value.runtimeType}).');
+    }
+  }
+
+  static void _requireBool(dynamic value, String field, String location) {
+    if (value is! bool) {
+      throw DataImportException(
+          '"$field" in $location must be a boolean (got ${value.runtimeType}).');
     }
   }
 

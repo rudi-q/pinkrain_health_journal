@@ -520,6 +520,127 @@ void main() {
     );
   });
 
+  test('validateEnvelope rejects symptom entry whose date is unparseable', () {
+    // getSymptomEntries does DateTime.parse inside a loop wrapped in
+    // try/catch that returns []. So one bad date silently nukes ALL
+    // symptom data on every read, not just the bad entry.
+    final env = envelopeWith();
+    (env['boxes'] as Map<String, dynamic>)[HiveService.symptomBoxName] = {
+      '2026-05-18': {
+        'date': 'yesterday-ish', // string, but not parseable
+        'symptoms': ['headache'],
+      },
+    };
+    expect(
+      () => DataTransferService.validateEnvelope(env),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  // ---- medication log row validation ----
+  //
+  // IntakeLog.fromMap is defensive: missing/wrong-typed fields silently
+  // become "Unknown Medicine" / dosage 1.0 / DateTime.now() placeholders.
+  // That's exactly the silent-corruption mode we cannot accept after a
+  // destructive import. Validate every field the writer produces.
+
+  Map<String, dynamic> validMedLogRow() => {
+        'treatment_id': '1747000000000123456',
+        'medicine_name': 'Paracetamol',
+        'medicine_type': 'Pain Killer',
+        'medicine_color': 'White',
+        'dosage': 20.0,
+        'unit': 'mg',
+        'treatment_plan_start_date': '2026-05-10T00:00:00.000Z',
+        'treatment_plan_end_date': '2026-06-10T00:00:00.000Z',
+        'dose_time': '2026-05-18T09:00:00.000Z',
+        'is_taken': true,
+        'is_skipped': false,
+      };
+
+  Map<String, dynamic> envelopeWithMedLog(Map<String, dynamic> row) {
+    final env = envelopeWith();
+    (env['boxes'] as Map<String, dynamic>)[HiveService.medicationLogsBoxName] =
+        {
+      'logs_2026-05-18': [row],
+    };
+    return env;
+  }
+
+  test('validateEnvelope accepts well-formed medication log rows', () {
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWithMedLog(validMedLogRow())),
+      returnsNormally,
+    );
+  });
+
+  test('validateEnvelope accepts a medication log row without dose_time', () {
+    // dose_time is the only field allowed to be missing (legacy single-dose
+    // treatments from older app versions).
+    final row = validMedLogRow()..remove('dose_time');
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWithMedLog(row)),
+      returnsNormally,
+    );
+  });
+
+  test('validateEnvelope accepts a medication log row with null dose_time', () {
+    final row = validMedLogRow()..['dose_time'] = null;
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWithMedLog(row)),
+      returnsNormally,
+    );
+  });
+
+  test('validateEnvelope rejects medication log row with non-string medicine_name',
+      () {
+    // fromMap would substitute "Unknown Medicine" silently.
+    final row = validMedLogRow()..['medicine_name'] = 42;
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWithMedLog(row)),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects medication log row with non-numeric dosage', () {
+    // fromMap would substitute 1.0 silently.
+    final row = validMedLogRow()..['dosage'] = 'ten mg';
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWithMedLog(row)),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects medication log row with unparseable date', () {
+    // fromMap would substitute DateTime.now() silently.
+    final row = validMedLogRow()
+      ..['treatment_plan_start_date'] = 'not-a-date';
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWithMedLog(row)),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects medication log row with non-boolean is_taken',
+      () {
+    // fromMap tolerates int/string representations of bool and silently
+    // coerces. Strict here so we don't accept truthy-ish corruption.
+    final row = validMedLogRow()..['is_taken'] = 1;
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWithMedLog(row)),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects medication log row with unparseable dose_time',
+      () {
+    final row = validMedLogRow()..['dose_time'] = 'whenever';
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWithMedLog(row)),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
   test('importFromFile leaves Hive untouched when moodData is malformed',
       () async {
     // Integration check: a bad mood value (the wellness-crash scenario)
