@@ -375,6 +375,180 @@ void main() {
     );
   });
 
+  // ---- per-box content validation for the four "other" boxes ----
+
+  test('validateEnvelope rejects userPreferences.userMood with wrong type', () {
+    // getUserMood returns Future<int>; await would TypeError on a string.
+    final env = envelopeWith();
+    (env['boxes'] as Map<String, dynamic>)[HiveService.userPrefsBox] = {
+      'userMood': '4', // string instead of int
+    };
+    expect(
+      () => DataTransferService.validateEnvelope(env),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects userPreferences.userName with wrong type', () {
+    final env = envelopeWith();
+    (env['boxes'] as Map<String, dynamic>)[HiveService.userPrefsBox] = {
+      'userName': 42,
+    };
+    expect(
+      () => DataTransferService.validateEnvelope(env),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope accepts userPreferences with unknown keys (forward compat)',
+      () {
+    final env = envelopeWith();
+    (env['boxes'] as Map<String, dynamic>)[HiveService.userPrefsBox] = {
+      'userMood': 3,
+      'userName': 'Alice',
+      'someFutureField': {'arbitrary': true},
+    };
+    expect(
+      () => DataTransferService.validateEnvelope(env),
+      returnsNormally,
+    );
+  });
+
+  test('validateEnvelope rejects mood entry with non-int mood value', () {
+    // Direct regression for wellness_screen.dart:201 (`mood as int`).
+    final env = envelopeWith();
+    (env['boxes'] as Map<String, dynamic>)[HiveService.moodBoxName] = {
+      'mood_2026-05-18': [
+        {
+          'mood': 'three',
+          'description': 'oops',
+          'timestamp': '2026-05-18T09:00:00.000Z',
+        },
+      ],
+    };
+    expect(
+      () => DataTransferService.validateEnvelope(env),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope accepts the legacy single-map mood entry shape', () {
+    // getMoodEntriesForDate handles both List-of-entries and a single Map
+    // for legacy data. Validation must accept both, otherwise we'd reject
+    // exports from older app installs.
+    final env = envelopeWith();
+    (env['boxes'] as Map<String, dynamic>)[HiveService.moodBoxName] = {
+      'mood_2026-05-18': {
+        'mood': 3,
+        'description': 'legacy entry',
+        'timestamp': '2026-05-18T09:00:00.000Z',
+      },
+    };
+    expect(
+      () => DataTransferService.validateEnvelope(env),
+      returnsNormally,
+    );
+  });
+
+  test('validateEnvelope rejects mood entry with unparseable timestamp', () {
+    final env = envelopeWith();
+    (env['boxes'] as Map<String, dynamic>)[HiveService.moodBoxName] = {
+      'mood_2026-05-18': [
+        {
+          'mood': 3,
+          'description': '',
+          'timestamp': 'yesterday-ish',
+        },
+      ],
+    };
+    expect(
+      () => DataTransferService.validateEnvelope(env),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects symptom entry whose symptoms is not a list',
+      () {
+    final env = envelopeWith();
+    (env['boxes'] as Map<String, dynamic>)[HiveService.symptomBoxName] = {
+      '2026-05-18': {
+        'date': '2026-05-18',
+        'symptoms': 'headache', // should be a list
+      },
+    };
+    expect(
+      () => DataTransferService.validateEnvelope(env),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects symptom list with non-string entries', () {
+    final env = envelopeWith();
+    (env['boxes'] as Map<String, dynamic>)[HiveService.symptomBoxName] = {
+      '2026-05-18': {
+        'date': '2026-05-18',
+        'symptoms': ['headache', 42],
+      },
+    };
+    expect(
+      () => DataTransferService.validateEnvelope(env),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects medicationLogs value that is not a list', () {
+    final env = envelopeWith();
+    (env['boxes'] as Map<String, dynamic>)[HiveService.medicationLogsBoxName] =
+        {
+      'logs_2026-05-18': {'not': 'a list'},
+    };
+    expect(
+      () => DataTransferService.validateEnvelope(env),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects medicationLogs entry that is not a map', () {
+    final env = envelopeWith();
+    (env['boxes'] as Map<String, dynamic>)[HiveService.medicationLogsBoxName] =
+        {
+      'logs_2026-05-18': ['scalar-instead-of-map'],
+    };
+    expect(
+      () => DataTransferService.validateEnvelope(env),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('importFromFile leaves Hive untouched when moodData is malformed',
+      () async {
+    // Integration check: a bad mood value (the wellness-crash scenario)
+    // must be rejected before any destructive op runs.
+    await seedFixtureData();
+    final before = jsonEncode(snapshotBoxes());
+
+    final badEnvelope = envelopeWith();
+    (badEnvelope['boxes'] as Map<String, dynamic>)[HiveService.moodBoxName] = {
+      'mood_2026-05-18': [
+        {
+          'mood': 'high',
+          'description': '',
+          'timestamp': '2026-05-18T09:00:00.000Z',
+        },
+      ],
+    };
+    final badFile = File('${tempDir.path}/bad_mood.json');
+    await badFile.writeAsString(jsonEncode(badEnvelope));
+
+    expect(
+      () => DataTransferService.importFromFile(badFile.path),
+      throwsA(isA<DataImportException>()),
+    );
+
+    final after = jsonEncode(snapshotBoxes());
+    expect(after, equals(before));
+  });
+
   test('importFromFile leaves Hive untouched when a box wrapper is missing',
       () async {
     // Integration check of the missing-box rejection: a corrupted export

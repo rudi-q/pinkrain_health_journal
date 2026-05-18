@@ -173,12 +173,15 @@ class DataTransferService {
   ///     hand-edited — and accepting it would let
   ///     `HiveService.importAllBoxes` clear the local box and skip
   ///     repopulation, silently destroying user data;
-  ///   - every field `Treatment.fromJson` and
-  ///     `MedicineInventorySerialization.fromJson` cast — including the
-  ///     optional `doseTimes`/`doseNamesMap`/`selectedDays` — is type-checked,
-  ///     because both readers catch their own parse failures and fall back to
-  ///     placeholder objects, which would silently replace the user's real
-  ///     data after Hive is already wiped.
+  ///   - every payload shape that a downstream reader will eventually cast
+  ///     is type-checked here. The principle is: since import is destructive,
+  ///     no badly-typed value gets past validation. Readers fall into two
+  ///     groups — the strict ones (`Treatment.fromJson`,
+  ///     `getUserMood`/`getUserName`, the `as int`/`as String` casts in
+  ///     `wellness_screen.dart`) crash on a wrong type, which would hit the
+  ///     user the instant they land on /wellness after import; the defensive
+  ///     ones (`IntakeLog.fromMap`) silently substitute placeholders, which
+  ///     is even worse because the user can't tell their data is gone.
   static void _spotCheckShapes(Map<String, dynamic> boxes) {
     // 1. Every exportable box must be present and a Map.
     for (final boxName in HiveService.exportableBoxNames) {
@@ -192,30 +195,145 @@ class DataTransferService {
       }
     }
 
-    final treatmentsBox = boxes[HiveService.treatmentsBoxName];
-    if (treatmentsBox is Map) {
-      final list = treatmentsBox['treatments'];
-      if (list != null && list is! List) {
-        throw const DataImportException(
-            'Export file is malformed: "treatments" should be a list.');
-      }
-      if (list is List) {
-        for (var i = 0; i < list.length; i++) {
-          _validateTreatmentEntry(list[i], i);
-        }
+    _validateUserPreferences(boxes[HiveService.userPrefsBox] as Map);
+    _validateMoodData(boxes[HiveService.moodBoxName] as Map);
+    _validateSymptomData(boxes[HiveService.symptomBoxName] as Map);
+    _validateMedicationLogs(boxes[HiveService.medicationLogsBoxName] as Map);
+
+    final treatmentsBox = boxes[HiveService.treatmentsBoxName] as Map;
+    final treatmentsList = treatmentsBox['treatments'];
+    if (treatmentsList != null && treatmentsList is! List) {
+      throw const DataImportException(
+          'Export file is malformed: "treatments" should be a list.');
+    }
+    if (treatmentsList is List) {
+      for (var i = 0; i < treatmentsList.length; i++) {
+        _validateTreatmentEntry(treatmentsList[i], i);
       }
     }
 
-    final pillboxBox = boxes[HiveService.pillboxBoxName];
-    if (pillboxBox is Map) {
-      final list = pillboxBox['pillbox'];
-      if (list != null && list is! List) {
-        throw const DataImportException(
-            'Export file is malformed: "pillbox" should be a list.');
+    final pillboxBox = boxes[HiveService.pillboxBoxName] as Map;
+    final pillboxList = pillboxBox['pillbox'];
+    if (pillboxList != null && pillboxList is! List) {
+      throw const DataImportException(
+          'Export file is malformed: "pillbox" should be a list.');
+    }
+    if (pillboxList is List) {
+      for (var i = 0; i < pillboxList.length; i++) {
+        _validatePillboxEntry(pillboxList[i], i);
       }
-      if (list is List) {
-        for (var i = 0; i < list.length; i++) {
-          _validatePillboxEntry(list[i], i);
+    }
+  }
+
+  /// `getUserMood` / `getUserName` etc. have `Future<int>` / `Future<String>`
+  /// return types — a wrong-typed value in Hive triggers a TypeError on
+  /// the implicit cast at the await boundary. Strict on the four known
+  /// keys; unknown keys are accepted (forward compat).
+  static void _validateUserPreferences(Map box) {
+    for (final entry in box.entries) {
+      final key = entry.key;
+      final value = entry.value;
+      if (key is! String) continue;
+      switch (key) {
+        case 'userMood':
+          if (value is! int) {
+            throw DataImportException(
+                '"userPreferences.userMood" must be an integer (got ${value.runtimeType}).');
+          }
+          break;
+        case 'userName':
+        case 'userMoodDescription':
+        case 'lastMoodDate':
+          if (value is! String) {
+            throw DataImportException(
+                '"userPreferences.$key" must be a string (got ${value.runtimeType}).');
+          }
+          break;
+      }
+    }
+  }
+
+  /// `wellness_screen.dart:201` casts mood as int. `getMoodEntriesForDate`
+  /// handles two value shapes for back-compat: a single Map (legacy) or a
+  /// List of Maps. We accept both, and inside each entry validate the three
+  /// fields that downstream code reads.
+  static void _validateMoodData(Map box) {
+    for (final entry in box.entries) {
+      final key = entry.key;
+      final value = entry.value;
+      final label = key is String ? key : key.toString();
+      if (value is Map) {
+        _validateMoodEntry(value, label, 0);
+      } else if (value is List) {
+        for (var i = 0; i < value.length; i++) {
+          if (value[i] is! Map) {
+            throw DataImportException(
+                'moodData["$label"][$i] must be a map (got ${value[i].runtimeType}).');
+          }
+          _validateMoodEntry(value[i] as Map, label, i);
+        }
+      } else {
+        throw DataImportException(
+            'moodData["$label"] must be a list or map (got ${value.runtimeType}).');
+      }
+    }
+  }
+
+  static void _validateMoodEntry(Map entry, String key, int index) {
+    final location = 'moodData["$key"][$index]';
+    final mood = entry['mood'];
+    if (mood is! int) {
+      throw DataImportException(
+          '"mood" in $location must be an integer (got ${mood.runtimeType}).');
+    }
+    _requireString(entry['description'], 'description', location);
+    _requireDateString(entry['timestamp'], 'timestamp', location);
+  }
+
+  /// `getSymptomEntries` does `List<String>.from(entry['symptoms'])` and
+  /// `DateTime.parse(entry['date'])`. Both throw on type mismatch.
+  static void _validateSymptomData(Map box) {
+    for (final entry in box.entries) {
+      final key = entry.key;
+      final value = entry.value;
+      final label = key is String ? key : key.toString();
+      if (value is! Map) {
+        throw DataImportException(
+            'symptomData["$label"] must be a map (got ${value.runtimeType}).');
+      }
+      _requireString(value['date'], 'date', 'symptomData["$label"]');
+      final symptoms = value['symptoms'];
+      if (symptoms is! List) {
+        throw DataImportException(
+            '"symptoms" in symptomData["$label"] must be a list (got ${symptoms.runtimeType}).');
+      }
+      for (var i = 0; i < symptoms.length; i++) {
+        if (symptoms[i] is! String) {
+          throw DataImportException(
+              '"symptoms[$i]" in symptomData["$label"] must be a string (got ${symptoms[i].runtimeType}).');
+        }
+      }
+    }
+  }
+
+  /// `IntakeLog.fromMap` is intentionally defensive about per-field types
+  /// (silently substitutes "Unknown Medicine" / `0.0` dosage / etc.), so
+  /// we don't replicate its full type ladder. But we do enforce that the
+  /// container shape is a List of Maps — anything else would either crash
+  /// the loader or generate a screen full of placeholder rows.
+  static void _validateMedicationLogs(Map box) {
+    for (final entry in box.entries) {
+      final key = entry.key;
+      final value = entry.value;
+      final label = key is String ? key : key.toString();
+      if (value is! List) {
+        throw DataImportException(
+            'medicationLogs["$label"] must be a list (got ${value.runtimeType}).');
+      }
+      for (var i = 0; i < value.length; i++) {
+        if (value[i] is! Map) {
+          throw DataImportException(
+              'medicationLogs["$label"][$i] must be a map (got ${value[i].runtimeType}).');
         }
       }
     }
