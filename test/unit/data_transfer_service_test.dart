@@ -318,6 +318,137 @@ void main() {
     );
   });
 
+  test('validateEnvelope rejects boxes wrapper of wrong type (list)', () {
+    // P2-2 regression: "treatments": [] silently passed before, and
+    // importAllBoxes would clear the local box and skip repopulation.
+    final env = envelopeWith();
+    (env['boxes'] as Map<String, dynamic>)[HiveService.treatmentsBoxName] =
+        <dynamic>[];
+    expect(
+      () => DataTransferService.validateEnvelope(env),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects boxes wrapper of wrong type (string)', () {
+    final env = envelopeWith();
+    (env['boxes'] as Map<String, dynamic>)[HiveService.pillboxBoxName] =
+        'oops';
+    expect(
+      () => DataTransferService.validateEnvelope(env),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope accepts a missing box (treated as empty)', () {
+    // A box missing from the envelope is a valid migration: the source
+    // device had no data for it, so the destination should also be empty.
+    // We rely on HiveService.importAllBoxes to clear local state.
+    final env = envelopeWith(treatments: [validTreatmentEntry()]);
+    expect(
+      (env['boxes'] as Map<String, dynamic>)
+          .containsKey(HiveService.pillboxBoxName),
+      isFalse,
+      reason: 'sanity: pillbox is intentionally absent from this fixture',
+    );
+    expect(
+      () => DataTransferService.validateEnvelope(env),
+      returnsNormally,
+    );
+  });
+
+  test('validateEnvelope rejects selectedDays with non-boolean entries', () {
+    // P2-1: Treatment.fromJson does `(e as bool)` and would crash → silent
+    // "Error Treatment" fallback if we didn't reject this up front.
+    final bad = validTreatmentEntry();
+    (bad['treatmentPlan'] as Map<String, dynamic>)['selectedDays'] = [
+      true,
+      'bad',
+      true,
+    ];
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWith(treatments: [bad])),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects selectedDays of the wrong shape', () {
+    final bad = validTreatmentEntry();
+    (bad['treatmentPlan'] as Map<String, dynamic>)['selectedDays'] = 'not-a-list';
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWith(treatments: [bad])),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects unparseable doseTimes entry', () {
+    final bad = validTreatmentEntry();
+    (bad['treatmentPlan'] as Map<String, dynamic>)['doseTimes'] = [
+      '1970-01-01T09:00:00.000Z',
+      'not-a-date',
+    ];
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWith(treatments: [bad])),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects doseNamesMap with unparseable values', () {
+    final bad = validTreatmentEntry();
+    (bad['treatmentPlan'] as Map<String, dynamic>)['doseNamesMap'] = {
+      'Morning': 'not-a-date',
+    };
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWith(treatments: [bad])),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects doseNamesMap of the wrong shape', () {
+    final bad = validTreatmentEntry();
+    (bad['treatmentPlan'] as Map<String, dynamic>)['doseNamesMap'] = ['Morning'];
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWith(treatments: [bad])),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope accepts treatments with valid optional fields', () {
+    // Sanity: the optional-field validation must not reject well-formed
+    // exports (the round-trip test seeds doseTimes and doseNamesMap).
+    final good = validTreatmentEntry();
+    (good['treatmentPlan'] as Map<String, dynamic>)
+      ..['doseTimes'] = ['1970-01-01T09:00:00.000Z']
+      ..['doseNamesMap'] = {'Morning': '1970-01-01T09:00:00.000Z'}
+      ..['selectedDays'] = [true, true, true, true, true, false, false];
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWith(treatments: [good])),
+      returnsNormally,
+    );
+  });
+
+  test('importFromFile leaves Hive untouched when boxes wrapper is wrong type',
+      () async {
+    // The P2-2 regression scenario as an integration test: present-but-not-a-map
+    // box must be rejected BEFORE HiveService.importAllBoxes clears anything.
+    await seedFixtureData();
+    final before = jsonEncode(snapshotBoxes());
+
+    final badEnvelope = envelopeWith();
+    (badEnvelope['boxes'] as Map<String, dynamic>)[
+        HiveService.treatmentsBoxName] = <dynamic>[];
+    final badFile = File('${tempDir.path}/bad_wrapper.json');
+    await badFile.writeAsString(jsonEncode(badEnvelope));
+
+    expect(
+      () => DataTransferService.importFromFile(badFile.path),
+      throwsA(isA<DataImportException>()),
+    );
+
+    final after = jsonEncode(snapshotBoxes());
+    expect(after, equals(before));
+  });
+
   test('validateEnvelope rejects pillbox entry missing medicine.specs', () {
     final bad = {
       'medicine': {

@@ -165,12 +165,30 @@ class DataTransferService {
   }
 
   /// Reject malformed exports up-front so we never enter the wipe path on
-  /// bad input. Lenient about missing boxes (treated as empty) but strict
-  /// about every field `Treatment.fromJson` and `MedicineInventorySerialization.fromJson`
-  /// require — both catch their own parse failures and fall back to
-  /// placeholder objects, which would silently replace the user's real data
-  /// after we've already wiped Hive.
+  /// bad input. Lenient about missing boxes (treated as empty — local box is
+  /// cleared by [HiveService.importAllBoxes], which matches the user's
+  /// "source device had no data for this box" intent) but strict about
+  /// everything else:
+  ///
+  ///   - present-but-non-Map box wrappers are rejected (otherwise
+  ///     `HiveService.importAllBoxes` would clear the local box and skip
+  ///     repopulation, silently destroying user data);
+  ///   - every field `Treatment.fromJson` and
+  ///     `MedicineInventorySerialization.fromJson` cast — including the
+  ///     optional `doseTimes`/`doseNamesMap`/`selectedDays` — is type-checked,
+  ///     because both readers catch their own parse failures and fall back to
+  ///     placeholder objects, which would silently replace the user's real
+  ///     data after Hive is already wiped.
   static void _spotCheckShapes(Map<String, dynamic> boxes) {
+    // 1. Every present box wrapper must be a Map (matching what
+    //    HiveService.exportAllBoxes produces).
+    for (final boxName in HiveService.exportableBoxNames) {
+      if (boxes.containsKey(boxName) && boxes[boxName] is! Map) {
+        throw DataImportException(
+            'Box "$boxName" must be a map (got ${boxes[boxName].runtimeType}).');
+      }
+    }
+
     final treatmentsBox = boxes[HiveService.treatmentsBoxName];
     if (treatmentsBox is Map) {
       final list = treatmentsBox['treatments'];
@@ -248,6 +266,51 @@ class DataTransferService {
         'treatment #${index + 1}');
 
     _requireString(entry['notes'], 'notes', 'treatment #${index + 1}');
+
+    // Optional fields. Treatment.fromJson tolerates them being absent, but
+    // if present each one is cast/parsed and would crash → "Error Treatment"
+    // fallback. Validate everything that's actually there.
+    final doseTimes = plan['doseTimes'];
+    if (doseTimes != null) {
+      if (doseTimes is! List) {
+        throw DataImportException(
+            '"treatmentPlan.doseTimes" in treatment #${index + 1} must be a list (got ${doseTimes.runtimeType}).');
+      }
+      for (var j = 0; j < doseTimes.length; j++) {
+        _requireDateString(doseTimes[j], 'treatmentPlan.doseTimes[$j]',
+            'treatment #${index + 1}');
+      }
+    }
+
+    final doseNamesMap = plan['doseNamesMap'];
+    if (doseNamesMap != null) {
+      if (doseNamesMap is! Map) {
+        throw DataImportException(
+            '"treatmentPlan.doseNamesMap" in treatment #${index + 1} must be a map (got ${doseNamesMap.runtimeType}).');
+      }
+      doseNamesMap.forEach((name, time) {
+        if (name is! String) {
+          throw DataImportException(
+              '"treatmentPlan.doseNamesMap" in treatment #${index + 1} has a non-string key.');
+        }
+        _requireDateString(time, 'treatmentPlan.doseNamesMap["$name"]',
+            'treatment #${index + 1}');
+      });
+    }
+
+    final selectedDays = plan['selectedDays'];
+    if (selectedDays != null) {
+      if (selectedDays is! List) {
+        throw DataImportException(
+            '"treatmentPlan.selectedDays" in treatment #${index + 1} must be a list (got ${selectedDays.runtimeType}).');
+      }
+      for (var j = 0; j < selectedDays.length; j++) {
+        if (selectedDays[j] is! bool) {
+          throw DataImportException(
+              '"treatmentPlan.selectedDays[$j]" in treatment #${index + 1} must be a boolean (got ${selectedDays[j].runtimeType}).');
+        }
+      }
+    }
   }
 
   /// Mirrors `MedicineInventorySerialization.fromJson` + nested
