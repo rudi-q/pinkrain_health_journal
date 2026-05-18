@@ -165,14 +165,14 @@ class DataTransferService {
   }
 
   /// Reject malformed exports up-front so we never enter the wipe path on
-  /// bad input. Lenient about missing boxes (treated as empty — local box is
-  /// cleared by [HiveService.importAllBoxes], which matches the user's
-  /// "source device had no data for this box" intent) but strict about
-  /// everything else:
+  /// bad input.
   ///
-  ///   - present-but-non-Map box wrappers are rejected (otherwise
-  ///     `HiveService.importAllBoxes` would clear the local box and skip
-  ///     repopulation, silently destroying user data);
+  ///   - every box in [HiveService.exportableBoxNames] must be present and
+  ///     a Map (possibly empty). `HiveService.exportAllBoxes` always writes
+  ///     all six wrappers, so a missing key means the file was truncated or
+  ///     hand-edited — and accepting it would let
+  ///     `HiveService.importAllBoxes` clear the local box and skip
+  ///     repopulation, silently destroying user data;
   ///   - every field `Treatment.fromJson` and
   ///     `MedicineInventorySerialization.fromJson` cast — including the
   ///     optional `doseTimes`/`doseNamesMap`/`selectedDays` — is type-checked,
@@ -180,10 +180,13 @@ class DataTransferService {
   ///     placeholder objects, which would silently replace the user's real
   ///     data after Hive is already wiped.
   static void _spotCheckShapes(Map<String, dynamic> boxes) {
-    // 1. Every present box wrapper must be a Map (matching what
-    //    HiveService.exportAllBoxes produces).
+    // 1. Every exportable box must be present and a Map.
     for (final boxName in HiveService.exportableBoxNames) {
-      if (boxes.containsKey(boxName) && boxes[boxName] is! Map) {
+      if (!boxes.containsKey(boxName)) {
+        throw DataImportException(
+            'Export file is missing the "$boxName" box. It may be truncated or corrupted.');
+      }
+      if (boxes[boxName] is! Map) {
         throw DataImportException(
             'Box "$boxName" must be a map (got ${boxes[boxName].runtimeType}).');
       }
@@ -303,6 +306,14 @@ class DataTransferService {
       if (selectedDays is! List) {
         throw DataImportException(
             '"treatmentPlan.selectedDays" in treatment #${index + 1} must be a list (got ${selectedDays.runtimeType}).');
+      }
+      // Must be exactly 7 — TreatmentPlan.shouldTakeOnDate indexes by
+      // weekday 0..6 (treatment.dart:82). A shorter list throws RangeError
+      // the next time the journal computes today's doses, after the import
+      // dialog has already closed.
+      if (selectedDays.length != 7) {
+        throw DataImportException(
+            '"treatmentPlan.selectedDays" in treatment #${index + 1} must have exactly 7 entries (got ${selectedDays.length}).');
       }
       for (var j = 0; j < selectedDays.length; j++) {
         if (selectedDays[j] is! bool) {

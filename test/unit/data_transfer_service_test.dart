@@ -229,7 +229,13 @@ void main() {
   Map<String, dynamic> envelopeWith(
       {List<Map<String, dynamic>>? treatments,
       List<Map<String, dynamic>>? pillbox}) {
-    final boxes = <String, dynamic>{};
+    // Mirror what HiveService.exportAllBoxes produces: every exportable box
+    // wrapper is present, empty by default. Tests can override the
+    // treatments / pillbox slots with their own fixtures.
+    final boxes = <String, dynamic>{
+      for (final name in HiveService.exportableBoxNames)
+        name: <String, dynamic>{},
+    };
     if (treatments != null) {
       boxes[HiveService.treatmentsBoxName] = {'treatments': treatments};
     }
@@ -340,21 +346,55 @@ void main() {
     );
   });
 
-  test('validateEnvelope accepts a missing box (treated as empty)', () {
-    // A box missing from the envelope is a valid migration: the source
-    // device had no data for it, so the destination should also be empty.
-    // We rely on HiveService.importAllBoxes to clear local state.
+  test('validateEnvelope rejects a missing exportable box', () {
+    // HiveService.exportAllBoxes always writes all six box wrappers (even
+    // empty as {}). A missing key means the file was truncated or
+    // hand-edited — accepting it would let HiveService.importAllBoxes
+    // clear the local box and skip repopulation, silently wiping user data.
     final env = envelopeWith(treatments: [validTreatmentEntry()]);
-    expect(
-      (env['boxes'] as Map<String, dynamic>)
-          .containsKey(HiveService.pillboxBoxName),
-      isFalse,
-      reason: 'sanity: pillbox is intentionally absent from this fixture',
-    );
+    (env['boxes'] as Map<String, dynamic>).remove(HiveService.pillboxBoxName);
     expect(
       () => DataTransferService.validateEnvelope(env),
-      returnsNormally,
+      throwsA(isA<DataImportException>()),
     );
+  });
+
+  test('validateEnvelope rejects selectedDays with wrong length', () {
+    // TreatmentPlan.shouldTakeOnDate indexes selectedDays by weekday 0..6
+    // (treatment.dart:82). A shorter list throws RangeError post-import,
+    // after the user has already lost their original data.
+    final bad = validTreatmentEntry();
+    (bad['treatmentPlan'] as Map<String, dynamic>)['selectedDays'] = [
+      true,
+      true,
+      true,
+    ];
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWith(treatments: [bad])),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('importFromFile leaves Hive untouched when a box wrapper is missing',
+      () async {
+    // Integration check of the missing-box rejection: a corrupted export
+    // with a missing wrapper must fail before any destructive op runs.
+    await seedFixtureData();
+    final before = jsonEncode(snapshotBoxes());
+
+    final badEnvelope = envelopeWith();
+    (badEnvelope['boxes'] as Map<String, dynamic>)
+        .remove(HiveService.treatmentsBoxName);
+    final badFile = File('${tempDir.path}/missing_box.json');
+    await badFile.writeAsString(jsonEncode(badEnvelope));
+
+    expect(
+      () => DataTransferService.importFromFile(badFile.path),
+      throwsA(isA<DataImportException>()),
+    );
+
+    final after = jsonEncode(snapshotBoxes());
+    expect(after, equals(before));
   });
 
   test('validateEnvelope rejects selectedDays with non-boolean entries', () {
