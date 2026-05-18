@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pinkrain/core/widgets/bottom_navigation.dart';
 import 'package:pinkrain/core/widgets/components.dart';
@@ -14,6 +15,9 @@ import 'package:pinkrain/core/services/data_transfer_service.dart';
 import 'package:pinkrain/core/services/hive_service.dart';
 import 'package:pinkrain/core/theme/tokens.dart';
 import 'package:pinkrain/core/theme/colors.dart';
+import 'package:pinkrain/features/journal/presentation/journal_medication_notifier.dart';
+import 'package:pinkrain/features/journal/presentation/journal_notifier.dart';
+import 'package:pinkrain/features/pillbox/presentation/pillbox_notifier.dart';
 import 'package:pinkrain/features/treatment/services/medication_notification_service.dart';
 import 'package:pinkrain/features/treatment/services/medication_scheduler_service.dart';
 import 'package:pinkrain/core/services/disclaimer_service.dart';
@@ -23,14 +27,14 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'dart:io';
 
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
   ProfileScreenState createState() => ProfileScreenState();
 }
 
-class ProfileScreenState extends State<ProfileScreen> {
+class ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool isReminderEnabled = true;
   bool isFillUpPillboxEnabled = false;
   late TextEditingController _nameController;
@@ -1026,6 +1030,16 @@ class ProfileScreenState extends State<ProfileScreen> {
 
     if (mounted) hostNavigatorState.pop();
     if (!mounted) return;
+
+    // Throw away every notifier whose state was populated from Hive before
+    // the import. Riverpod will rebuild them on next read, picking up the
+    // freshly imported data. Without this, the in-memory state is stale and
+    // — worse — the next pillbox/journal mutation would write the pre-import
+    // state back over the imported Hive contents.
+    ref.invalidate(pillBoxProvider);
+    ref.invalidate(pillIntakeProvider);
+    ref.invalidate(journalMedicationNotifierProvider);
+    ref.invalidate(selectedDateProvider);
 
     showCupertinoDialog(
       context: context,

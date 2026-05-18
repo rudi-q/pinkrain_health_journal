@@ -16,6 +16,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+import 'package:pinkrain/core/services/data_transfer_service.dart';
 import 'package:pinkrain/core/services/hive_service.dart';
 
 void main() {
@@ -193,6 +194,172 @@ void main() {
       expect(Hive.box(name).isEmpty, isTrue,
           reason: '$name should have been cleared by an empty import.');
     }
+  });
+
+  // ---- validateEnvelope ----
+  //
+  // These guard the destructive write path. Anything that would later make
+  // Treatment.fromJson or MedicineInventorySerialization.fromJson fall back
+  // to a placeholder object (silently replacing real user data) must be
+  // rejected here, BEFORE importFromFile touches Hive.
+
+  Map<String, dynamic> validTreatmentEntry() => {
+        'id': '1747000000000123456',
+        'medicine': {
+          'name': 'Paracetamol',
+          'type': 'Pain Killer',
+          'color': 'White',
+          'specification': {
+            'dosage': 20.0,
+            'unit': 'mg',
+            'useCase': '',
+          },
+        },
+        'treatmentPlan': {
+          'startDate': '2026-05-10T00:00:00.000Z',
+          'endDate': '2026-06-10T00:00:00.000Z',
+          'timeOfDay': '1970-01-01T09:00:00.000Z',
+          'mealOption': '',
+          'instructions': '',
+          'frequency': 1,
+        },
+        'notes': '',
+      };
+
+  Map<String, dynamic> envelopeWith(
+      {List<Map<String, dynamic>>? treatments,
+      List<Map<String, dynamic>>? pillbox}) {
+    final boxes = <String, dynamic>{};
+    if (treatments != null) {
+      boxes[HiveService.treatmentsBoxName] = {'treatments': treatments};
+    }
+    if (pillbox != null) {
+      boxes[HiveService.pillboxBoxName] = {'pillbox': pillbox};
+    }
+    return {
+      'schema': DataTransferService.schemaTag,
+      'version': DataTransferService.schemaVersion,
+      'boxes': boxes,
+    };
+  }
+
+  test('validateEnvelope accepts a well-formed envelope', () {
+    expect(
+      () => DataTransferService.validateEnvelope(
+          envelopeWith(treatments: [validTreatmentEntry()])),
+      returnsNormally,
+    );
+  });
+
+  test('validateEnvelope rejects wrong schema tag', () {
+    final env = envelopeWith()..['schema'] = 'something-else';
+    expect(
+      () => DataTransferService.validateEnvelope(env),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects wrong version', () {
+    final env = envelopeWith()..['version'] = 99;
+    expect(
+      () => DataTransferService.validateEnvelope(env),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects empty medicine object (the regression case)',
+      () {
+    // This is the exact shape the reviewer flagged: schema/version OK,
+    // medicine + treatmentPlan present but empty. Old code accepted this
+    // and then Treatment.fromJson would silently produce an "Error Treatment".
+    final bad = {
+      'id': 'x',
+      'medicine': <String, dynamic>{},
+      'treatmentPlan': <String, dynamic>{},
+      'notes': '',
+    };
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWith(treatments: [bad])),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects unparseable startDate', () {
+    final bad = validTreatmentEntry()
+      ..['treatmentPlan'] = {
+        ...(validTreatmentEntry()['treatmentPlan'] as Map<String, dynamic>),
+        'startDate': 'not-a-date',
+      };
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWith(treatments: [bad])),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects dosage of the wrong type', () {
+    final bad = validTreatmentEntry();
+    (bad['medicine'] as Map<String, dynamic>)['specification'] = {
+      'dosage': '20', // string instead of num — fromJson would crash
+      'unit': 'mg',
+      'useCase': '',
+    };
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWith(treatments: [bad])),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects missing notes field', () {
+    // Treatment.fromJson does `json['notes'] as String` which throws on null.
+    final bad = validTreatmentEntry()..remove('notes');
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWith(treatments: [bad])),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('validateEnvelope rejects pillbox entry missing medicine.specs', () {
+    final bad = {
+      'medicine': {
+        'name': 'Aspirin',
+        'type': 'Tablet',
+        'color': 'White',
+        // 'specs' missing
+      },
+      'quantity': 30,
+    };
+    expect(
+      () => DataTransferService.validateEnvelope(envelopeWith(pillbox: [bad])),
+      throwsA(isA<DataImportException>()),
+    );
+  });
+
+  test('importFromFile leaves Hive untouched when validation fails', () async {
+    await seedFixtureData();
+    final before = jsonEncode(snapshotBoxes());
+
+    // Craft a malformed export and write it to disk.
+    final badEnvelope = envelopeWith(treatments: [
+      {
+        'id': 'x',
+        'medicine': <String, dynamic>{},
+        'treatmentPlan': <String, dynamic>{},
+        'notes': '',
+      }
+    ]);
+    final badFile = File('${tempDir.path}/bad_import.json');
+    await badFile.writeAsString(jsonEncode(badEnvelope));
+
+    expect(
+      () => DataTransferService.importFromFile(badFile.path),
+      throwsA(isA<DataImportException>()),
+    );
+
+    // The seeded data must still be there byte-for-byte. This is the actual
+    // safety property the reviewer wanted: a malformed file does not cost the
+    // user their local data.
+    final after = jsonEncode(snapshotBoxes());
+    expect(after, equals(before));
   });
 
   test('exportAllBoxes returns Map<String, dynamic> for all nested maps', () async {
