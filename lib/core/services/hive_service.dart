@@ -12,6 +12,17 @@ class HiveService {
   static const String medicationLogsBoxName = 'medicationLogs';
   static const String treatmentsBoxName = 'treatments';
   static const String pillboxBoxName = 'pillboxData';
+
+  /// Boxes that participate in user-data export/import.
+  /// Excludes device-specific boxes (medication_scheduler, medication_actions, disclaimer_box).
+  static const List<String> exportableBoxNames = [
+    userPrefsBox,
+    moodBoxName,
+    symptomBoxName,
+    medicationLogsBoxName,
+    treatmentsBoxName,
+    pillboxBoxName,
+  ];
   static const String lastMoodDateKey = 'lastMoodDate';
   static const String userMoodKey = 'userMood';
   static const String userMoodDescriptionKey = 'userMoodDescription';
@@ -769,6 +780,48 @@ class HiveService {
       return data;
     }
     return [];
+  }
+
+  /// Read every entry from each exportable box into a plain JSON-safe map.
+  /// Top-level shape: `{ boxName: { key: value, ... }, ... }`.
+  /// Keys and nested maps are normalized to `Map<String, dynamic>` so the
+  /// result round-trips cleanly through `jsonEncode`/`jsonDecode`.
+  static Future<Map<String, Map<String, dynamic>>> exportAllBoxes() async {
+    final result = <String, Map<String, dynamic>>{};
+    for (final boxName in exportableBoxNames) {
+      final box = await _openBox(boxName);
+      final boxMap = <String, dynamic>{};
+      for (final key in box.keys) {
+        final value = box.get(key);
+        boxMap[key.toString()] = _sanitizeValue(value);
+      }
+      result[boxName] = boxMap;
+    }
+    return result;
+  }
+
+  /// Replace the contents of every exportable box with the supplied data.
+  /// Each box is cleared then re-populated. Box keys missing from `data` are
+  /// cleared (so a partial import does not leave stale entries). Unknown box
+  /// names in `data` are ignored.
+  static Future<void> importAllBoxes(Map<String, dynamic> data) async {
+    for (final boxName in exportableBoxNames) {
+      final box = await _openBox(boxName);
+      await box.clear();
+      final raw = data[boxName];
+      if (raw is! Map) continue;
+      for (final entry in raw.entries) {
+        await box.put(entry.key.toString(), _sanitizeValue(entry.value));
+      }
+    }
+  }
+
+  /// Recursively normalize a Hive/JSON value so all maps are `Map<String, dynamic>`.
+  /// Mirrors `_sanitizeMap`/`_sanitizeList` but also handles top-level scalars.
+  static dynamic _sanitizeValue(dynamic value) {
+    if (value is Map) return _sanitizeMap(value);
+    if (value is List) return _sanitizeList(value);
+    return value;
   }
 
   /// Delete all user data from the device
