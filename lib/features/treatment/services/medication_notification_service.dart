@@ -1,7 +1,9 @@
-import 'dart:typed_data';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:hive/hive.dart';
+import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:pinkrain/core/util/helpers.dart';
 import 'package:pinkrain/features/journal/data/journal_log.dart';
@@ -23,25 +25,161 @@ class MedicationNotificationService {
 
   // Use the existing notification service implementation
   final _notificationService = notification_impl.NotificationService();
-  
+
   // Use the new scheduler service for scheduling notifications
   final _schedulerService = MedicationSchedulerService();
 
-  // Track which medications we've already notified for today
+  // Track which medications we've already notified for today.
+  // This is an in-memory write-through cache backed by Hive (see [_trackingBoxName]).
   final Set<String> _notifiedMedicationIds = {};
-  
+
   // Track last scheduling time to prevent duplicate rapid schedules
   DateTime? _lastScheduleTime;
   int? _lastMedicationCount;
   static const Duration _scheduleDebounceTime = Duration(seconds: 2);
 
+  // --- Persistent dedupe set ---
+  // The set lives in Hive under `notified_<yyyy-MM-dd>` so it segregates by day
+  // and naturally ages out via the prune on init. Writes are fire-and-forget
+  // (`unawaited`) because the in-memory set is the source of truth within the
+  // running process — Hive is only consulted on cold start (singleton resurrection)
+  // to repopulate the cache.
+  static const String _trackingBoxName = 'notification_tracking';
+  static const String _trackingKeyPrefix = 'notified_';
+
+  // Chain of in-flight Hive writes, exposed via [pendingWrites] for tests so they
+  // can await fire-and-forget persistence without leaking the implementation detail.
+  Future<void> _pendingWrites = Future<void>.value();
+
+  /// Visible for testing — await any in-flight fire-and-forget Hive writes.
+  @visibleForTesting
+  Future<void> get pendingWrites => _pendingWrites;
+
+  String _todayKey([DateTime? now]) {
+    final d = now ?? DateTime.now();
+    return '$_trackingKeyPrefix${DateFormat('yyyy-MM-dd').format(d)}';
+  }
+
+  /// Open (or reuse) the persistent tracking box.
+  /// Mirrors the lazy-open pattern used by [MedicationSchedulerService._getBox].
+  Future<Box> _getTrackingBox() async {
+    if (!Hive.isBoxOpen(_trackingBoxName)) {
+      return await Hive.openBox(_trackingBoxName);
+    }
+    return Hive.box(_trackingBoxName);
+  }
+
+  /// Read today's bucket from Hive as a list of medication-id strings.
+  List<String> _readBucket(Box box, String key) {
+    final raw = box.get(key);
+    if (raw is List) {
+      return raw.map((e) => e.toString()).toList();
+    }
+    return const <String>[];
+  }
+
+  /// Queue a Hive mutation behind the previous one so tests can await
+  /// [pendingWrites] and observe a quiescent state.
+  void _enqueueWrite(Future<void> Function() op) {
+    _pendingWrites = _pendingWrites.then((_) => op()).catchError((Object e, StackTrace st) {
+      devPrint('❌ Error persisting notification tracking: $e');
+    });
+  }
+
+  /// Persist the current in-memory set to today's Hive bucket.
+  Future<void> _persistTodaySnapshot() async {
+    try {
+      final box = await _getTrackingBox();
+      await box.put(_todayKey(), _notifiedMedicationIds.toList(growable: false));
+    } catch (e) {
+      devPrint('❌ Error writing notification tracking snapshot: $e');
+    }
+  }
+
+  /// Delete today's Hive bucket (used by resetDailyNotifications).
+  Future<void> _deleteTodayBucket() async {
+    try {
+      final box = await _getTrackingBox();
+      await box.delete(_todayKey());
+    } catch (e) {
+      devPrint('❌ Error deleting today\'s notification tracking bucket: $e');
+    }
+  }
+
+  /// Restore today's set from Hive and prune any older date buckets.
+  Future<void> _restoreAndPruneTracking() async {
+    try {
+      final box = await _getTrackingBox();
+      final todayKey = _todayKey();
+
+      // Restore today's bucket into the in-memory cache.
+      _notifiedMedicationIds
+        ..clear()
+        ..addAll(_readBucket(box, todayKey));
+
+      // Prune older date buckets — anything keyed with our prefix but not today.
+      final stale = box.keys
+          .whereType<String>()
+          .where((k) => k.startsWith(_trackingKeyPrefix) && k != todayKey)
+          .toList(growable: false);
+      if (stale.isNotEmpty) {
+        await box.deleteAll(stale);
+        devPrint('🧹 Pruned ${stale.length} stale notification-tracking bucket(s)');
+      }
+      devPrint('♻️ Restored ${_notifiedMedicationIds.length} notification-tracking entries from Hive');
+    } catch (e) {
+      devPrint('❌ Error restoring notification tracking from Hive: $e');
+    }
+  }
+
+  /// Visible for testing — run only the Hive-side restore/prune step that
+  /// `initialize()` performs, without touching platform channels (notification
+  /// service or scheduler service init).
+  @visibleForTesting
+  Future<void> restoreTrackingForTesting() async {
+    await _restoreAndPruneTracking();
+  }
+
+  /// Visible for testing — seed the in-memory dedupe set and write through to
+  /// Hive, simulating what `_showMedicationNotification` would do.
+  @visibleForTesting
+  void markNotifiedForTesting(String medicationId) {
+    _notifiedMedicationIds.add(medicationId);
+    _enqueueWrite(_persistTodaySnapshot);
+  }
+
+  /// Visible for testing — read the live in-memory set.
+  @visibleForTesting
+  Set<String> get notifiedMedicationIdsForTesting => Set.unmodifiable(_notifiedMedicationIds);
+
+  /// Visible for testing — clear all state (in-memory + on-disk) and close
+  /// the tracking box so the next test can re-init with a fresh Hive instance.
+  @visibleForTesting
+  Future<void> resetForTesting() async {
+    // Drain pending writes before tearing down.
+    await _pendingWrites;
+    _notifiedMedicationIds.clear();
+    _lastScheduleTime = null;
+    _lastMedicationCount = null;
+    if (Hive.isBoxOpen(_trackingBoxName)) {
+      final box = Hive.box(_trackingBoxName);
+      await box.clear();
+      await box.close();
+    }
+    _pendingWrites = Future<void>.value();
+  }
+
   /// Initialize the notification service
   Future<void> initialize() async {
     // Initialize the notification service
     await _notificationService.initialize();
-    
+
     // Initialize the scheduler service
     await _schedulerService.initialize();
+
+    // Restore the in-memory dedupe set from Hive (survives iOS process
+    // recreation) and prune older date buckets.
+    await _restoreAndPruneTracking();
 
     // Check and print notification permission status
     final isEnabled = await areNotificationsEnabled();
@@ -274,9 +412,10 @@ class MedicationNotificationService {
         includeSnoozeAction: true, // Enable snooze button
       );
       
-      // Add to our tracking set to avoid duplicates
+      // Add to our tracking set to avoid duplicates (write-through to Hive)
       _notifiedMedicationIds.add(medicationId);
-      
+      _enqueueWrite(_persistTodaySnapshot);
+
       devPrint('✅ Showed medication notification for: $medicationId');
     } catch (e) {
       devPrint('❌ Error showing notification: $e');
@@ -288,22 +427,38 @@ class MedicationNotificationService {
   void clearNotificationForMedication(String medicationId) {
     // Remove all entries that start with this medication ID
     _notifiedMedicationIds.removeWhere((id) => id.startsWith(medicationId));
+    // Mirror to Hive: read today's bucket, filter, write back (fire-and-forget).
+    _enqueueWrite(() async {
+      final box = await _getTrackingBox();
+      final key = _todayKey();
+      final current = _readBucket(box, key);
+      final filtered = current.where((id) => !id.startsWith(medicationId)).toList(growable: false);
+      if (filtered.length != current.length) {
+        await box.put(key, filtered);
+      }
+    });
     devPrint('🧹 Cleared notification tracking for: $medicationId');
   }
-  
+
   /// Clear all notification tracking (useful when rescheduling)
   void clearAllNotificationTracking() {
     _notifiedMedicationIds.clear();
     _lastScheduleTime = null;
     _lastMedicationCount = null;
+    // Fire-and-forget: drop today's bucket so a process recreated after this
+    // call doesn't restore the cleared entries.
+    _enqueueWrite(_deleteTodayBucket);
     devPrint('🧹 Cleared all notification tracking');
   }
-  
+
   /// Clear notification tracking at the end of the day
   void resetDailyNotifications() {
     _notifiedMedicationIds.clear();
     _lastScheduleTime = null;
     _lastMedicationCount = null;
+    // Explicitly delete today's bucket — yesterday's was already pruned on init,
+    // but this avoids ambiguity if the reset fires mid-day for any reason.
+    _enqueueWrite(_deleteTodayBucket);
     _schedulerService.resetScheduledNotifications();
   }
   
