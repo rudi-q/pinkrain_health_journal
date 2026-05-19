@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:pinkrain/core/util/helpers.dart';
 import 'package:pinkrain/features/journal/data/journal_log.dart';
@@ -22,7 +24,14 @@ class MedicationSchedulerService {
   
   static const String _boxName = 'medication_scheduler';
   static const String _scheduledNotificationsKey = 'scheduled_notifications';
-  
+  static const String _idSchemeVersionKey = 'id_scheme_version';
+
+  /// Current notification-ID scheme version.
+  /// Bump this whenever the algorithm in [stableNotificationId] changes so the
+  /// migration in [initialize] clears OS-scheduled notifications from any
+  /// previous scheme (e.g. the old `String.hashCode`-based IDs at v1).
+  static const int _currentIdSchemeVersion = 2;
+
   // Notification text constants (DRY principle)
   static const String _notificationTitleSuffix = ' 💊';
   static const String _notificationBody = 'Don\'t forget to take your medicine!';
@@ -40,13 +49,55 @@ class MedicationSchedulerService {
     if (!Hive.isBoxOpen(_boxName)) {
       await Hive.openBox(_boxName);
     }
-    
+
+    // One-time migration: if the persisted ID scheme is older than the current
+    // one, the OS still has notifications scheduled under the previous IDs.
+    // Wipe them so the restore + re-schedule paths below repopulate with the
+    // new IDs and we don't end up with orphan duplicates.
+    await _migrateIdSchemeIfNeeded();
+
     // Reset notifications that have passed
     await _cleanupPassedNotifications();
-    
+
     // Restore scheduled notifications on app restart
     // iOS clears scheduled notifications when the app is killed, so we need to reschedule them
     await _restoreScheduledNotifications();
+  }
+
+  /// Migrate the persisted notification-ID scheme if the stored version is
+  /// missing or older than [_currentIdSchemeVersion]. Cancels every
+  /// OS-scheduled notification (because their IDs were computed under the old
+  /// scheme and would otherwise leak as orphans) and clears our Hive-backed
+  /// `scheduled_notifications` mirror. The normal restore / re-schedule paths
+  /// will then repopulate everything with the new scheme.
+  Future<void> _migrateIdSchemeIfNeeded() async {
+    try {
+      final box = await _getBox();
+      final storedVersion = box.get(_idSchemeVersionKey);
+
+      if (storedVersion == _currentIdSchemeVersion) {
+        return;
+      }
+
+      devPrint(
+        '🔁 Notification ID scheme migration: stored=$storedVersion, '
+        'current=$_currentIdSchemeVersion — clearing OS-scheduled notifications '
+        'and persisted records so they can be re-armed under the new scheme.',
+      );
+
+      try {
+        await _notificationService.cancelAllNotifications();
+      } catch (e) {
+        devPrint('⚠️ Error cancelling all notifications during ID scheme migration: $e');
+      }
+
+      await box.put(_scheduledNotificationsKey, <Map<String, dynamic>>[]);
+      await box.put(_idSchemeVersionKey, _currentIdSchemeVersion);
+
+      devPrint('✅ Notification ID scheme migration complete (now at v$_currentIdSchemeVersion)');
+    } catch (e) {
+      devPrint('❌ Error during notification ID scheme migration: $e');
+    }
   }
   
   /// Schedule notifications for medications
@@ -732,26 +783,50 @@ class MedicationSchedulerService {
     }
   }
   
-  /// Generate a unique notification ID for a medication
-  /// CRITICAL: For scheduled notifications, use a deterministic ID based on medicationId and time
-  /// This ensures that scheduling the same notification multiple times will replace it, not duplicate it
+  /// Generate a unique notification ID for a medication.
+  ///
+  /// For scheduled notifications, delegates to [stableNotificationId] which
+  /// uses a deterministic FNV-1a 32-bit hash over `'$medicationId|$scheduledTimeMs'`.
+  /// This is stable across Dart/Flutter SDK upgrades — unlike the previous
+  /// `String.hashCode`-based scheme, which the language spec only guarantees
+  /// stable within a single isolate's lifetime.
+  ///
+  /// For immediate (unscheduled) notifications the old timestamp-based
+  /// fallback is preserved — those IDs are never persisted long-term so they
+  /// don't suffer the same cross-version stability problem.
   int _generateNotificationId({String? medicationId, int? scheduledTimeMs}) {
-    // If we have medicationId and scheduledTime, create a deterministic ID
-    // This ensures the same notification always gets the same ID, preventing duplicates
     if (medicationId != null && scheduledTimeMs != null) {
-      // Create a hash-based ID from medicationId and scheduledTime
-      // This ensures the same medication at the same time always gets the same notification ID
-      final hash = medicationId.hashCode ^ scheduledTimeMs.hashCode;
-      // Ensure positive and within 32-bit range, use modulo to keep it reasonable
-      return (hash.abs() % 2147483647); // Max 32-bit signed int
+      return stableNotificationId(medicationId, scheduledTimeMs);
     }
-    
+
     // Fallback: Use timestamp-based ID for immediate notifications
     final baseId = DateTime.now().millisecondsSinceEpoch;
     final timeComponent = DateTime.now().millisecondsSinceEpoch % 10000;
-    
+
     // Combine them while ensuring we stay within 32-bit integer range
     return (baseId % 100000) * 10000 + timeComponent;
+  }
+
+  /// Deterministic 32-bit notification ID for a `(medicationId, scheduledTimeMs)` pair.
+  ///
+  /// Uses FNV-1a (32-bit) over the UTF-8 bytes of `'$medicationId|$scheduledTimeMs'`
+  /// and masks the result to a positive 32-bit signed int (`& 0x7FFFFFFF`) so
+  /// it fits the contract of `flutter_local_notifications`.
+  ///
+  /// FNV-1a is chosen because it's tiny (~10 lines, no dependency), well
+  /// specified, and — crucially — produces the same output on every Dart SDK
+  /// version, which `String.hashCode` does not guarantee.
+  @visibleForTesting
+  static int stableNotificationId(String medicationId, int scheduledTimeMs) {
+    final bytes = utf8.encode('$medicationId|$scheduledTimeMs');
+    const int fnvOffsetBasis = 0x811c9dc5;
+    const int fnvPrime = 0x01000193;
+    int hash = fnvOffsetBasis;
+    for (final b in bytes) {
+      hash = (hash ^ b) & 0xFFFFFFFF;
+      hash = (hash * fnvPrime) & 0xFFFFFFFF;
+    }
+    return hash & 0x7FFFFFFF;
   }
   
   /// Get the Hive box for notification storage
