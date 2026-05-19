@@ -15,6 +15,7 @@ import 'package:pinkrain/core/services/data_transfer_service.dart';
 import 'package:pinkrain/core/services/hive_service.dart';
 import 'package:pinkrain/core/theme/tokens.dart';
 import 'package:pinkrain/core/theme/colors.dart';
+import 'package:pinkrain/features/journal/domain/push_notifications.dart';
 import 'package:pinkrain/features/journal/presentation/journal_medication_notifier.dart';
 import 'package:pinkrain/features/journal/presentation/journal_notifier.dart';
 import 'package:pinkrain/features/pillbox/presentation/pillbox_notifier.dart';
@@ -232,6 +233,17 @@ class ProfileScreenState extends ConsumerState<ProfileScreen> {
                   }
                 }
               }),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text('Send test reminder (30s)', style: AppTokens.textStyleMedium),
+                trailing: HugeIcon(
+                  icon: HugeIcons.strokeRoundedPlay,
+                  size: 24,
+                  strokeWidth: 1,
+                  color: AppTokens.iconPrimary,
+                ),
+                onTap: _sendTestReminder,
+              ),
            /*   _buildSwitchTile('Fill-up Pillbox', isFillUpPillboxEnabled, (value) {
                 setState(() {
                   isFillUpPillboxEnabled = value;
@@ -1061,6 +1073,52 @@ class ProfileScreenState extends ConsumerState<ProfileScreen> {
         ],
       ),
     );
+  }
+
+  // Schedule a one-shot reminder ~30s out so the user can verify on-device
+  // that scheduled notifications actually fire. This is the user-facing
+  // self-diagnostic for fix #10 in docs/notifications-audit.md.
+  Future<void> _sendTestReminder() async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      final enabled = await _notificationService.areNotificationsEnabled();
+      if (!enabled) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Enable notifications first to test.')),
+        );
+        return;
+      }
+
+      // Be safe: ensure plugin + channels are initialized before scheduling.
+      await _notificationService.initialize();
+
+      // ID 999999 is reserved for this test ping — clearly outside the
+      // deterministic-hash range used by real medication reminders.
+      const int testReminderId = 999999;
+      final scheduledTime = DateTime.now().add(const Duration(seconds: 30));
+
+      await NotificationService().schedulePillReminder(
+        testReminderId,
+        'Test reminder 💊',
+        'If you can see this, scheduled notifications work on this device.',
+        scheduledTime,
+        includeSnoozeAction: false,
+      );
+
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Test reminder scheduled — close the app and wait ~30 seconds.',
+          ),
+        ),
+      );
+    } catch (e) {
+      devPrint('❌ Error scheduling test reminder: $e');
+      messenger.showSnackBar(
+        SnackBar(content: Text('Could not schedule test reminder: $e')),
+      );
+    }
   }
 
   // Show dialog to guide user to settings when permission is permanently denied
