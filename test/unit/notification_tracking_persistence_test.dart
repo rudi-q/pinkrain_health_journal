@@ -123,6 +123,56 @@ void main() {
       expect(persisted, <String>['treatment-B_20260519_0900']);
     });
 
+    test('restore does not lose live entries when a persist is pending',
+        () async {
+      // Regression for the race the audit re-review flagged: a notification
+      // is shown (entry added in-memory, fire-and-forget persist queued); then
+      // initialize() is called again in the same process (e.g. the test
+      // reminder button or the data import flow both call it). Before the
+      // fix, restore read the *old* Hive bucket and clobbered the live entry,
+      // and the queued persist then wrote the clobbered set back to disk.
+      //
+      // The fix drains _pendingWrites before reading, and merges instead of
+      // replacing — so the queued write lands first, the read sees the up-to-
+      // date bucket, and addAll is a no-op for entries already in-memory.
+
+      // 1. First entry: mark and fully persist.
+      service.markNotifiedForTesting('treatment-A_20260520_0900');
+      await service.pendingWrites;
+
+      // 2. Second entry: mark but DO NOT await the persist. This is the race
+      //    window — the in-memory set has both A and B, Hive has only A,
+      //    and _pendingWrites holds the not-yet-run persist of B.
+      service.markNotifiedForTesting('treatment-B_20260520_1300');
+
+      // 3. Simulate re-init in the same session.
+      await service.restoreTrackingForTesting();
+
+      // 4. Both entries must survive in-memory.
+      expect(
+        service.notifiedMedicationIdsForTesting,
+        containsAll(<String>[
+          'treatment-A_20260520_0900',
+          'treatment-B_20260520_1300',
+        ]),
+        reason:
+            'restore must drain pending writes before reading, otherwise B is lost',
+      );
+
+      // 5. And Hive must reflect both — the drain forced B to be persisted.
+      final box = await Hive.openBox('notification_tracking');
+      final persisted = (box.get(todayKey()) as List).cast<String>();
+      expect(
+        persisted,
+        containsAll(<String>[
+          'treatment-A_20260520_0900',
+          'treatment-B_20260520_1300',
+        ]),
+        reason:
+            'drained persist must have landed B in Hive before restore reads',
+      );
+    });
+
     test('older date buckets are pruned on init/restore', () async {
       // Seed today plus two stale buckets directly into Hive.
       final box = await Hive.openBox('notification_tracking');

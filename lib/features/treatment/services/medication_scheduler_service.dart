@@ -65,11 +65,20 @@ class MedicationSchedulerService {
   }
 
   /// Migrate the persisted notification-ID scheme if the stored version is
-  /// missing or older than [_currentIdSchemeVersion]. Cancels every
-  /// OS-scheduled notification (because their IDs were computed under the old
-  /// scheme and would otherwise leak as orphans) and clears our Hive-backed
-  /// `scheduled_notifications` mirror. The normal restore / re-schedule paths
-  /// will then repopulate everything with the new scheme.
+  /// missing or older than [_currentIdSchemeVersion].
+  ///
+  /// The OS still holds notifications scheduled under the old IDs, so we
+  /// cancel them wholesale; but we PRESERVE the persisted records and
+  /// rewrite each entry's `id` with the new scheme.
+  /// `_restoreScheduledNotifications`, which runs immediately after this
+  /// returns, then re-arms everything under the new IDs using the same
+  /// `medicationId` and `scheduledTime` metadata.
+  ///
+  /// We can't fall back to the rebuild path alone
+  /// (`_ensureFutureNotificationsScheduled`) because it filters by
+  /// `TreatmentPlan.isOnGoing()`, which excludes treatments whose `endDate`
+  /// has just passed midnight even when valid same-day doses remain.
+  /// Preserving the records avoids that hole entirely.
   Future<void> _migrateIdSchemeIfNeeded() async {
     try {
       final box = await _getBox();
@@ -81,9 +90,14 @@ class MedicationSchedulerService {
 
       devPrint(
         '🔁 Notification ID scheme migration: stored=$storedVersion, '
-        'current=$_currentIdSchemeVersion — clearing OS-scheduled notifications '
-        'and persisted records so they can be re-armed under the new scheme.',
+        'current=$_currentIdSchemeVersion — rewriting record IDs and '
+        'cancelling stale OS-scheduled notifications.',
       );
+
+      // Snapshot before we cancel anything. Even if cancellation fails, we
+      // still want to rewrite the persisted records so the next restore arms
+      // them under the new IDs.
+      final oldRecords = _getScheduledNotifications(box);
 
       try {
         await _notificationService.cancelAllNotifications();
@@ -91,14 +105,48 @@ class MedicationSchedulerService {
         devPrint('⚠️ Error cancelling all notifications during ID scheme migration: $e');
       }
 
-      await box.put(_scheduledNotificationsKey, <Map<String, dynamic>>[]);
+      final migratedRecords = <Map<String, dynamic>>[];
+      int dropped = 0;
+      for (final notification in oldRecords) {
+        final medicationId = notification['medicationId'] as String? ?? '';
+        final scheduledTimeMs = notification['scheduledTime'] as int?;
+        if (medicationId.isEmpty || scheduledTimeMs == null) {
+          dropped++;
+          continue;
+        }
+
+        final newId = _generateNotificationId(
+          medicationId: medicationId,
+          scheduledTimeMs: scheduledTimeMs,
+        );
+
+        migratedRecords.add({
+          'id': newId,
+          'medicationId': medicationId,
+          'scheduledTime': scheduledTimeMs,
+          'type': notification['type'] ?? 'main',
+        });
+      }
+
+      await box.put(_scheduledNotificationsKey, migratedRecords);
       await box.put(_idSchemeVersionKey, _currentIdSchemeVersion);
 
-      devPrint('✅ Notification ID scheme migration complete (now at v$_currentIdSchemeVersion)');
+      if (dropped > 0) {
+        devPrint('⚠️ Dropped $dropped malformed record(s) during ID scheme migration');
+      }
+      devPrint(
+        '✅ Notification ID scheme migration complete (now at v$_currentIdSchemeVersion) '
+        '— rewrote ${migratedRecords.length} record(s)',
+      );
     } catch (e) {
       devPrint('❌ Error during notification ID scheme migration: $e');
     }
   }
+
+  /// Visible for testing — exercise the migration step in isolation, without
+  /// also running the cleanup + restore that `initialize()` chains after it.
+  @visibleForTesting
+  Future<void> migrateIdSchemeForTesting() => _migrateIdSchemeIfNeeded();
   
   /// Schedule notifications for medications
   /// This method will schedule notifications for each medication

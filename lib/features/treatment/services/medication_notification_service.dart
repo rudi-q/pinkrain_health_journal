@@ -107,15 +107,25 @@ class MedicationNotificationService {
   }
 
   /// Restore today's set from Hive and prune any older date buckets.
+  ///
+  /// Drain pending fire-and-forget writes first so Hive reflects everything
+  /// we've added in-memory this session — otherwise a re-init mid-session
+  /// (e.g. the test-reminder button or the data-import flow both call
+  /// `initialize()` again) can read a stale bucket and clobber live entries
+  /// that the queued `_persistTodaySnapshot` hasn't flushed yet.
+  ///
+  /// Then MERGE (don't replace). If anything was added between the drain and
+  /// the read, the in-memory set already contains it; `addAll` is a no-op
+  /// for entries already present and only pulls in genuinely-restored IDs.
   Future<void> _restoreAndPruneTracking() async {
+    await _pendingWrites;
+
     try {
       final box = await _getTrackingBox();
       final todayKey = _todayKey();
 
-      // Restore today's bucket into the in-memory cache.
-      _notifiedMedicationIds
-        ..clear()
-        ..addAll(_readBucket(box, todayKey));
+      // Merge persisted entries into the live in-memory set.
+      _notifiedMedicationIds.addAll(_readBucket(box, todayKey));
 
       // Prune older date buckets — anything keyed with our prefix but not today.
       final stale = box.keys
