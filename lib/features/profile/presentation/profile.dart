@@ -594,10 +594,14 @@ class ProfileScreenState extends ConsumerState<ProfileScreen> {
                           // Cancel all scheduled notifications
                           final scheduler = MedicationSchedulerService();
                           await scheduler.cancelAllNotifications();
-                          
+
+                          // Wipe the per-day notification dedupe state
+                          // (both in-memory and the persisted Hive box).
+                          await _notificationService.deleteAllPersistedTracking();
+
                           // Delete all Hive data
                           await HiveService.deleteAllData();
-                          
+
                           // Delete disclaimer data
                           await DisclaimerService.deleteAllData();
                           
@@ -1093,9 +1097,11 @@ class ProfileScreenState extends ConsumerState<ProfileScreen> {
       // Be safe: ensure plugin + channels are initialized before scheduling.
       await _notificationService.initialize();
 
-      // ID 999999 is reserved for this test ping — clearly outside the
-      // deterministic-hash range used by real medication reminders.
-      const int testReminderId = 999999;
+      // ID -999 is genuinely outside the deterministic-hash range used by
+      // real reminders. `stableNotificationId` masks with `0x7FFFFFFF`, so
+      // its output is always >= 0; a negative ID cannot collide with any
+      // real medication notification.
+      const int testReminderId = -999;
       final scheduledTime = DateTime.now().add(const Duration(seconds: 30));
 
       await NotificationService().schedulePillReminder(

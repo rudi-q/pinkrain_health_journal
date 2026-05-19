@@ -451,6 +451,31 @@ class MedicationNotificationService {
     devPrint('🧹 Cleared all notification tracking');
   }
 
+  /// Wipe both the in-memory dedupe set and the entire Hive tracking box
+  /// from disk. Intended for the "Delete All Data" flow — the routine
+  /// `clearAllNotificationTracking` only drops today's bucket via a
+  /// fire-and-forget write, which is the right behavior for normal app
+  /// usage but leaves disk state if the user is explicitly wiping
+  /// everything. This is the heavyweight counterpart.
+  Future<void> deleteAllPersistedTracking() async {
+    // Drain any pending fire-and-forget writes before we tear down the box,
+    // otherwise an in-flight write could re-create the file we just deleted.
+    await _pendingWrites;
+    _notifiedMedicationIds.clear();
+    _lastScheduleTime = null;
+    _lastMedicationCount = null;
+    try {
+      if (Hive.isBoxOpen(_trackingBoxName)) {
+        await Hive.box(_trackingBoxName).close();
+      }
+      await Hive.deleteBoxFromDisk(_trackingBoxName);
+      devPrint('🗑️ Deleted notification_tracking box from disk');
+    } catch (e) {
+      devPrint('⚠️ Error deleting notification_tracking box: $e');
+    }
+    _pendingWrites = Future<void>.value();
+  }
+
   /// Clear notification tracking at the end of the day
   void resetDailyNotifications() {
     _notifiedMedicationIds.clear();
