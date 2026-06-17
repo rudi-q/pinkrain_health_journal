@@ -1,6 +1,8 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pinkrain/core/widgets/bottom_navigation.dart';
 import 'package:pinkrain/core/widgets/components.dart';
@@ -9,9 +11,13 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pinkrain/core/util/helpers.dart' show devPrint;
+import 'package:pinkrain/core/services/data_transfer_service.dart';
 import 'package:pinkrain/core/services/hive_service.dart';
 import 'package:pinkrain/core/theme/tokens.dart';
 import 'package:pinkrain/core/theme/colors.dart';
+import 'package:pinkrain/features/journal/presentation/journal_medication_notifier.dart';
+import 'package:pinkrain/features/journal/presentation/journal_notifier.dart';
+import 'package:pinkrain/features/pillbox/presentation/pillbox_notifier.dart';
 import 'package:pinkrain/features/treatment/services/medication_notification_service.dart';
 import 'package:pinkrain/features/treatment/services/medication_scheduler_service.dart';
 import 'package:pinkrain/core/services/disclaimer_service.dart';
@@ -21,14 +27,14 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'dart:io';
 
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
   ProfileScreenState createState() => ProfileScreenState();
 }
 
-class ProfileScreenState extends State<ProfileScreen> {
+class ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool isReminderEnabled = true;
   bool isFillUpPillboxEnabled = false;
   late TextEditingController _nameController;
@@ -392,6 +398,28 @@ class ProfileScreenState extends State<ProfileScreen> {
                   color: AppTokens.iconPrimary,
                 ),
               ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text('Export Data', style: AppTokens.textStyleMedium),
+                trailing: HugeIcon(
+                  icon: HugeIcons.strokeRoundedDownload01,
+                  size: 24,
+                  strokeWidth: 1,
+                  color: AppTokens.iconPrimary,
+                ),
+                onTap: _showExportConfirmationModal,
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text('Import Data', style: AppTokens.textStyleMedium),
+                trailing: HugeIcon(
+                  icon: HugeIcons.strokeRoundedUpload01,
+                  size: 24,
+                  strokeWidth: 1,
+                  color: AppTokens.iconPrimary,
+                ),
+                onTap: _pickAndImportData,
+              ),
               _buildHelpTile('Delete All Data'),
               SizedBox(height: 30),
               Center(
@@ -637,6 +665,401 @@ class ProfileScreenState extends State<ProfileScreen> {
           ),
         );
       },
+    );
+  }
+
+  // Bottom-sheet confirmation for exporting all data as JSON.
+  void _showExportConfirmationModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext sheetContext) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: AppTokens.bgPrimary,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 20),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppTokens.borderLight,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'Export Data',
+                    style: AppTokens.textStyleXLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'A JSON file will be created with all your data, including:\n'
+                    '• Mood entries\n'
+                    '• Symptom data\n'
+                    '• Medication logs\n'
+                    '• Treatments\n'
+                    '• Pillbox data\n'
+                    '• User preferences\n\n'
+                    'You will be able to share or save the file using your device\'s share sheet. '
+                    'Keep it private — it contains your personal health data.',
+                    style: AppTokens.textStyleMedium.copyWith(
+                      color: AppTokens.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Button.primary(
+                      onPressed: () {
+                        Navigator.of(sheetContext).pop();
+                        _runExport();
+                      },
+                      text: 'Export Data',
+                      size: ButtonSize.large,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Button.secondary(
+                      onPressed: () => Navigator.of(sheetContext).pop(),
+                      text: 'Cancel',
+                      size: ButtonSize.large,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Produce the JSON file and hand it to the share sheet.
+  Future<void> _runExport() async {
+    if (!mounted) return;
+    final hostContext = context;
+    final hostNavigatorState = Navigator.of(hostContext);
+
+    showCupertinoDialog(
+      context: hostContext,
+      barrierDismissible: false,
+      builder: (context) => const CupertinoAlertDialog(
+        content: Padding(
+          padding: EdgeInsets.only(top: 20.0),
+          child: CupertinoActivityIndicator(),
+        ),
+      ),
+    );
+
+    String? exportPath;
+    try {
+      exportPath = await DataTransferService.exportToFile();
+    } catch (e) {
+      devPrint('❌ Export failed: $e');
+      if (mounted) hostNavigatorState.pop();
+      if (mounted) {
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Export Failed'),
+            content: Text('Could not produce export file: $e'),
+            actions: [
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    }
+
+    if (mounted) hostNavigatorState.pop();
+    if (!mounted) return;
+
+    try {
+      await SharePlus.instance.share(ShareParams(
+        files: [XFile(exportPath)],
+        subject: 'PinkRain Data Export',
+        text: 'PinkRain data export — keep this file private.',
+      ));
+    } catch (e) {
+      devPrint('❌ Share failed: $e');
+      if (mounted) {
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Could Not Share'),
+            content: Text(
+              'Export saved to:\n$exportPath\n\nBut sharing failed: $e',
+            ),
+            actions: [
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
+
+  // Open the native file picker for a .json file, then show the import
+  // confirmation modal if the user picked something.
+  Future<void> _pickAndImportData() async {
+    FilePickerResult? result;
+    try {
+      result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+    } catch (e) {
+      devPrint('❌ File picker failed: $e');
+      if (mounted) {
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Could Not Open File Picker'),
+            content: Text('$e'),
+            actions: [
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    }
+
+    if (result == null || result.files.isEmpty) return;
+    final picked = result.files.single;
+    final path = picked.path;
+    if (path == null) {
+      if (mounted) {
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Could Not Read File'),
+            content: const Text('Please pick the file from a different location.'),
+            actions: [
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    }
+
+    if (!mounted) return;
+    _showImportConfirmationModal(path, picked.name);
+  }
+
+  // Bottom-sheet confirmation for replacing all data with an import file.
+  void _showImportConfirmationModal(String path, String fileName) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext sheetContext) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: AppTokens.bgPrimary,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 20),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppTokens.borderLight,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'Replace All Data?',
+                    style: AppTokens.textStyleXLarge.copyWith(
+                      color: AppTokens.stateError,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'This will permanently replace all data on this device with the contents of:\n\n'
+                    '$fileName\n\n'
+                    'This action cannot be undone.',
+                    style: AppTokens.textStyleMedium.copyWith(
+                      color: AppTokens.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Button.destructive(
+                      onPressed: () {
+                        Navigator.of(sheetContext).pop();
+                        _runImport(path);
+                      },
+                      text: 'Replace All Data',
+                      size: ButtonSize.large,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Button.secondary(
+                      onPressed: () => Navigator.of(sheetContext).pop(),
+                      text: 'Cancel',
+                      size: ButtonSize.large,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Apply the import file and navigate to a fresh wellness screen on success.
+  Future<void> _runImport(String path) async {
+    if (!mounted) return;
+    final hostContext = context;
+    final hostNavigatorState = Navigator.of(hostContext);
+
+    showCupertinoDialog(
+      context: hostContext,
+      barrierDismissible: false,
+      builder: (context) => const CupertinoAlertDialog(
+        content: Padding(
+          padding: EdgeInsets.only(top: 20.0),
+          child: CupertinoActivityIndicator(),
+        ),
+      ),
+    );
+
+    try {
+      await DataTransferService.importFromFile(path);
+      // Refresh in-screen name controller so it reflects the imported value.
+      final importedName = await HiveService.getUserName();
+      if (mounted) {
+        _nameController.text = importedName;
+      }
+    } on DataImportException catch (e) {
+      devPrint('❌ Import rejected: ${e.message}');
+      if (mounted) hostNavigatorState.pop();
+      if (mounted) {
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Import Failed'),
+            content: Text(e.message),
+            actions: [
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    } catch (e) {
+      devPrint('❌ Import failed mid-flight: $e');
+      if (mounted) hostNavigatorState.pop();
+      if (mounted) {
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Import Failed'),
+            content: Text(
+              'Something went wrong while restoring data:\n$e\n\n'
+              'Some data may have been partially imported. Run import again to retry.',
+            ),
+            actions: [
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    }
+
+    if (mounted) hostNavigatorState.pop();
+    if (!mounted) return;
+
+    // Throw away every notifier whose state was populated from Hive before
+    // the import. Riverpod will rebuild them on next read, picking up the
+    // freshly imported data. Without this, the in-memory state is stale and
+    // — worse — the next pillbox/journal mutation would write the pre-import
+    // state back over the imported Hive contents.
+    ref.invalidate(pillBoxProvider);
+    ref.invalidate(pillIntakeProvider);
+    ref.invalidate(journalMedicationNotifierProvider);
+    ref.invalidate(selectedDateProvider);
+
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Data Imported'),
+        content: const Text(
+          'Your data has been restored. The app will now refresh.',
+        ),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () {
+              Navigator.of(context).pop();
+              if (!mounted) return;
+              this.context.go('/wellness');
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
     );
   }
 
