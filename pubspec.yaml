@@ -20,18 +20,18 @@ dependencies:
   pretty_animated_text: ^2.0.0
   hive: ^2.2.3
   hive_flutter: ^1.1.0
-  path_provider: ^2.1.5
+  path_provider: ^2.1.6
   cristalyse: ^1.17.6
   tflite_flutter: ^0.12.1
   pdf: ^3.12.0
   share_plus: ^11.0.0
-  flutter_local_notifications: ^19.5.0
+  flutter_local_notifications: ^22.0.1
   permission_handler: ^12.0.3
   just_audio: ^0.10.5
   url_launcher: ^6.2.5
   http: ^1.6.0
   html: ^0.15.4
-  timezone: ^0.10.1
+  timezone: ^0.11.0
   hugeicons: ^1.1.7
   hux: ^0.25.0
   package_info_plus: ^8.0.0
